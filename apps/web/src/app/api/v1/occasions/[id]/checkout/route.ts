@@ -12,6 +12,7 @@ export const POST = route<{ id: string }>(async (req, { id }) => {
   const { host, occasion } = await requireMember(id);
   const { plan } = await readJson(req, z.object({ plan: z.enum(["tek", "buyuk"]) }));
   if (!paymentsEnabled()) throw new ApiError(503, "payments_unavailable", "Payments are coming soon");
+  if (occasion.status === "archived") throw new ApiError(403, "upload_closed", "This album has expired");
   if (RANK[occasion.plan] >= RANK[plan]) throw new ApiError(409, "already_on_plan", "This event already has that plan");
   const amount = occasion.plan === "tek" && plan === "buyuk" ? UPGRADE_TEK_TO_BUYUK_PENCE : PLANS[plan].pricePence;
   const locale = requestLocale(req);

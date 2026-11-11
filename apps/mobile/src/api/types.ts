@@ -110,6 +110,8 @@ export type MediaItem = {
   favourite?: boolean;
   visibility?: string;
   approved?: boolean;
+  /** Host responses only: the uploading guest (null for host uploads). */
+  guestId?: string | null;
   createdAt: string;
 };
 

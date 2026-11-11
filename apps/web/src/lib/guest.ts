@@ -44,8 +44,10 @@ export function pinCookie(o: OccasionRow) {
 /** Active (non-archived) occasion by random slug or vanity name, or 404. Cookies always use the random `slug`. */
 export async function occasionBySlug(slug: string): Promise<OccasionRow> {
   if (!isSlug(slug)) throw notFound("Unknown event");
-  const [o] = await db.select().from(schema.occasions)
-    .where(and(or(eq(schema.occasions.slug, slug), eq(schema.occasions.vanitySlug, slug.toLowerCase())), ne(schema.occasions.status, "archived"))).limit(1);
+  const rows = await db.select().from(schema.occasions)
+    .where(and(or(eq(schema.occasions.slug, slug), eq(schema.occasions.vanitySlug, slug.toLowerCase())), ne(schema.occasions.status, "archived"))).limit(2);
+  // The exact random slug always wins, so a vanity name can never shadow another event's link.
+  const o = rows.find((r) => r.slug === slug) ?? rows[0];
   if (!o) throw notFound("Unknown event");
   return o;
 }

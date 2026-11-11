@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 import { useT } from "@/i18n/client";
 import { useGuest } from "./GuestContext";
 
-/** Bottom pill tab bar (mockups): Feed · Challenges · + · Camera · Book. */
+/** Bottom pill tab bar (mockups): Feed · Challenges · + · Camera · Guestbook. */
 export function TabBar() {
   const t = useT("guest");
   const { path, occasion } = useGuest();

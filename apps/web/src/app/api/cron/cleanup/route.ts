@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 const BATCH = 300;
 
-/** Hourly: purge abandoned/failed/deleted media, stale login codes, rate-limit rows and expired share links. */
+/** Daily (Vercel Hobby allows one run a day; upgrade to Pro to run hourly): purge abandoned/failed/deleted media, stale login codes, rate-limit rows and expired share links. */
 export async function GET(req: NextRequest) {
   if (!cronAuthorized(req)) return errorJson(401, "unauthorized", "Bad cron secret");
   try {

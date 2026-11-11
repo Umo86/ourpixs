@@ -24,6 +24,6 @@ export const TEMPLATE_COPY: L<{
   tr: {
     metaTitle: "QR kart ve masa tabelası şablonları", metaDesc: "Düğün, kına gecesi ve partiler için yazdırılabilir altı QR kart ve masa tabelası tasarımı. Örneği yazdırın ya da kendi etkinliğiniz için birini seçin.",
     title: "Masaya koymaya", accent: "değer QR kartlar.", lead: "Renklerimizle hazırlanmış altı tasarım. Boyutunu ve görünümünü görmek için bir örnek yazdırın ya da birini seçip QR stüdyosunda kendi QR kodunuz ve isimlerinizle hazırlayın.",
-    headline: "Fotoğraflarınızı paylaşmak için okutun", sub: "Uygulama yok. Üyelik yok.", names: "Elif & Can", sample: "Örnek QR", print: "Örneği yazdır", use: "Bu tasarımı kullan", note: "Örneklerde demo QR kod kullanılır. Panelinizdeki QR stüdyosu kartları kendi QR kodunuz, isimleriniz ve renklerinizle hazırlar.", designLabel: "Tasarım", qrAlt: "Örnek QR kod",
+    headline: "Fotoğraflarını paylaşmak için okut", sub: "Uygulama yok. Üyelik yok.", names: "Elif & Can", sample: "Örnek QR", print: "Örneği yazdır", use: "Bu tasarımı kullan", note: "Örneklerde demo QR kod kullanılır. Panelinizdeki QR stüdyosu kartları kendi QR kodunuz, isimleriniz ve renklerinizle hazırlar.", designLabel: "Tasarım", qrAlt: "Örnek QR kod",
   },
 };

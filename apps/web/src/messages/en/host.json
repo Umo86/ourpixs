@@ -22,7 +22,7 @@
   "forbidden": "You don't have permission to do that.",
   "not_found": "We couldn't find that.",
   "invalid_request": "Please check the details and try again.",
-  "rate_limited": "That's a lot of tries. Please wait a few minutes.",
+  "rate_limited": "Too many attempts. Please wait a few minutes.",
   "code_invalid": "That code isn't right. Check the email and try again.",
   "code_expired": "That code has expired. Request a new one.",
   "email_unavailable": "Email sign-in isn't set up yet. Please contact support.",

@@ -1,13 +1,15 @@
 import { z } from "zod";
 import { db, schema } from "@/db";
-import { route, json, readJson, badRequest, planFeature } from "@/lib/http";
+import { route, json, readJson, badRequest, planFeature, planLimit } from "@/lib/http";
 import { occasionBySlug, requireGuest } from "@/lib/guest";
 import { limit } from "@/lib/rate-limit";
 import { planOf } from "@/lib/occasion";
-import { headObject } from "@/lib/storage";
+import { deleteObjects, headObject } from "@/lib/storage";
 import { toMessages } from "@/lib/serializers";
 import { notifyHosts } from "@/lib/push";
 import { after } from "next/server";
+
+const MAX_RECORDING_BYTES = 100 * 1024 * 1024;
 
 const body = z.object({
   kind: z.enum(["text", "voice", "video"]),
@@ -28,8 +30,15 @@ export const POST = route<{ slug: string }>(async (req, { slug }) => {
   } else {
     if (!planOf(o).voiceGuestbook) throw planFeature("voice and video messages");
     // Key must come from /messages/upload-url for this guest and exist in storage.
-    if (!b.mediaKey || !b.mediaKey.startsWith(`o/${o.id}/msg/${guest.id}/`)) throw badRequest("Upload the recording first");
-    if (!(await headObject(b.mediaKey))) throw badRequest("The recording didn't finish uploading");
+    const prefix = `o/${o.id}/msg/${guest.id}/`;
+    if (!b.mediaKey || !b.mediaKey.startsWith(prefix) || !/^[\w-]+\.[a-z0-9]+$/.test(b.mediaKey.slice(prefix.length))) throw badRequest("Upload the recording first");
+    const obj = await headObject(b.mediaKey);
+    if (!obj) throw badRequest("The recording didn't finish uploading");
+    // The presigned PUT can't cap the size on every driver, so re-check what actually landed.
+    if (obj.bytes > MAX_RECORDING_BYTES) {
+      await deleteObjects([b.mediaKey]).catch(() => {});
+      throw planLimit("Recording is too large");
+    }
     mediaKey = b.mediaKey;
   }
   const [m] = await db.insert(schema.messages).values({

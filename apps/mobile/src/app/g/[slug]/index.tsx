@@ -13,7 +13,7 @@ import { MediaGrid } from "@/components/MediaGrid";
 import { MediaViewer } from "@/components/MediaViewer";
 import { Screen } from "@/components/Screen";
 import { EmptyState, ErrorView, Loading, Notice } from "@/components/States";
-import { occasionLabel, supportEmail } from "@/config";
+import { occasionLabel } from "@/config";
 import { useGuest } from "@/guest/GuestContext";
 import { useI18n } from "@/i18n";
 import { PermissionDeniedError, saveToCameraRoll } from "@/lib/saveMedia";
@@ -23,7 +23,7 @@ import { colors } from "@/theme";
 const POLL_MS = 20_000;
 
 export default function GuestFeed() {
-  const { t, locale, brand } = useI18n();
+  const { t, locale } = useI18n();
   const { slug, session, auth, occasion, leave, expired } = useGuest();
   const [mode, setMode] = useState<"all" | "mine">("all");
   const [items, setItems] = useState<MediaItem[] | null>(null);
@@ -137,11 +137,24 @@ export default function GuestFeed() {
     ]);
 
   // App Store 1.2: guests can report objectionable content to us; hosts can hide/delete it in their album.
-  const report = (it: MediaItem) => {
-    const subject = encodeURIComponent(t("guest.reportSubject"));
-    const body = encodeURIComponent(t("guest.reportBody", { slug, id: it.id }));
-    void Linking.openURL(`mailto:${supportEmail(brand)}?subject=${subject}&body=${body}`);
-  };
+  const report = (it: MediaItem) =>
+    Alert.alert(t("guest.reportTitle"), t("guest.reportConfirm"), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("guest.report"),
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await guestApi.report(slug, auth, it.id);
+            setItems((prev) => prev?.filter((m) => m.id !== it.id) ?? prev);
+            setViewer(null);
+            Alert.alert(t("guest.reportDone"));
+          } catch (e) {
+            Alert.alert(errorMessage(e, t));
+          }
+        },
+      },
+    ]);
 
   const doLeave = () =>
     Alert.alert(t("guest.leave"), occasion?.title, [

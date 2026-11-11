@@ -18,6 +18,7 @@ type GuestRow = typeof schema.guests.$inferSelect;
 export type Actor = { guest: GuestRow } | { hostId: string };
 
 const MAX_PHOTO_BYTES = 60 * 1024 * 1024;
+const MAX_DERIVED_BYTES = 25 * 1024 * 1024;
 
 export const uploadFileSchema = z.object({
   clientId: z.string().min(1).max(100),
@@ -174,8 +175,11 @@ export async function completeUploads(o: OccasionRow, mediaIds: string[], actor:
       m.keyDisplay ? headObject(m.keyDisplay) : Promise.resolve(null),
       m.keyThumb ? headObject(m.keyThumb) : Promise.resolve(null),
     ]);
-    const keyDisplay = disp ? m.keyDisplay : null;
-    const keyThumb = thumb ? m.keyThumb : null;
+    // Derived images are small WebPs made in the browser; anything bigger is not one of ours.
+    const oversized = [disp && disp.bytes > MAX_DERIVED_BYTES ? m.keyDisplay : null, thumb && thumb.bytes > MAX_DERIVED_BYTES ? m.keyThumb : null];
+    if (oversized.some(Boolean)) await deleteObjects(oversized).catch(() => {});
+    const keyDisplay = disp && !oversized[0] ? m.keyDisplay : null;
+    const keyThumb = thumb && !oversized[1] ? m.keyThumb : null;
     // Auto-moderation: flags only, never deletes. NSFW goes to the approval queue regardless of approval mode.
     const [flags, nsfw] = await Promise.all([signalFlags(m), nsfwCheck({ keyDisplay, keyThumb })]);
     if (nsfw) flags.push("nsfw");

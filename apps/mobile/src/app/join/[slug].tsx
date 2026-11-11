@@ -105,13 +105,13 @@ export default function JoinEvent() {
           label={t("join.pinLabel")}
           help={t("join.pinHelp")}
           value={pin}
-          onChangeText={(v) => setPin(v.replace(/\D/g, "").slice(0, 4))}
+          onChangeText={(v) => setPin(v.replace(/\D/g, "").slice(0, 8))}
           keyboardType="number-pad"
-          maxLength={4}
+          maxLength={8}
           error={formError}
           autoFocus
         />
-        <Button tone="dark" label={t("common.continue")} disabled={pin.length !== 4} onPress={() => void load(pin)} />
+        <Button tone="dark" label={t("common.continue")} disabled={pin.length < 4} onPress={() => void load(pin)} />
       </Screen>
     );
   }

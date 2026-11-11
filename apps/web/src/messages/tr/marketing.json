@@ -175,7 +175,7 @@
         },
         {
           "title": "Tek kullanımlık kamera",
-          "body": "Misafir başına sınırlı poz; kareler ertesi sabah ortaya çıkar."
+          "body": "Misafir başına sınırlı sayıda kare; hepsi ertesi sabah birlikte açılır."
         },
         {
           "title": "Sesli anı defteri",
@@ -242,7 +242,7 @@
           },
           {
             "title": "Kaldığı yerden devam eden yüklemeler",
-            "body": "İlerleme göstergeli ve kesintide kaldığı yerden otomatik devam eden yükleme sırası; kalabalık mekanların zorlanan Wi-Fi'ı düşünülerek tasarlandı."
+            "body": "İlerleme göstergeli ve kesintide kaldığı yerden otomatik devam eden yükleme sırası; kalabalık mekanlardaki zayıf Wi-Fi düşünülerek tasarlandı."
           },
           {
             "title": "Canlı akış ve tepkiler",
@@ -254,7 +254,7 @@
           },
           {
             "title": "Tek kullanımlık kamera modu",
-            "body": "Herkese sınırlı sayıda poz; kareler ertesi sabah hep birlikte ortaya çıkar."
+            "body": "Herkese sınırlı sayıda kare hakkı; kareler ertesi sabah hep birlikte ortaya çıkar."
           },
           {
             "title": "Sesli ve görüntülü anı defteri",
@@ -404,7 +404,7 @@
       },
       {
         "q": "Para iadesi alabilir miyim?",
-        "a": "Evet. Tüm ücretli etkinlik planlarında {days} gün para iade garantisi vardır. Satın almanızdan sonraki {days} gün içinde {email} adresine yazın, sebep sormadan ödemenizin tamamını iade edelim."
+        "a": "Evet. Tüm ücretli etkinlik planlarında {days} gün para iade garantisi vardır. Satın almanızdan sonraki {days} gün içinde {email} adresine yazın, sebep sormadan ödemenizin tamamını iade ederiz."
       },
       {
         "q": "Sonradan yükseltebilir miyim?",
@@ -412,7 +412,7 @@
       },
       {
         "q": "Saklama süresi bitince ne olur?",
-        "a": "Süre dolmadan 30 gün ve 7 gün önce size e-postayla hatırlatırız; böylece her şeyi indirebilirsiniz. Daha uzun süre mi gerekiyor? Saklama süresini uzatmak için bizimle iletişime geçin."
+        "a": "Süre dolmadan 30 gün ve 7 gün kala size e-postayla hatırlatırız; böylece her şeyi indirebilirsiniz. Daha uzun süre mi gerekiyor? Saklama süresini uzatmak için bizimle iletişime geçin."
       },
       {
         "q": "Misafirler ücret öder mi?",
@@ -504,7 +504,7 @@
         "body": "QR kodu dans pistine koyun, kalabalık sizin için en iyi içeriği üretsin."
       },
       {
-        "title": "Fotoğrafçılar ve video çekimcileri",
+        "title": "Fotoğrafçılar ve kameramanlar",
         "body": "Orada olamadığınız anları da yakalayın, tek ve eksiksiz bir albüm teslim edin."
       }
     ],
@@ -553,7 +553,7 @@
       "types": {
         "venue": "Mekan",
         "dj": "DJ ya da sunucu",
-        "photographer": "Fotoğrafçı ya da video çekimcisi",
+        "photographer": "Fotoğrafçı ya da kameraman",
         "planner": "Organizatör",
         "other": "Diğer"
       },
@@ -572,7 +572,7 @@
   "credits": {
     "title": "Fotoğraf ve videolar,",
     "accent": "teşekkürlerle.",
-    "lead": "Bu sitedeki fotoğraflar ve video Pexels'ten alınmıştır. Aşağıdaki fotoğrafçılara ve video çekimcilerine teşekkür ederiz.",
+    "lead": "Bu sitedeki fotoğraflar ve video Pexels'ten alınmıştır. Aşağıdaki fotoğrafçılara ve kameramanlara teşekkür ederiz.",
     "roles": {
       "video": "Ana sayfa videosu",
       "wedding": "Düğün fotoğrafı",
@@ -614,7 +614,7 @@
       {
         "h": "Verileri neden kullanıyoruz ve hukuki dayanaklarımız",
         "p": [
-          "Birleşik Krallık GDPR'ının 6. maddesi uyarınca aşağıdaki hukuki dayanaklara güveniriz:"
+          "Birleşik Krallık GDPR'ının 6. maddesi uyarınca aşağıdaki hukuki dayanaklardan yararlanırız:"
         ],
         "list": [
           "Sözleşme (m. 6(1)(b)): etkinlikleri oluşturmak ve yürütmek, yüklenenleri ev sahibinin seçtiği kişilere saklayıp göstermek, giriş kodları ve makbuzlar göndermek ve ödemeyi almak için.",
@@ -693,7 +693,7 @@
       {
         "h": "Haklarınızı nasıl kullanırsınız ve şikâyet edersiniz",
         "p": [
-          "{email} adresine yazın. Ücretsiz olarak bir ay içinde yanıt veririz. Kimliğinizi doğrulamamız gerekebilir; karmaşık taleplerde süreyi en fazla iki ay daha uzatabiliriz ve nedenini size bildiririz.",
+          "{email} adresine yazın. Ücretsiz olarak ve bir ay içinde yanıt veririz. Kimliğinizi doğrulamamız gerekebilir; karmaşık taleplerde süreyi en fazla iki ay daha uzatabiliriz ve nedenini size bildiririz.",
           "Verilerinizi ele alış biçimimizden memnun değilseniz Birleşik Krallık Bilgi Komiserliği Ofisi'ne (ICO) ico.org.uk adresinden ya da 0303 123 1113 numaralı telefondan şikâyette bulunabilirsiniz. Önce durumu düzeltmemize fırsat verirseniz seviniriz."
         ]
       },
@@ -751,7 +751,7 @@
       {
         "h": "İptal ve iadeler",
         "list": [
-          "Para iade garantisi: satın almanızdan sonraki {days} gün içinde, sebep belirtmeden, ücretli etkinlik planınızın ücretinin tamamının iadesini isteyebilirsiniz. Hesabınızdaki e-posta adresinden {email} adresine yazmanız yeterlidir. İadeler Stripe aracılığıyla ilk ödeme yöntemine yapılır.",
+          "Para iade garantisi: satın almanızdan sonraki {days} gün içinde, sebep belirtmeden, ücretli etkinlik planı için ödediğiniz tutarın tamamının iadesini isteyebilirsiniz. Hesabınızdaki e-posta adresinden {email} adresine yazmanız yeterlidir. İadeler Stripe aracılığıyla ilk ödeme yöntemine yapılır.",
           "Yasal cayma hakkınız: Birleşik Krallık'ta 2013 tarihli Tüketici Sözleşmeleri (Bilgilendirme, İptal ve Ek Ücretler) Yönetmeliği uyarınca dijital bir hizmeti genellikle 14 gün içinde iptal edebilirsiniz. Bir etkinlik oluşturarak hizmetin hemen başlamasını talep etmiş olursunuz. Etkinlik başlamışsa ya da yüklemeler başlamışsa bu yasal hak kaybolabilir veya orantılı bir iadeyle sınırlanabilir; ancak para iade garantimiz, satın almanızdan sonraki {days} gün boyunca yine de geçerlidir.",
           "Partner planı: aşağıdaki “Partner planı” bölümüne bakın."
         ]

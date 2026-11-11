@@ -111,6 +111,9 @@ export async function demoRequest<T>(method: string, path: string, body?: unknow
   }
   if ((m = p.match(/^\/g\/([^/]+)\/missions$/))) return { missions: demoGuestMissions() } as T;
   if ((m = p.match(/^\/g\/([^/]+)\/messages$/))) return { message: { id: "new", kind: "text", body: b.body ?? null, mediaUrl: null, durationS: null, guestName: "Ayşe", createdAt: new Date().toISOString() } } as T;
+  if ((m = p.match(/^\/g\/([^/]+)\/report$/))) return { ok: true } as T;
+  if ((m = p.match(/^\/occasions\/([^/]+)\/guests\/([^/]+)\/block$/))) return { ok: true } as T;
+  if (p === "/me" && method === "DELETE") return { ok: true } as T;
   if ((m = p.match(/^\/g\/([^/]+)\/mine$/))) return (method === "DELETE" ? { ok: true } : { items: allMedia().slice(0, 4) }) as T;
 
   throw new Error(`demo: unhandled ${method} ${path}`);

@@ -6,7 +6,7 @@ export type HelpVars = { days: number; email: string; upgrade: string };
 
 export const HELP_UI = {
   en: { metaTitle: "Help centre", metaDesc: "Answers about guests, hosts, payments and refunds, privacy and safety, and venue Wi-Fi.", title: "How can we", accent: "help?", lead: "Search the answers below. Can't find yours? Email us and a person will reply.", search: "Search help", placeholder: "Search, e.g. refund, Wi-Fi, app", none: "Nothing matches that search. Try another word, or email us.", contact: "Still stuck? Email", count: "{n} answers" },
-  tr: { metaTitle: "Yardım merkezi", metaDesc: "Misafirler, ev sahipleri, ödemeler ve iadeler, gizlilik ve güvenlik ile mekan Wi-Fi'ı hakkında yanıtlar.", title: "Size nasıl", accent: "yardımcı olabiliriz?", lead: "Aşağıdaki yanıtlarda arama yapın. Aradığınızı bulamadınız mı? Bize yazın; size bir insan yanıt verir.", search: "Yardımda ara", placeholder: "Ara, örn. iade, Wi-Fi, uygulama", none: "Bu aramayla eşleşen bir şey yok. Başka bir sözcük deneyin ya da bize yazın.", contact: "Hâlâ takıldınız mı? Yazın:", count: "{n} yanıt" },
+  tr: { metaTitle: "Yardım merkezi", metaDesc: "Misafirler, ev sahipleri, ödemeler ve iadeler, gizlilik ve güvenlik ile mekan Wi-Fi'si hakkında yanıtlar.", title: "Size nasıl", accent: "yardımcı olabiliriz?", lead: "Aşağıdaki yanıtlarda arama yapın. Aradığınızı bulamadınız mı? Bize yazın; gerçek bir kişi yanıtlar.", search: "Yardımda ara", placeholder: "Ara, örn. iade, Wi-Fi, uygulama", none: "Bu aramayla eşleşen bir şey yok. Başka bir sözcük deneyin ya da bize yazın.", contact: "Hâlâ takıldınız mı? Yazın:", count: "{n} yanıt" },
 } as const;
 
 export function helpGroups(locale: Locale, v: HelpVars): HelpGroup[] {
@@ -25,15 +25,15 @@ export function helpGroups(locale: Locale, v: HelpVars): HelpGroup[] {
         { q: "Yurt dışındaki akrabalar nasıl katılır?", a: "Özel bir aile bağlantısı oluşturun ve WhatsApp ile gönderin. Büyük Gün planında kullanılabilir." }] },
       { id: "payments", title: "Ödemeler ve iadeler", items: [
         { q: "Abonelik var mı?", a: "Etkinlik planlarında yok: etkinlik başına bir kez ödersiniz. Mekanlar için Partner planı ise aylık bir aboneliktir." },
-        { q: "Para iadesi alabilir miyim?", a: `Evet. Ücretli etkinlik planlarında ${v.days} gün para iade garantisi vardır. Satın almanızdan sonraki ${v.days} gün içinde ${v.email} adresine yazın, sebep sormadan iade edelim.` },
+        { q: "Para iadesi alabilir miyim?", a: `Evet. Ücretli etkinlik planlarında ${v.days} gün para iade garantisi vardır. Satın almanızdan sonraki ${v.days} gün içinde ${v.email} adresine yazın, sebep sormadan iade ederiz.` },
         { q: "Sonradan yükseltebilir miyim?", a: `Evet. Tek Gün planından Büyük Gün planına geçerken yalnızca ${v.upgrade} farkı ödersiniz.` },
-        { q: "Saklama süresi bitince ne olur?", a: "Süre dolmadan 30 ve 7 gün önce size e-posta göndeririz; böylece her şeyi indirebilirsiniz. Süreyi uzatmak için bizimle iletişime geçin." }] },
+        { q: "Saklama süresi bitince ne olur?", a: "Süre dolmadan 30 ve 7 gün kala size e-posta göndeririz; böylece her şeyi indirebilirsiniz. Süreyi uzatmak için bizimle iletişime geçin." }] },
       { id: "privacy", title: "Gizlilik ve güvenlik", items: [
         { q: "Albümü kimler görebilir?", a: "Yalnızca bağlantıya (ya da QR koda) sahip olanlar. Bağlantılar tahmin edilemez, isteğe bağlı PIN ekleyebilirsiniz ve sayfalar arama motorlarının dışında tutulur." },
-        { q: "Verilerim nerede saklanıyor?", a: "Etkinlik verileri ve medya dosyaları Birleşik Krallık ve AB'de saklanır. Hizmet sağlayıcılarımız ve uyguladığımız güvenceler için gizlilik politikamıza bakın." },
+        { q: "Verilerim nerede saklanıyor?", a: "Etkinlik verileri ve medya dosyaları Londra'da (Birleşik Krallık) saklanır. Hizmet sağlayıcılarımız ve uyguladığımız güvenceler için gizlilik politikamıza bakın." },
         { q: "Hangi çerezleri kullanıyorsunuz?", a: "Yalnızca zorunlu olanları: oturum, dil ve misafir cihaz anahtarı. Reklam ya da izleme çerezi kullanmıyoruz." },
         { q: "Bir fotoğrafın kaldırılmasını nasıl isterim?", a: `Önce ev sahibine söyleyin. Çözülmezse ${v.email} adresine yazın.` }] },
-      { id: "wifi", title: "Mekan Wi-Fi'ı", items: [
+      { id: "wifi", title: "Mekan Wi-Fi'si", items: [
         { q: "Mekanda Wi-Fi yoksa ne olur?", a: "Misafirler kendi mobil verilerini kullanabilir. Yüklemeler sıraya alınır ve bağlantı zayıfsa kaldığı yerden devam eder." },
         { q: "İnternet yarıda kesilirse yükleme kaybolur mu?", a: "Hayır. Yükleme kuyruğu bağlantı geri geldiğinde otomatik devam eder." },
         { q: "Canlı ekran için ne gerekiyor?", a: "İnternete bağlı bir bilgisayar ya da tarayıcısı olan bir televizyon yeterli; canlı ekran bağlantısını bu ekranda açın. Canlı ekran Tek Gün ve Büyük Gün planlarında vardır." }] },
@@ -57,7 +57,7 @@ export function helpGroups(locale: Locale, v: HelpVars): HelpGroup[] {
         { q: "What happens when storage ends?", a: "We email you 30 days and 7 days before it ends, so you can download everything. To extend storage, contact us." }] },
       { id: "privacy", title: "Privacy & safety", items: [
         { q: "Who can see an album?", a: "Only people with the link or QR code. Links are unguessable, you can add a PIN, and pages are kept out of search engines." },
-        { q: "Where is my data stored?", a: "Event data and media files are stored in the UK and EU. See our privacy policy for our providers and the safeguards we use." },
+        { q: "Where is my data stored?", a: "Event data and media files are stored in London, UK. See our privacy policy for our providers and the safeguards we use." },
         { q: "Which cookies do you use?", a: "Only essential ones: sign-in, language and a guest device token. No advertising or tracking cookies." },
         { q: "How do I ask for a photo to be removed?", a: `Tell the host first. If that doesn't work, email ${v.email}.` }] },
       { id: "wifi", title: "Venue Wi-Fi", items: [

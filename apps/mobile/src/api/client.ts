@@ -124,6 +124,8 @@ export const authApi = {
     request<{ token: string; host: Host }>("/api/v1/auth/verify", { method: "POST", body: { email, code }, auth: "none" }),
   me: () => request<{ host: Host }>("/api/v1/me"),
   updateMe: (patch: { name?: string; locale?: Locale }) => request<{ host: Host }>("/api/v1/me", { method: "PATCH", body: patch }),
+  /** Deletes the account, the events it owns (all files) and memberships. 409 `org_owner` while it owns an active partner account. */
+  deleteAccount: () => request<{ ok: true }>("/api/v1/me", { method: "DELETE" }),
   registerPushToken: (token: string, platform: "ios" | "android") =>
     request<{ ok: true }>("/api/v1/push-tokens", { method: "POST", body: { token, platform } }),
 };
@@ -149,6 +151,10 @@ export const hostApi = {
    */
   completeUploads: (id: string, mediaIds: string[]) =>
     request<{ ok: true }>(`/api/v1/occasions/${enc(id)}/uploads/complete`, { method: "POST", body: { mediaIds } }),
+
+  /** Blocks a guest: hides everything they uploaded and stops that device uploading again. */
+  blockGuest: (id: string, guestId: string) =>
+    request<{ ok: true }>(`/api/v1/occasions/${enc(id)}/guests/${enc(guestId)}/block`, { method: "POST" }),
 
   messages: (id: string) => request<{ messages: Message[] }>(`/api/v1/occasions/${enc(id)}/messages`),
 
@@ -199,6 +205,9 @@ export const guestApi = {
   missions: (slug: string, auth: GuestAuth) => request<{ missions: GuestMission[] }>(`/api/v1/g/${enc(slug)}/missions`, { auth }),
   postMessage: (slug: string, auth: GuestAuth, body: { kind: MessageKind; body?: string; mediaKey?: string }) =>
     request<{ message: Message }>(`/api/v1/g/${enc(slug)}/messages`, { method: "POST", body, auth }),
+  /** Reports a photo/video: it leaves the feed until a host reviews it. */
+  report: (slug: string, auth: GuestAuth, mediaId: string) =>
+    request<{ ok: true }>(`/api/v1/g/${enc(slug)}/report`, { method: "POST", body: { mediaId }, auth }),
   mine: (slug: string, auth: GuestAuth) => request<{ items: MediaItem[] }>(`/api/v1/g/${enc(slug)}/mine`, { auth }),
   deleteMine: (slug: string, auth: GuestAuth, mediaId: string) =>
     request<{ ok: true }>(`/api/v1/g/${enc(slug)}/mine`, { method: "DELETE", auth, query: { mediaId } }),

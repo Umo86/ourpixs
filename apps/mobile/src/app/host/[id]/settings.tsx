@@ -72,7 +72,7 @@ export default function HostSettings() {
   };
 
   const setPinNow = async () => {
-    if (!/^\d{4}$/.test(pin)) return setPinError(t("settings.pinInvalid"));
+    if (!/^\d{4,8}$/.test(pin)) return setPinError(t("settings.pinInvalid"));
     setPinError(null);
     await save("pin", { pin });
     setPin("");
@@ -221,8 +221,8 @@ export default function HostSettings() {
           </View>
         ) : (
           <View style={{ gap: 10 }}>
-            <Field label={t("settings.pin")} placeholder={t("settings.pinPlaceholder")} value={pin} onChangeText={(v) => setPin(v.replace(/\D/g, "").slice(0, 4))} keyboardType="number-pad" maxLength={4} error={pinError} secureTextEntry={false} />
-            <Button label={t("settings.setPin")} icon="lock" size="md" loading={saving === "pin"} disabled={pin.length !== 4} onPress={() => void setPinNow()} />
+            <Field label={t("settings.pin")} placeholder={t("settings.pinPlaceholder")} value={pin} onChangeText={(v) => setPin(v.replace(/\D/g, "").slice(0, 8))} keyboardType="number-pad" maxLength={8} error={pinError} secureTextEntry={false} />
+            <Button label={t("settings.setPin")} icon="lock" size="md" loading={saving === "pin"} disabled={pin.length < 4} onPress={() => void setPinNow()} />
           </View>
         )}
       </Section>

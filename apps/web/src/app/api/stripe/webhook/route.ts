@@ -1,5 +1,5 @@
 import type Stripe from "stripe";
-import { and, desc, eq, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, ne, notInArray, or, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { errorJson, json, toErrorResponse } from "@/lib/http";
 import { stripe } from "@/lib/stripe";
@@ -62,7 +62,8 @@ export async function POST(req: NextRequest) {
 async function markPaid(s: Stripe.Checkout.Session) {
   const meta = s.metadata || {};
   let [order] = await db.update(schema.orders).set({ status: "paid" })
-    .where(and(eq(schema.orders.stripeSessionId, s.id), ne(schema.orders.status, "paid"))).returning();
+    // A replayed "completed" event must not revive an order that was refunded since.
+    .where(and(eq(schema.orders.stripeSessionId, s.id), notInArray(schema.orders.status, ["paid", "refunded"]))).returning();
   if (!order) {
     const [existing] = await db.select().from(schema.orders).where(eq(schema.orders.stripeSessionId, s.id)).limit(1);
     if (existing) return; // already processed
@@ -119,7 +120,9 @@ async function syncSubscription(sub: Stripe.Subscription) {
   const raw = sub as unknown as { current_period_end?: number; items?: { data?: { current_period_end?: number }[] } };
   const end = raw.current_period_end ?? raw.items?.data?.[0]?.current_period_end;
   const orgId = sub.metadata?.orgId;
-  const where = orgId ? or(eq(schema.organisations.id, orgId), eq(schema.organisations.stripeSubscriptionId, sub.id)) : eq(schema.organisations.stripeSubscriptionId, sub.id);
+  // A late "canceled" event for an old subscription must not cancel an organisation that has since re-subscribed:
+  // cancellations only match by subscription id.
+  const where = orgId && status !== "cancelled" ? or(eq(schema.organisations.id, orgId), eq(schema.organisations.stripeSubscriptionId, sub.id)) : eq(schema.organisations.stripeSubscriptionId, sub.id);
   await db.update(schema.organisations).set({
     stripeSubscriptionId: sub.id,
     ...(status ? { status } : {}),

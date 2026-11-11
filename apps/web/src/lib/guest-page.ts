@@ -12,6 +12,14 @@ import { BRANDS } from "./config";
 import { DEMO_COOKIE, demoOccasion, isDemo } from "./demo";
 import type { PublicOccasion } from "./api-types";
 
+function safeDecode(v: string) {
+  try {
+    return decodeURIComponent(v);
+  } catch {
+    return v;
+  }
+}
+
 type GuestContext = {
   o: { id: string; slug: string; title: string };
   guest: { id: string; displayName: string; shotsTaken: number } | null;
@@ -30,7 +38,7 @@ export const loadGuestContext = cache(async (slug: string): Promise<GuestContext
     const po = demoOccasion(locale);
     return {
       o: { id: "demo", slug: "demo", title: po.title },
-      guest: name ? { id: "demo-guest", displayName: decodeURIComponent(name).slice(0, 40), shotsTaken: 0 } : null,
+      guest: name ? { id: "demo-guest", displayName: safeDecode(name).slice(0, 40), shotsTaken: 0 } : null,
       locale, publicOccasion: po, pinOk: true, demo: true,
       branding: { mode: "platform", platform: true, platformName: BRANDS[po.brand].name, venueName: null, logoUrl: null, poweredBy: false, colours: po.branding.colours },
     };

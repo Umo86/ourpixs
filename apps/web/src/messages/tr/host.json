@@ -31,12 +31,12 @@
   "pin_invalid": "PIN hatalı.",
   "not_joined": "Önce etkinliğe katılın.",
   "upload_closed": "Bu etkinlik için yüklemeler kapalı.",
-  "plan_limit": "Paketinizin sınırına ulaştınız. Daha fazlası için paketinizi yükseltin.",
-  "plan_feature": "Bu özellik etkinliğin paketinde yok.",
+  "plan_limit": "Planınızın sınırına ulaştınız. Daha fazlası için planınızı yükseltin.",
+  "plan_feature": "Bu özellik etkinliğin planında yok.",
   "storage_not_configured": "Fotoğraf depolama henüz hazır değil, yüklemeler beklemede. Lütfen daha sonra tekrar deneyin.",
   "storage_error": "Yükleme tamamlanmadı. Tekrar deneyeceğiz.",
   "payments_unavailable": "Ödemeler çok yakında.",
-  "already_on_plan": "Bu etkinlik zaten bu pakette.",
+  "already_on_plan": "Bu etkinlik zaten bu planda.",
   "shots_exhausted": "Tek kullanımlık kamerada kare kalmadı.",
   "slug_taken": "Bu link adı alınmış. Başka bir ad deneyin.",
   "slug_invalid": "3–40 küçük harf, rakam veya tire kullanın.",
@@ -88,7 +88,7 @@
   "emptyBody": "Bir etkinlik oluşturun, QR kartları yazdırın; misafirlerin bütün fotoğrafları tek bir özel albümde toplansın.",
   "emptyCta": "İlk etkinliğinizi oluşturun",
   "partnerTitle": "Mekanlar, organizatörler ve fotoğrafçılar",
-  "partnerBody": "Partner paketiyle müşterilerinizin etkinliklerini kendi markanızla yönetin.",
+  "partnerBody": "Partner planıyla müşterilerinizin etkinliklerini kendi markanızla yönetin.",
   "partnerCta": "Partner paneli",
   "accountTitle": "Hesabınız",
   "accountBody": "{email} ile giriş yaptınız. Hesabınızı silerseniz sahibi olduğunuz etkinlikler ve içindeki bütün fotoğraflar silinir."
@@ -125,7 +125,7 @@
   "dayName": "Gün adı",
   "newDay": "{n}. gün",
   "addDay": "Gün ekle",
-  "multiDayNote": "Ücretsiz paket bir gün içerir. Diğer günler Büyük Gün paketine geçince açılır.",
+  "multiDayNote": "Ücretsiz plan bir gün içerir. Diğer günler Büyük Gün planına geçince açılır.",
   "themeTitle": "Bir görünüm",
   "themeAccent": "seçin.",
   "create": "Etkinliği oluştur",
@@ -133,7 +133,7 @@
   "doneSticker": "Hazır",
   "doneTitle": "Etkinliğiniz",
   "doneAccent": "yayında.",
-  "doneBody": "Linki paylaşın ya da QR kartları yazdırın. Misafirler QR'ı okutur, adını yazar ve paylaşmaya başlar.",
+  "doneBody": "Linki paylaşın ya da QR kartları yazdırın. Misafirler QR kodu okutur, adını yazar ve paylaşmaya başlar.",
   "printQr": "QR kartları yazdır",
   "openAlbum": "Albümü aç"
  },
@@ -154,7 +154,7 @@
   "download": "İndir",
   "settings": "Ayarlar",
   "wall": "Canlı ekran",
-  "locked": "açmak için paketinizi yükseltin"
+  "locked": "açmak için planınızı yükseltin"
  },
  "occasion": {
   "archived": "Bu albümün süresi doldu ve dosyaları silindi."
@@ -168,7 +168,7 @@
  },
  "album": {
   "title": "Albüm",
-  "freeLimit": "Ücretsiz pakette {max} karenin {used} tanesi kullanıldı.",
+  "freeLimit": "Ücretsiz planda {max} karenin {used} tanesi kullanıldı.",
   "pendingCount": "{n} kare",
   "pendingBody": "onayınızı bekliyor. Onaylanınca canlı akışta ve canlı ekranda görünür.",
   "review": "İncele",
@@ -251,9 +251,9 @@
   "posterHint": "A4 kağıda %100 ölçekle yazdırın. Kalın kağıt daha şık durur.",
   "dayHint": "Bu QR kod sadece {day} gününü açar.",
   "sticker": "Okut beni",
-  "headline": "Kareleriniz",
+  "headline": "Karelerin",
   "accent": "bizimle kalsın.",
-  "body": "QR kodu okutun, fotoğraf ve videolarınızı albümümüze ekleyin. Uygulama gerekmez.",
+  "body": "QR kodu okut, fotoğraf ve videolarını albümümüze ekle. Uygulama gerekmez.",
   "atVenue": "{venue}",
   "poweredBy": "{brand} altyapısıyla"
  },
@@ -273,7 +273,7 @@
   "confirmRevoke": "Bu link iptal edilsin mi? Linki kullanan herkesin erişimi kapanır.",
   "whatsapp": "WhatsApp'ta paylaş",
   "native": "Paylaş",
-  "guestMessage": "{title} için bize katılın! Fotoğraf ve videolarınızı albümümüze eklemek için bu linki açın, uygulama gerekmez: {url}",
+  "guestMessage": "{title} için bize katıl! Fotoğraf ve videolarını albümümüze eklemek için bu linki aç, uygulama gerekmez: {url}",
   "familyMessage": "{title} fotoğrafları burada: {url}"
  },
  "team": {
@@ -306,15 +306,15 @@
   "coverSaved": "Kapak fotoğrafı güncellendi.",
   "coverFailed": "Bu fotoğrafı kullanamadık. JPEG ya da PNG deneyin.",
   "days": "Günler",
-  "daysHint": "Paketiniz misafirler için {max} gün içerir. Her günün kendi QR kodu ve yükleme saatleri olabilir.",
+  "daysHint": "Planınız misafirler için {max} gün içerir. Her günün kendi QR kodu ve yükleme saatleri olabilir.",
   "removeDay": "{name} gününü kaldır",
   "dayWindow": "Bu günün yükleme saatleri",
   "dayLink": "Gün linki:",
-  "dayLocked": "Bu gün Büyük Gün paketiyle açılır.",
+  "dayLocked": "Bu gün Büyük Gün planıyla açılır.",
   "uploads": "Yükleme ve gizlilik",
-  "opens": "Yüklemeler açılış",
+  "opens": "Yüklemelerin açılış zamanı",
   "opensHint": "Hemen açmak için boş bırakın.",
-  "closes": "Yüklemeler kapanış",
+  "closes": "Yüklemelerin kapanış zamanı",
   "closesHint": "Açık kalması için boş bırakın.",
   "approval": "Misafirler görmeden önce kareleri onaylayın",
   "approvalHint": "Yeni kareler siz onaylayana kadar albümde bekler.",
@@ -326,8 +326,8 @@
   "disposable": "Tek kullanımlık kamera",
   "shots": "Misafir başına kare",
   "shotsHint": "Kamerayı kapatmak için boş bırakın. Tek kullanımlık kareler ertesi sabah açılır.",
-  "needsPaid": "Tek Gün ve Büyük Gün paketlerinde var.",
-  "needsBig": "Büyük Gün paketinde var.",
+  "needsPaid": "Tek Gün ve Büyük Gün planlarında var.",
+  "needsBig": "Büyük Gün planında var.",
   "pin": "Etkinlik PIN'i",
   "pinOn": "Misafirlerin katılmak için PIN girmesi gerekiyor.",
   "pinOff": "PIN yok. Linki ya da QR kodu olan herkes katılabilir.",
@@ -346,16 +346,16 @@
   "bothHint": "Onların isimleri, mekanınızın adı ve logonuzla."
  },
  "plan": {
-  "title": "Paket",
-  "current": "Mevcut paket:",
+  "title": "Plan",
+  "current": "Mevcut plan:",
   "storedUntil": "fotoğraflar {date} tarihine kadar saklanır",
   "choose": "{plan} seçin",
-  "upgradeTo": "{plan} paketine geçin",
+  "upgradeTo": "{plan} planına geçin",
   "comingSoon": "Ödemeler çok yakında",
-  "top": "En üst paketteyiz. Keyfini çıkarın!",
-  "moneyBack": "{days} gün para iade garantisi.",
-  "oneOff": "Etkinlik başına tek seferlik ödeme, GBP, KDV dahil. Abonelik yok.",
-  "paidNotice": "Ödemeniz alındı. Etkinliğinizin paketi yükseltildi.",
+  "top": "En üst plandasınız. Keyfini çıkarın!",
+  "moneyBack": "{days} gün içinde para iade garantisi.",
+  "oneOff": "Etkinlik başına tek seferlik ödeme (GBP, KDV dahil). Abonelik yok.",
+  "paidNotice": "Ödemeniz alındı. Etkinliğinizin planı yükseltildi.",
   "cancelledNotice": "Ödeme iptal edildi. Herhangi bir ücret alınmadı.",
   "features": {
    "tek": "Sınırsız fotoğraf ve video|Canlı ekran|Fotoğraf görevleri|Tek kullanımlık kamera|1 yıl saklama",
@@ -370,9 +370,9 @@
   "mismatch": "Ad eşleşmedi, hiçbir şey silinmedi."
  },
  "upsell": {
-  "title": "{feature} Tek Gün ve Büyük Gün paketlerinde var",
-  "body": "Açmak için bu etkinliğin paketini yükseltin. Tek seferlik ödeme, abonelik yok.",
-  "cta": "Paketleri görün"
+  "title": "{feature} Tek Gün ve Büyük Gün planlarında var",
+  "body": "Açmak için bu etkinliğin planını yükseltin. Tek seferlik ödeme, abonelik yok.",
+  "cta": "Planları görün"
  },
  "missions": {
   "metaTitle": "Fotoğraf görevleri",
@@ -390,14 +390,14 @@
   "confirmDelete": "Bu görev silinsin mi?",
   "leaderboard": "Sıralama",
   "score": "{n} / {total}",
-  "ideas": "Çiftle selfie|Bütün masanız tek karede|En iyi dans figürü|En yaşlı ve en genç misafir bir arada|Mutluluktan ağlayan biri|10 saniyelik video mesaj|Günün en şık kıyafeti|Ev sahiplerine kadeh kaldırın"
+  "ideas": "Çiftle selfie|Bütün masa tek karede|En iyi dans figürü|En yaşlı ve en genç misafir bir arada|Mutluluktan ağlayan biri|10 saniyelik video mesaj|Günün en şık kıyafeti|Ev sahiplerine kadeh kaldır"
  },
  "guestbook": {
   "metaTitle": "Anı defteri",
   "title": "Anı",
   "titleAccent": "defteri.",
   "leadVoice": "Misafirlerinizden yazılı, sesli ve görüntülü mesajlar. Sadece ev sahipleri görebilir.",
-  "leadText": "Misafirlerinizden yazılı mesajlar. Sesli ve görüntülü mesajlar Büyük Gün paketinde var.",
+  "leadText": "Misafirlerinizden yazılı mesajlar. Sesli ve görüntülü mesajlar Büyük Gün planında var.",
   "empty": "Henüz mesaj yok.",
   "emptyHint": "Misafirler, misafir uygulamasındaki Defter sekmesinden mesaj bırakabilir.",
   "count": "{n} mesaj",
@@ -426,16 +426,16 @@
   "saved": "İndirme tamamlandı.",
   "failed": "İndirme durdu. Lütfen tekrar deneyin.",
   "nothing": "Henüz indirilecek bir şey yok.",
-  "browserNote": "Büyük albümler en iyi bilgisayarda Chrome ya da Edge ile iner; dosyayı doğrudan diske kaydederler."
+  "browserNote": "Büyük albümler en iyi bilgisayarda Chrome ya da Edge ile iner, çünkü bu tarayıcılar dosyaları doğrudan diske kaydeder."
  },
  "partner": {
   "metaTitle": "Partner paneli",
-  "eyebrow": "Partner paketi",
+  "eyebrow": "Partner planı",
   "title": "Mekanınız,",
   "titleAccent": "markanız.",
   "perMonth": "{price} / ay",
   "pitchTitle": "Yönettiğiniz her etkinlik için kendi markanızla misafir fotoğrafları.",
-  "pitchPoints": "Büyük Gün paketinde sınırsız etkinlik|Misafirler logonuzu, renklerinizi ve adınızı görür|Her etkinlikte mekan, çift ya da ikisi birden markası|Personel hesapları|Çiftleri kendi albümlerine davet edin",
+  "pitchPoints": "Büyük Gün planında sınırsız etkinlik|Misafirler logonuzu, renklerinizi ve adınızı görür|Her etkinlikte mekan, çift ya da ikisi birden markası|Personel hesapları|Çiftleri kendi albümlerine davet edin",
   "vatNote": "Fiyatlara KDV dahildir. Faturalandırma portalından istediğiniz zaman iptal edebilirsiniz.",
   "createTitle": "Partner hesabınızı oluşturun",
   "venueName": "İşletme adı",
@@ -483,7 +483,7 @@
   "moreHelp": "Yardım merkezi",
   "deleteLink": "Hesabınızı silin",
   "privacy": "Gizlilik politikası",
-  "faq": "Misafirlerin uygulama indirmesi gerekiyor mu?::Hayır. Misafirler QR kodu okutur ve telefonlarının tarayıcısından yükler. Uygulama isteğe bağlı, daha çok ev sahipleri için.|Fotoğraflar ne kadar saklanır?::Ücretsiz etkinliklerde 30 gün, Tek Gün'de 1 yıl, Büyük Gün'de 3 yıl. Her şeyi istediğiniz zaman indirebilirsiniz.|Ücret iadesi alabilir miyim?::Evet. Ücretli paketlerde 14 gün para iade garantisi var. Kayıt olduğunuz adresten bize yazın.|Fotoğrafları kimler görebilir?::Albümün tamamını sadece ev sahipleri ve ortak ev sahipleri görür. Misafirler ortak akışı görür; isterseniz kareleri önce onaylayabilirsiniz."
+  "faq": "Misafirlerin uygulama indirmesi gerekiyor mu?::Hayır. Misafirler QR kodu okutur ve telefonlarının tarayıcısından yükler. Uygulama isteğe bağlı, daha çok ev sahipleri için.|Fotoğraflar ne kadar saklanır?::Ücretsiz etkinliklerde 30 gün, Tek Gün'de 1 yıl, Büyük Gün'de 3 yıl. Her şeyi istediğiniz zaman indirebilirsiniz.|Ücret iadesi alabilir miyim?::Evet. Ücretli planlarda 14 gün para iade garantisi var. Kayıt olduğunuz adresten bize yazın.|Fotoğrafları kimler görebilir?::Albümün tamamını sadece ev sahipleri ve ortak ev sahipleri görür. Misafirler ortak akışı görür; isterseniz kareleri önce onaylayabilirsiniz."
  },
  "accountDelete": {
   "metaTitle": "Hesabınızı silin",
@@ -518,7 +518,7 @@
   "expiry": {
    "subject": "{title}: albümünüz {date} tarihine kadar saklanıyor",
    "heading": "Albümünüzü yakında indirin",
-   "body": "{title} fotoğraf ve videoları {date} tarihine kadar saklanıyor. O tarihten önce indirin ya da daha uzun saklamak için paketinizi yükseltin.",
+   "body": "{title} fotoğraf ve videoları {date} tarihine kadar saklanıyor. O tarihten önce indirin ya da daha uzun saklamak için planınızı yükseltin.",
    "cta": "Hemen indirin",
    "footer": "Bu e-postayı, bu etkinliğin ev sahibi olduğunuz için aldınız."
   },

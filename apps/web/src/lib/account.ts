@@ -44,5 +44,7 @@ export async function deleteAccount(hostId: string) {
   }
   // Orders for events the host didn't own keep no personal link once the host is gone.
   await db.delete(schema.orders).where(eq(schema.orders.hostId, hostId));
+  const [host] = await db.select({ email: schema.hosts.email }).from(schema.hosts).where(eq(schema.hosts.id, hostId)).limit(1);
+  if (host) await db.delete(schema.loginTokens).where(eq(schema.loginTokens.email, host.email));
   await db.delete(schema.hosts).where(eq(schema.hosts.id, hostId));
 }

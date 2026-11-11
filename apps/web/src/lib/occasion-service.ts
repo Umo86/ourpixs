@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { and, eq, notInArray, or } from "drizzle-orm";
+import { and, eq, ne, notInArray, or, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { OCCASIONS, PLANS, type Brand, type OccasionType, type Plan } from "./config";
 import { ApiError, badRequest, planFeature, planLimit } from "./http";
@@ -134,8 +134,8 @@ export async function updateOccasion(o: OccasionRow, p: z.infer<typeof patchSche
       const err = vanityError(p.vanitySlug);
       if (err) throw new ApiError(400, err === "reserved" ? "slug_reserved" : "slug_invalid", err === "reserved" ? "That link name is reserved" : "Use 3–40 lowercase letters, numbers or hyphens");
       const [clash] = await db.select({ id: schema.occasions.id }).from(schema.occasions)
-        .where(or(eq(schema.occasions.vanitySlug, p.vanitySlug), eq(schema.occasions.slug, p.vanitySlug))).limit(1);
-      if (clash && clash.id !== o.id) throw new ApiError(409, "slug_taken", "That link name is taken");
+        .where(and(ne(schema.occasions.id, o.id), or(eq(schema.occasions.vanitySlug, p.vanitySlug), sql`lower(${schema.occasions.slug}) = ${p.vanitySlug}`))).limit(1);
+      if (clash) throw new ApiError(409, "slug_taken", "That link name is taken");
       set.vanitySlug = p.vanitySlug;
     }
   }
@@ -205,6 +205,9 @@ export async function keysForOccasion(occasionId: string) {
   const media = await db.select({ a: schema.media.keyOriginal, b: schema.media.keyDisplay, c: schema.media.keyThumb })
     .from(schema.media).where(eq(schema.media.occasionId, occasionId));
   const msgs = await db.select({ k: schema.messages.mediaKey }).from(schema.messages).where(eq(schema.messages.occasionId, occasionId));
-  return [...media.flatMap((m) => [m.a, m.b, m.c]), ...msgs.map((m) => m.k)].filter((k): k is string => !!k);
+  // Custom covers live under o/{id}/cover/ and aren't media rows.
+  const [occ] = await db.select({ k: schema.occasions.coverKey }).from(schema.occasions).where(eq(schema.occasions.id, occasionId));
+  const cover = occ?.k?.startsWith(`o/${occasionId}/cover/`) ? occ.k : null;
+  return [...media.flatMap((m) => [m.a, m.b, m.c]), ...msgs.map((m) => m.k), cover].filter((k): k is string => !!k);
 }
 

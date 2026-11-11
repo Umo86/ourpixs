@@ -22,6 +22,7 @@ const body = z.object({
 export const PATCH = route<{ orgId: string }>(async (req, { orgId }) => {
   const { org, role } = await requireOrgMember(orgId, { owner: true });
   const b = await readJson(req, body);
+  if (!Object.keys(b).length) return json({ organisation: await orgPayload(org, role) });
   const [updated] = await db.update(schema.organisations).set(b).where(eq(schema.organisations.id, org.id)).returning();
   return json({ organisation: await orgPayload(updated!, role) });
 });

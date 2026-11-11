@@ -3,6 +3,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Alert, Linking, Pressable, StyleSheet, View } from "react-native";
 
+import { ApiError, authApi, errorMessage } from "@/api/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/Button";
@@ -60,12 +61,17 @@ export default function AppSettings() {
     Alert.alert(t("appSettings.deleteAccount"), t("appSettings.deleteAccountBody"), [
       { text: t("common.cancel"), style: "cancel" },
       {
-        text: t("common.continue"),
+        text: t("appSettings.deleteAccountConfirm"),
         style: "destructive",
-        onPress: () => {
-          const subject = encodeURIComponent(t("appSettings.deleteAccountSubject"));
-          const body = encodeURIComponent(t("appSettings.deleteAccountMail", { email: host?.email ?? "" }));
-          void Linking.openURL(`mailto:${supportEmail(brand)}?subject=${subject}&body=${body}`);
+        onPress: async () => {
+          try {
+            await authApi.deleteAccount();
+            await signOut();
+            router.replace("/");
+            Alert.alert(t("appSettings.deleteAccountDone"));
+          } catch (e) {
+            Alert.alert(e instanceof ApiError && e.code === "org_owner" ? t("appSettings.deleteAccountOrgOwner") : errorMessage(e, t));
+          }
         },
       },
     ]);

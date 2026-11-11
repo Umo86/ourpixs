@@ -17,11 +17,14 @@ export const POST = route<{ slug: string }>(async (req, { slug }) => {
   const ip = clientIp(req);
   await requirePinAccess(o, ip, guest);
   await limit(`report:${o.id}:${guest?.id ?? ip}`, 10, 3600);
+  // Re-joining mints a new guest id, so also cap per IP: reports hide photos until a host looks.
+  await limit(`report:ip:${o.id}:${ip}`, 30, 3600);
   const b = await readJson(req, body);
   const [m] = await db.update(schema.media).set({
     approved: false,
     moderationFlags: sql`case when 'reported' = any(${schema.media.moderationFlags}) then ${schema.media.moderationFlags} else array_append(${schema.media.moderationFlags}, 'reported') end`,
-  }).where(and(eq(schema.media.id, b.mediaId), eq(schema.media.occasionId, o.id))).returning({ id: schema.media.id });
+  }).where(and(eq(schema.media.id, b.mediaId), eq(schema.media.occasionId, o.id), eq(schema.media.status, "uploaded"), eq(schema.media.visibility, "visible")))
+    .returning({ id: schema.media.id });
   if (!m) throw notFound("Unknown photo");
   after(async () => {
     await notifyHosts(o, "pending");

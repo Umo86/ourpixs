@@ -117,6 +117,30 @@ export default function Album() {
     );
   };
 
+  // App Store 1.2: hosts can block an abusive guest (hides all their uploads, stops that device uploading).
+  const blockGuest = (it: MediaItem) =>
+    Alert.alert(t("album.blockGuestTitle", { name: it.guestName ?? t("album.blockGuestUnknown") }), t("album.blockGuestBody"), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("album.blockGuest"),
+        style: "destructive",
+        onPress: async () => {
+          if (!it.guestId) return;
+          setBusy(true);
+          try {
+            await hostApi.blockGuest(id, it.guestId);
+            setItems((prev) => (filter === "hidden" ? prev : prev.filter((m) => m.guestId !== it.guestId)));
+            setViewer(null);
+            void refreshOcc();
+          } catch (e) {
+            Alert.alert(errorMessage(e, t));
+          } finally {
+            setBusy(false);
+          }
+        },
+      },
+    ]);
+
   const act = async (ids: string[], action: MediaAction) => {
     if (!ids.length) return;
     const run = async () => {
@@ -274,6 +298,7 @@ export default function Album() {
             {it.approved === false ? <Button size="sm" full={false} tone="dark" icon="check" label={t("album.approve")} onPress={() => void act([it.id], "approve")} /> : null}
             <Button size="sm" full={false} tone="dark" variant="secondary" icon={it.visibility === "hidden" ? "eye" : "eyeOff"} label={it.visibility === "hidden" ? t("album.show") : t("album.hide")} onPress={() => void act([it.id], it.visibility === "hidden" ? "show" : "hide")} />
             <Button size="sm" full={false} tone="dark" variant="danger" icon="trash" label={t("common.delete")} onPress={() => void act([it.id], "delete")} />
+            {it.guestId ? <Button size="sm" full={false} tone="dark" variant="ghost" icon="alert" label={t("album.blockGuest")} onPress={() => blockGuest(it)} /> : null}
           </>
         )}
       />
