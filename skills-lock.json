@@ -1,6 +1,18 @@
 {
   "version": 2,
   "skills": {
+    "app-store-screenshots": {
+      "source": "inference-sh-skills/skills",
+      "sourceType": "github",
+      "skillPath": "guides/design/app-store-screenshots/SKILL.md",
+      "computedHash": "dfb673fabf40651383c3dc3a6bb62884d36aedbdb4f567b52097a9a843a82678"
+    },
+    "eas-app-stores": {
+      "source": "expo/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/expo/skills/eas-app-stores/SKILL.md",
+      "computedHash": "3d7a01419697be15a8cbdb20781d12ecbaad31db31f68e35deed14bad9d91eb4"
+    },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
