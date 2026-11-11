@@ -1,10 +1,7 @@
-import { eq } from "drizzle-orm";
-import { db, schema } from "@/db";
 import { route, json, readJson } from "@/lib/http";
 import { requireMember } from "@/lib/auth";
 import { occasionStats } from "@/lib/queries";
-import { keysForOccasion, occasionPayload, patchSchema, updateOccasion } from "@/lib/occasion-service";
-import { deleteObjects } from "@/lib/storage";
+import { deleteOccasion, occasionPayload, patchSchema, updateOccasion } from "@/lib/occasion-service";
 
 export const maxDuration = 60;
 
@@ -23,7 +20,6 @@ export const PATCH = route<{ id: string }>(async (req, { id }) => {
 
 export const DELETE = route<{ id: string }>(async (_req, { id }) => {
   const { occasion } = await requireMember(id, { owner: true });
-  await deleteObjects(await keysForOccasion(occasion.id));
-  await db.delete(schema.occasions).where(eq(schema.occasions.id, occasion.id));
+  await deleteOccasion(occasion.id);
   return json({ ok: true });
 });

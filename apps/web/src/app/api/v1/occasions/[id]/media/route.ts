@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { and, eq, inArray, ne, sql, type SQL } from "drizzle-orm";
-import { db, schema } from "@/db";
+import { schema } from "@/db";
 import { route, json, readJson, readQuery } from "@/lib/http";
 import { requireMember } from "@/lib/auth";
 import { liveMedia, mediaPage } from "@/lib/queries";
 import { toMediaItems } from "@/lib/serializers";
 import { canonicalMoment } from "@/lib/occasion";
-import { deleteObjects } from "@/lib/storage";
+import { applyMediaAction } from "@/lib/media-actions";
 import { accessForOccasion } from "@/lib/access";
 
 const { media } = schema;
@@ -61,24 +61,6 @@ export const PATCH = route<{ id: string }>(async (req, { id }) => {
   const scope = match
     ? and(eq(media.occasionId, occasion.id), eq(media.visibility, "visible"), MATCH[match])
     : and(eq(media.occasionId, occasion.id), inArray(media.id, ids!));
-  if (action === "delete") {
-    const rows = await db.select({ a: media.keyOriginal, b: media.keyDisplay, c: media.keyThumb }).from(media).where(scope);
-    // Hide first so nothing is served while storage deletes; the cleanup cron retries if storage fails.
-    await db.update(media).set({ visibility: "deleted" }).where(scope);
-    try {
-      await deleteObjects(rows.flatMap((r) => [r.a, r.b, r.c]));
-      await db.delete(media).where(scope);
-    } catch (e) {
-      console.error("[media] storage delete failed; cron will retry", e);
-    }
-    return json({ ok: true });
-  }
-  const set =
-    action === "hide" ? { visibility: "hidden" as const }
-    : action === "show" ? { visibility: "visible" as const }
-    : action === "favourite" ? { favourite: true }
-    : action === "unfavourite" ? { favourite: false }
-    : { approved: true };
-  await db.update(media).set(set).where(and(scope, ne(media.visibility, "deleted")));
+  await applyMediaAction(scope!, action);
   return json({ ok: true });
 });

@@ -16,6 +16,7 @@ apps/web/                Next.js 15 App Router, TypeScript, Tailwind v4
   src/app/g/[slug]/      guest web app (welcome, feed, upload, missions, camera, guestbook)
   src/app/wall/[slug]/   live wall slideshow
   src/app/s/[token]/     family-abroad share link
+  src/app/admin/         superadmin dashboard (ADMIN_EMAILS only, 404 for everyone else); routes under /api/admin, helpers in src/lib/admin*.ts
   src/app/api/           route handlers; mobile API under /api/v1
   src/db/                Drizzle schema + client (Neon serverless HTTP)
   src/lib/config.ts      brands, occasions, plans, themes — SINGLE SOURCE OF TRUTH
@@ -27,7 +28,7 @@ apps/mobile/             Expo SDK (latest), Expo Router, TypeScript
 ## Language
 - Supported locales: `en`, `tr`. Every user-facing string goes through i18n. No string literals in JSX except proper nouns.
 - Server: `const { t, locale } = await getT("marketing")`. Client: `const t = useT("guest")` (inside `<I18nProvider>`).
-- Message namespaces: `common`, `marketing`, `host`, `guest`. Each namespace has an EN and TR JSON file. Add keys to BOTH files. Write natural Turkish (not translated-sounding): "Harika! 3 fotoğraf yüklendi", "İnternet zayıf, yüklemeler devam edecek".
+- Message namespaces: `common`, `marketing`, `host`, `guest`, `admin`. Each namespace has an EN and TR JSON file. Add keys to BOTH files. Write natural Turkish (not translated-sounding): "Harika! 3 fotoğraf yüklendi", "İnternet zayıf, yüklemeler devam edecek".
 - Language switch sets the `lang` cookie (`setLanguage` in `src/i18n/client.tsx`). Guest pages use `getT(ns, { preferBrowser: true })` so a Turkish phone gets Turkish.
 
 ## Design system (Version 2 — "stylish, fun, high-end")
@@ -48,7 +49,8 @@ apps/mobile/             Expo SDK (latest), Expo Router, TypeScript
 - Business model: account subscription (`SUBSCRIPTION` in `src/lib/config.ts`): 3-day free trial from the first event (downloads locked), then £9.99/month or £69.99/year, everything unlimited. Read-only 90 days after a cancelled plan ends, 30 days after an unpaid trial, then deleted. All checks go through `src/lib/access.ts`, enforced server-side; an event follows its owner's subscription. No venue/partner plan.
 - Email via Resend (`RESEND_API_KEY`, `EMAIL_FROM_EN`, `EMAIL_FROM_TR`). If not configured and `PREVIEW_SHOW_CODE=1`, the login code is returned to the UI for testing (never in production).
 - Stripe Checkout in subscription mode, GBP, inline prices, plus the Customer Portal (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`; `src/lib/billing.ts`). If not configured, plan buttons show "Payments coming soon". The mobile store builds never sell or link to the subscription (App Store 3.1.1 / Play billing).
-- `noindex` on `/g`, `/s`, `/wall`, `/dashboard`.
+- `noindex` on `/g`, `/s`, `/wall`, `/dashboard`, `/admin`.
+- Admin (`/admin`, `/api/admin/*`): every page calls `requireAdmin()` and every route uses `adminRoute()` / `requireAdminApi()` from `src/lib/admin.ts`; every mutation is zod-validated, rate-limited and written to `admin_audit`. Admin overrides (complimentary access, suspension, event lock) live in `src/lib/access.ts` like every other access rule.
 
 ## Code style
 - TypeScript strict. Server Components by default; `"use client"` only where needed.

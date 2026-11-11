@@ -43,6 +43,13 @@
       "when": 1794361595714,
       "tag": "0005_drop_partner_plan",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794382987668,
+      "tag": "0006_admin_dashboard",
+      "breakpoints": true
     }
   ]
 }

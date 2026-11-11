@@ -9,7 +9,8 @@ import { loadDays, occasionExtras } from "./queries";
 import { coverUrlFor, toOccasion, toSummary } from "./serializers";
 import { randomSlug, vanityError } from "./slug";
 import { hashSecret } from "./crypto";
-import { accessForOccasion, accessForOwners, assertCanCreateEvents, assertWritable, computeAccess, loadOwnerBilling, trialEndFrom, type Access } from "./access";
+import { deleteObjects } from "./storage";
+import { accessForOccasion, accessForOwners, assertCanCreateEvents, assertWritable, computeAccess, forOccasion, loadOwnerBilling, trialEndFrom, type Access } from "./access";
 
 type OccasionRow = typeof schema.occasions.$inferSelect;
 
@@ -190,12 +191,18 @@ export async function summariesFor(hostId: string) {
       row: r.occasion,
       summary: toSummary(r.occasion, {
         coverUrl: await coverUrlFor(ex?.coverKey ?? null), mediaCount: ex?.mediaCount ?? 0, guestCount: ex?.guestCount ?? 0, role: r.role as "owner" | "cohost",
-      }, access.get(r.occasion.ownerId)!),
+      }, forOccasion(access.get(r.occasion.ownerId)!, r.occasion)),
     };
   }));
   // Newest event date first; undated by creation.
   list.sort((a, b) => (b.row.startsOn || b.row.createdAt.toISOString()).localeCompare(a.row.startsOn || a.row.createdAt.toISOString()));
   return list.map((l) => l.summary);
+}
+
+/** Deletes an event with every file it holds (media, guestbook recordings, custom cover). Used by the owner and by admins. */
+export async function deleteOccasion(occasionId: string) {
+  await deleteObjects(await keysForOccasion(occasionId));
+  await db.delete(schema.occasions).where(eq(schema.occasions.id, occasionId));
 }
 
 export async function keysForOccasion(occasionId: string) {

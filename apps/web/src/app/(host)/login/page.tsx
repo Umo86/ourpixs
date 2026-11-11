@@ -6,6 +6,7 @@ import { getT } from "@/i18n";
 import { getHost } from "@/lib/auth";
 import { safeNext } from "@/lib/safe-next";
 import { LoginForm } from "@/components/host/LoginForm";
+import { Notice } from "@/components/app/Notice";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const next = safeNext(sp.next);
-  if (await getHost().catch(() => null)) redirect(next);
+  // `reauth=1`: a fresh sign-in is required (admin area), so show the form even with a session. Suspended accounts never have one.
+  if (sp.reauth !== "1" && (await getHost().catch(() => null))) redirect(next);
   const { t } = await getT("host");
   return (
     <>
@@ -30,7 +32,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             </h1>
             <p className="m-0 max-w-md text-lg text-text-2">{t("login.lead")}</p>
           </div>
-          <div className="rounded-[28px] bg-tint p-6 sm:p-8">
+          <div className="flex flex-col gap-4 rounded-[28px] bg-tint p-6 sm:p-8">
+            {sp.suspended === "1" ? <Notice tone="error">{t("errors.account_suspended")}</Notice> : null}
+            {sp.reauth === "1" ? <Notice>{t("login.reauth")}</Notice> : null}
             <LoginForm next={next} />
           </div>
         </Container>

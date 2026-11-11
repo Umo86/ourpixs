@@ -133,3 +133,11 @@ Tokens from `POST /api/v1/push-tokens` receive: first guest upload of the day ("
 
 ### Universal links
 `/.well-known/apple-app-site-association` (appID `$APPLE_TEAM_ID.com.ourpixs.app`, paths `/g/*`) and `/.well-known/assetlinks.json` (`com.ourpixs.app`, fingerprints from `ANDROID_SHA256_FINGERPRINTS`) are served on both domains.
+
+### Admin overrides (additive)
+Set by our team from the web admin dashboard (`/admin`, web only; not part of this API).
+- `Subscription.compUntil?: string|null` — set while the account has complimentary access; `status` is then `"active"` and everything is unlocked (`canDownload: true`, `showUpgradePrompt: false`).
+- `OccasionAccess.reason` may also be `"suspended"` (the owner's account is suspended: read-only, downloads locked) or `"locked"` (this event's uploads were closed by our team: read-only).
+- New error codes: `account_suspended` (403; `POST /auth/verify` and every host endpoint for a suspended account — show "Your account is suspended, please contact support"), `event_locked` (403; host edits on a locked event, instead of `plan_required`).
+- `POST /api/v1/g/:slug/report` also records the report (reason + a hash of the IP) for our moderation queue; the response is unchanged.
+

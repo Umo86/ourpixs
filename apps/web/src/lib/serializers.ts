@@ -25,6 +25,7 @@ export function toSubscription(a: Access): Subscription {
     status: a.status, interval: a.interval, trialEndsAt: iso(a.trialEndsAt), currentPeriodEnd: iso(a.currentPeriodEnd),
     cancelAtPeriodEnd: a.cancelAtPeriodEnd, deleteAfter: iso(a.deleteAfter), canCreateEvents: a.canCreateEvents,
     canDownload: a.canDownload, readOnly: a.readOnly, showUpgradePrompt: a.showUpgradePrompt, daysLeft: a.daysLeft,
+    compUntil: a.comped ? iso(a.compUntil) : null,
   };
 }
 

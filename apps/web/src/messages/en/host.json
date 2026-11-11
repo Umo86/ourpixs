@@ -43,7 +43,10 @@
   "guest_blocked": "This guest is blocked.",
   "plan_required": "This needs an active plan. Subscribe to download, create more events or edit a read-only event.",
   "already_subscribed": "You already have a subscription. Use Manage billing to change it.",
-  "billing_error": "We couldn't cancel your subscription, so nothing was deleted. Please try again or contact us."
+  "billing_error": "We couldn't cancel your subscription, so nothing was deleted. Please try again or contact us.",
+  "account_suspended": "This account is suspended. Please contact support if you think this is a mistake.",
+  "event_locked": "This event has been locked by our team. Please contact support.",
+  "reauth_required": "Please sign in again to continue."
  },
  "login": {
   "metaTitle": "Sign in",
@@ -65,7 +68,8 @@
   "resendIn": "Send a new code in {s}s",
   "changeEmail": "Use a different email",
   "previewTitle": "Preview mode",
-  "previewBody": "Email isn't set up on this deployment. Your code is"
+  "previewBody": "Email isn't set up on this deployment. Your code is",
+  "reauth": "For security, please sign in again to continue."
  },
  "account": {
   "menu": "Account menu",
@@ -504,12 +508,16 @@
    "cancelled": "Your subscription has ended",
    "cancelledBody": "Your events are read-only. You can view and download everything until {date}, then the files are deleted.",
    "expired": "Your free trial has ended",
-   "expiredBody": "Your events are read-only and downloads are locked. Files are kept until {date}."
+   "expiredBody": "Your events are read-only and downloads are locked. Files are kept until {date}.",
+   "comped": "Complimentary access",
+   "compedBody": "Everything is unlocked until {date}, on us."
   },
   "readOnly": {
    "trialEnded": "The free trial has ended, so this event is read-only and downloads are locked. Files are kept until {date}.",
    "cancelled": "The subscription has ended, so this event is read-only. Everything can still be downloaded until {date}.",
-   "cohost": "Only the event owner can subscribe."
+   "cohost": "Only the event owner can subscribe.",
+   "locked": "Uploads are closed for this event and it can't be edited right now. Please contact support.",
+   "suspended": "This account is suspended, so its events are read-only. Please contact support."
   },
   "prompt": {
    "trial": {

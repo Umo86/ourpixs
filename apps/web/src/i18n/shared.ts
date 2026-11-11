@@ -7,10 +7,12 @@ import enHost from "@/messages/en/host.json";
 import trHost from "@/messages/tr/host.json";
 import enGuest from "@/messages/en/guest.json";
 import trGuest from "@/messages/tr/guest.json";
+import enAdmin from "@/messages/en/admin.json";
+import trAdmin from "@/messages/tr/admin.json";
 
 const MESSAGES = {
-  en: { common: enCommon, marketing: enMarketing, host: enHost, guest: enGuest },
-  tr: { common: trCommon, marketing: trMarketing, host: trHost, guest: trGuest },
+  en: { common: enCommon, marketing: enMarketing, host: enHost, guest: enGuest, admin: enAdmin },
+  tr: { common: trCommon, marketing: trMarketing, host: trHost, guest: trGuest, admin: trAdmin },
 } as const;
 
 export type Namespace = keyof (typeof MESSAGES)["en"];

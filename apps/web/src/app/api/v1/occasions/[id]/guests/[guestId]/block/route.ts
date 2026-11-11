@@ -1,17 +1,12 @@
-import { and, eq, ne } from "drizzle-orm";
-import { db, schema } from "@/db";
 import { route, json, notFound, assertUuid } from "@/lib/http";
 import { requireMember } from "@/lib/auth";
+import { setGuestBlocked } from "@/lib/media-actions";
 
 /** Block a guest: hide all their media and stop that device from uploading again. */
 export const POST = route<{ id: string; guestId: string }>(async (_req, { id, guestId }) => {
   const { occasion } = await requireMember(id);
   assertUuid(guestId, "guest");
-  const [g] = await db.update(schema.guests).set({ blockedAt: new Date() })
-    .where(and(eq(schema.guests.id, guestId), eq(schema.guests.occasionId, occasion.id))).returning({ id: schema.guests.id });
-  if (!g) throw notFound("Unknown guest");
-  await db.update(schema.media).set({ visibility: "hidden" })
-    .where(and(eq(schema.media.guestId, guestId), eq(schema.media.occasionId, occasion.id), ne(schema.media.visibility, "deleted")));
+  if (!(await setGuestBlocked(occasion.id, guestId, true))) throw notFound("Unknown guest");
   return json({ ok: true });
 });
 
@@ -19,6 +14,6 @@ export const POST = route<{ id: string; guestId: string }>(async (_req, { id, gu
 export const DELETE = route<{ id: string; guestId: string }>(async (_req, { id, guestId }) => {
   const { occasion } = await requireMember(id);
   assertUuid(guestId, "guest");
-  await db.update(schema.guests).set({ blockedAt: null }).where(and(eq(schema.guests.id, guestId), eq(schema.guests.occasionId, occasion.id)));
+  await setGuestBlocked(occasion.id, guestId, false);
   return json({ ok: true });
 });

@@ -78,6 +78,15 @@ export function SubscriptionCard({ sub, payments }: { sub: Subscription; payment
   const days = sub.daysLeft ?? 0;
   let title: string;
   let body: string;
+  if (sub.compUntil) {
+    return (
+      <section aria-labelledby="plan-h" className="flex flex-col gap-4 rounded-[28px] border border-[#E6E8EF] p-6">
+        <span className="text-[13px] font-bold uppercase tracking-[0.16em] text-royal">{t("billing.kicker")}</span>
+        <h2 id="plan-h" className="m-0 text-2xl font-black tracking-tight">{t("billing.status.comped")}</h2>
+        <p className="m-0 text-text-2">{t("billing.status.compedBody", { date: date(sub.compUntil) })}</p>
+      </section>
+    );
+  }
   switch (sub.status) {
     case "trialing":
       title = t("billing.status.trialing", { days });

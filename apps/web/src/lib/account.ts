@@ -3,8 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { cancelSubscriptionNow } from "./billing";
 import { ApiError } from "./http";
-import { keysForOccasion } from "./occasion-service";
-import { deleteObjects } from "./storage";
+import { deleteOccasion } from "./occasion-service";
 
 /**
  * Real account deletion (App Store / Play requirement):
@@ -23,10 +22,7 @@ export async function deleteAccount(hostId: string) {
   }
 
   const events = await db.select({ id: schema.occasions.id }).from(schema.occasions).where(eq(schema.occasions.ownerId, hostId));
-  for (const o of events) {
-    await deleteObjects(await keysForOccasion(o.id));
-    await db.delete(schema.occasions).where(eq(schema.occasions.id, o.id));
-  }
+  for (const o of events) await deleteOccasion(o.id);
   // Legacy one-off orders keep no personal link once the host is gone.
   await db.delete(schema.orders).where(eq(schema.orders.hostId, hostId));
   await db.delete(schema.loginTokens).where(eq(schema.loginTokens.email, host.email));

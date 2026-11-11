@@ -4,7 +4,7 @@ What is already done, and the steps that need an account owner. Every setting li
 
 ## Already set up
 - **GitHub:** `Umo86/ourpixs`, connected to the Vercel project `ourpixs` (root directory `apps/web`). Every push to `main` deploys to production.
-- **Neon Postgres:** project `fancy-hall-12485138` (London). Migrations 0000 to 0003 are applied; 0004 and 0005 are new (see step 3).
+- **Neon Postgres:** project `fancy-hall-12485138` (London). Migrations 0000 to 0003 are applied; 0004 and 0005 are new (see step 3), and 0006 (see step 5).
 - **Vercel Blob:** media storage in London.
 - **Vercel settings:** `DATABASE_URL`, `AUTH_SECRET`, `GUEST_TOKEN_SECRET`, `CRON_SECRET`, `DEFAULT_BRAND`, `PREVIEW_SHOW_CODE`, `BLOB_READ_WRITE_TOKEN`.
 
@@ -44,7 +44,21 @@ Until step 2 is done, the subscribe buttons show "Payments coming soon".
 - **Cloudflare R2 instead of Blob:** private bucket with presigned URLs. Set the four `R2_*` settings, and add a CORS rule that allows PUT and GET from both domains, the `Content-Type` header, and exposes `ETag`.
 - **Vercel Pro:** lets the clean-up job run hourly instead of daily (`apps/web/vercel.json`). Functions run in London (`regions: ["lhr1"]`), next to the database.
 
-## 5. Mobile apps (Expo / EAS)
+## 5. Admin dashboard
+A superadmin area at `/admin` on both domains (overview, users, events, moderation, enquiries, audit log, system health).
+1. **Database first:** apply migration `0006_admin_dashboard` (additive: new columns `hosts.comp_until`, `hosts.suspended_at`, `hosts.suspended_reason`, `occasions.admin_locked_at`, `leads.handled_at`; new tables `admin_audit`, `media_reports`, `cron_runs`; a few indexes), **then** deploy. The new code reads these columns on every request.
+2. Set `ADMIN_EMAILS` in Vercel to a comma-separated list of admin emails (e.g. `you@ourpixs.com`) and redeploy.
+3. Sign in at `/login` with that email as usual, then open `/admin`. Admin pages need a sign-in from the last 12 hours; after that you're asked to sign in again.
+
+Anyone who isn't on the list (or isn't signed in) gets a 404 on `/admin` and `/api/admin/*`. `/admin` is `noindex` and disallowed in `robots.txt`. Every admin change (trial extensions, complimentary access, cancellations, suspensions, deletions, moderation, cron runs) is recorded in the audit log at `/admin/audit` with the admin's email and the reason typed.
+
+What the admin overrides do:
+- **Complimentary access** (until a date): full access, downloads included; the daily jobs never expire, warn or delete the account while it lasts. Afterwards a read-only account gets its full grace period before anything is deleted.
+- **Suspend**: the host can't sign in or use the app (a neutral "account suspended, contact support" message); their events stay viewable for guests but read-only, downloads locked.
+- **Close guest uploads** on one event: read-only until reopened. Archive hides an event from guests; delete removes it with every file.
+- **Run now** on `/admin/system` runs the same expiry / cleanup job as the daily schedule.
+
+## 6. Mobile apps (Expo / EAS)
 See `apps/mobile/README.md` and `apps/mobile/store/checklist.md`. In short:
 1. Run `npm i -g eas-cli`, then `eas login`, then `eas init` in `apps/mobile`.
 2. Replace the placeholder icon and splash in `apps/mobile/assets`.
@@ -54,7 +68,7 @@ See `apps/mobile/README.md` and `apps/mobile/store/checklist.md`. In short:
 6. Google Play: run a closed test with at least 12 testers for 14 days before production access.
 7. Run `eas submit --platform ios` and `eas submit --platform android`, using the metadata in `apps/mobile/store/`.
 
-## 6. Legal (before launch)
+## 7. Legal (before launch)
 - Fill in `[COMPANY NAME]`, `[COMPANY NUMBER]`, `[REGISTERED ADDRESS]` and `[ICO REGISTRATION NUMBER]` on the privacy and terms pages.
 - Register with the ICO (data protection fee).
 - Have a solicitor review the privacy policy and terms.

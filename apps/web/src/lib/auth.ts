@@ -43,9 +43,15 @@ export async function signSession(hostId: string): Promise<string> {
 }
 
 export async function verifySession(token: string): Promise<string | null> {
+  return (await verifySessionClaims(token))?.hostId ?? null;
+}
+
+/** Verified session claims: host id and when the token was issued (admin pages require a recent sign-in). */
+export async function verifySessionClaims(token: string): Promise<{ hostId: string; issuedAt: Date | null } | null> {
   try {
     const { payload } = await jwtVerify(token, secretKey(), { algorithms: ["HS256"] });
-    return typeof payload.sub === "string" && isUuid(payload.sub) ? payload.sub : null;
+    if (typeof payload.sub !== "string" || !isUuid(payload.sub)) return null;
+    return { hostId: payload.sub, issuedAt: typeof payload.iat === "number" ? new Date(payload.iat * 1000) : null };
   } catch {
     return null;
   }
@@ -71,27 +77,41 @@ async function readSessionToken(): Promise<string | null> {
   return (await cookies()).get(SESSION_COOKIE)?.value || null;
 }
 
-/** Current host or null. Memoised per request. */
-export const getHost = cache(async (): Promise<HostRow | null> => {
+/**
+ * The verified session (host row + token issue time), INCLUDING suspended hosts. Memoised per request.
+ * Use getHost / requireHost for normal access: they treat a suspended account as signed out / rejected.
+ */
+export const getSession = cache(async (): Promise<{ host: HostRow; issuedAt: Date | null } | null> => {
   const token = await readSessionToken();
   if (!token) return null;
-  const id = await verifySession(token);
-  if (!id) return null;
-  const [host] = await db.select().from(schema.hosts).where(eq(schema.hosts.id, id)).limit(1);
-  return host ?? null;
+  const claims = await verifySessionClaims(token);
+  if (!claims) return null;
+  const [host] = await db.select().from(schema.hosts).where(eq(schema.hosts.id, claims.hostId)).limit(1);
+  return host ? { host, issuedAt: claims.issuedAt } : null;
 });
 
+/** Current (non-suspended) host or null. Memoised per request. Suspension applies immediately, even to existing sessions. */
+export const getHost = cache(async (): Promise<HostRow | null> => {
+  const s = await getSession();
+  if (!s || s.host.suspendedAt) return null;
+  return s.host;
+});
+
+export const accountSuspended = () => new ApiError(403, "account_suspended", "This account is suspended. Please contact support.");
+
 export async function requireHost(): Promise<HostRow> {
-  const host = await getHost();
-  if (!host) throw unauthorized();
-  return host;
+  const s = await getSession();
+  if (s?.host.suspendedAt) throw accountSuspended();
+  if (!s) throw unauthorized();
+  return s.host;
 }
 
-/** For server-component pages: redirect to /login instead of throwing. */
+/** For server-component pages: redirect to /login instead of throwing (suspended accounts see a neutral notice there). */
 export async function requireHostPage(next?: string): Promise<HostRow> {
-  const host = await getHost();
-  if (!host) redirect(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
-  return host;
+  const s = await getSession();
+  if (s?.host.suspendedAt) redirect("/login?suspended=1");
+  if (!s) redirect(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
+  return s.host;
 }
 
 /** Membership (owner or co-host) of an occasion. */
@@ -177,6 +197,7 @@ export async function verifyLoginCode(input: { email: string; code: string; loca
     if (!host) [host] = await db.select().from(schema.hosts).where(eq(schema.hosts.email, email)).limit(1);
   }
   if (!host) throw new ApiError(500, "server_error", "Could not create account");
+  if (host.suspendedAt) throw accountSuspended();
 
   // Accept any pending co-host invites for this email.
   const invites = await db.select().from(schema.cohostInvites).where(eq(schema.cohostInvites.email, email));

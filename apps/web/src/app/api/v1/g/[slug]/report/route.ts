@@ -7,10 +7,14 @@ import { getGuest, occasionBySlug, requirePinAccess } from "@/lib/guest";
 import { limit } from "@/lib/rate-limit";
 import { emailConfigured, sendReportEmail } from "@/lib/email";
 import { notifyHosts } from "@/lib/push";
+import { hmac, requireEnv } from "@/lib/crypto";
 
 const body = z.object({ mediaId: z.string().uuid(), reason: z.string().trim().max(500).optional().nullable() });
 
-/** Guest reports a photo: it leaves the feed (approved=false, flag "reported") until a host reviews it. */
+/**
+ * Guest reports a photo: it leaves the feed (approved=false, flag "reported") until a host reviews it.
+ * Each report is also stored in media_reports (reason + an HMAC of the IP) for the admin moderation queue.
+ */
 export const POST = route<{ slug: string }>(async (req, { slug }) => {
   const o = await occasionBySlug(slug);
   const guest = await getGuest(o);
@@ -26,6 +30,10 @@ export const POST = route<{ slug: string }>(async (req, { slug }) => {
   }).where(and(eq(schema.media.id, b.mediaId), eq(schema.media.occasionId, o.id), eq(schema.media.status, "uploaded"), eq(schema.media.visibility, "visible")))
     .returning({ id: schema.media.id });
   if (!m) throw notFound("Unknown photo");
+  await db.insert(schema.mediaReports).values({
+    mediaId: m.id, occasionId: o.id, guestId: guest?.id ?? null, reason: b.reason || null,
+    ipHash: hmac(requireEnv("GUEST_TOKEN_SECRET", 16), `report-ip:${ip}`),
+  });
   after(async () => {
     await notifyHosts(o, "pending");
     if (!emailConfigured()) return;

@@ -47,8 +47,17 @@ export const hosts = pgTable("hosts", {
   trialPromptSentAt: timestamp("trial_prompt_sent_at", { withTimezone: true }),
   trialEndEmailSentAt: timestamp("trial_end_email_sent_at", { withTimezone: true }),
   deletionWarningSentAt: timestamp("deletion_warning_sent_at", { withTimezone: true }),
+  // ── Admin overrides (see src/lib/access.ts and /admin). ──
+  /** Complimentary access: while comp_until > now the account has full active access, and the crons never end or delete it. */
+  compUntil: timestamp("comp_until", { withTimezone: true }),
+  /** Suspended accounts can't sign in or use the API; their events are read-only for guests. */
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  suspendedReason: text("suspended_reason"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [index("hosts_plan_status_idx").on(t.planStatus), index("hosts_stripe_customer_idx").on(t.stripeCustomerId)]);
+}, (t) => [
+  index("hosts_plan_status_idx").on(t.planStatus), index("hosts_stripe_customer_idx").on(t.stripeCustomerId),
+  index("hosts_created_idx").on(t.createdAt),
+]);
 
 /** One-time email sign-in codes / magic links (web + mobile share this). */
 export const loginTokens = pgTable("login_tokens", {
@@ -96,6 +105,8 @@ export const occasions = pgTable("occasions", {
   /** Legacy per-event retention. No longer read: retention follows the owner's account (hosts.delete_after). */
   storageExpiresAt: timestamp("storage_expires_at", { withTimezone: true }),
   status: statusEnum("status").notNull().default("active"),
+  /** Admin override: uploads closed and the event is read-only (src/lib/access.ts) until an admin reopens it. */
+  adminLockedAt: timestamp("admin_locked_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index("occasions_owner_idx").on(t.ownerId)]);
 
@@ -169,6 +180,7 @@ export const media = pgTable("media", {
 }, (t) => [
   index("media_occasion_created_idx").on(t.occasionId, t.createdAt),
   index("media_occasion_day_idx").on(t.occasionId, t.dayId),
+  index("media_created_idx").on(t.createdAt),
 ]);
 
 export const reactions = pgTable("reactions", {
@@ -233,5 +245,47 @@ export const leads = pgTable("leads", {
   email: text("email").notNull(),
   name: text("name"),
   data: jsonb("data"),
+  /** Set by an admin once the enquiry has been dealt with (/admin/enquiries). */
+  handledAt: timestamp("handled_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Guest reports ("report this photo"), one row per report. Resolved by an admin from /admin/moderation. */
+export const mediaReports = pgTable("media_reports", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  mediaId: uuid("media_id").notNull().references(() => media.id, { onDelete: "cascade" }),
+  occasionId: uuid("occasion_id").notNull().references(() => occasions.id, { onDelete: "cascade" }),
+  guestId: uuid("guest_id").references(() => guests.id, { onDelete: "set null" }),
+  reason: text("reason"),
+  /** HMAC of the reporter's IP (never the IP itself). */
+  ipHash: text("ip_hash"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  resolvedBy: uuid("resolved_by").references(() => hosts.id, { onDelete: "set null" }),
+}, (t) => [index("media_reports_media_idx").on(t.mediaId), index("media_reports_open_idx").on(t.resolvedAt, t.createdAt)]);
+
+/** Every mutating admin action (/admin). Never updated or deleted by the app. */
+export const adminAudit = pgTable("admin_audit", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  adminHostId: uuid("admin_host_id").references(() => hosts.id, { onDelete: "set null" }),
+  adminEmail: text("admin_email").notNull(),
+  action: text("action").notNull(),
+  targetType: text("target_type").notNull(),
+  targetId: text("target_id"),
+  details: jsonb("details"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("admin_audit_created_idx").on(t.createdAt),
+  index("admin_audit_target_idx").on(t.targetType, t.targetId),
+  index("admin_audit_action_idx").on(t.action),
+]);
+
+/** One row per cron run (scheduled or "Run now" from /admin/system). */
+export const cronRuns = pgTable("cron_runs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+  ok: boolean("ok"),
+  summary: jsonb("summary"),
+}, (t) => [index("cron_runs_name_idx").on(t.name, t.startedAt)]);

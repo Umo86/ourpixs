@@ -4,7 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { BRANDS, brandBaseUrl, intervalPence, type Brand, type Locale, type PlanInterval } from "./config";
 import { ApiError } from "./http";
-import { computeAccess } from "./access";
+import { subscriptionAccess } from "./access";
 import { paymentsEnabled, stripe } from "./stripe";
 import { makeT } from "@/i18n/shared";
 
@@ -22,7 +22,8 @@ function requirePayments() {
  */
 export async function createSubscriptionCheckout(host: HostRow, interval: PlanInterval, brand: Brand, locale: Locale) {
   requirePayments();
-  const a = computeAccess(host);
+  // The Stripe state, not admin overrides: a comped account may still subscribe for when the complimentary period ends.
+  const a = subscriptionAccess(host);
   if (a.status === "active" || a.status === "past_due") {
     throw new ApiError(409, "already_subscribed", "You already have a subscription. Use Manage billing to change it.");
   }
@@ -78,6 +79,24 @@ export async function cancelSubscriptionNow(subId: string | null) {
   await stripe().subscriptions.cancel(subId);
 }
 
+/**
+ * Admin: cancel a host's subscription, either at the end of the paid period or immediately (no refund; refunds stay manual).
+ * The host row is then re-synced from Stripe (the webhook would do the same, this just makes it instant).
+ */
+export async function adminCancelSubscription(host: Pick<HostRow, "id" | "stripeSubscriptionId">, mode: "period_end" | "now") {
+  requirePayments();
+  if (!host.stripeSubscriptionId) throw new ApiError(409, "no_subscription", "There is no subscription on this account");
+  try {
+    if (mode === "now") await cancelSubscriptionNow(host.stripeSubscriptionId);
+    else await stripe().subscriptions.update(host.stripeSubscriptionId, { cancel_at_period_end: true });
+    await syncSubscription(host.stripeSubscriptionId, { hostId: host.id });
+  } catch (e) {
+    if (e instanceof ApiError) throw e;
+    console.error("[billing] admin cancel failed", e);
+    throw new ApiError(502, "billing_error", "Stripe could not cancel the subscription");
+  }
+}
+
 function periodEnd(sub: Stripe.Subscription): Date | null {
   // current_period_end lives on subscription items in current API versions.
   const raw = sub as unknown as { current_period_end?: number; items?: { data?: { current_period_end?: number }[] } };
@@ -109,7 +128,7 @@ export async function syncSubscription(subId: string, hint: { hostId?: string | 
     if (hostId) [host] = await db.select().from(schema.hosts).where(eq(schema.hosts.id, hostId)).limit(1);
     if (!host && customerId) [host] = await db.select().from(schema.hosts).where(eq(schema.hosts.stripeCustomerId, customerId)).limit(1);
     if (!host) return { applied: false as const, reason: "no_host" };
-    const local = computeAccess(host).status;
+    const local = subscriptionAccess(host).status;
     if (host.stripeSubscriptionId && (local === "active" || local === "past_due")) {
       console.error("[billing] host already has a live subscription; not adopting", { hostId: host.id, sub: sub.id });
       return { applied: false as const, reason: "has_live_subscription" };

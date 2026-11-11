@@ -8,9 +8,12 @@ export type Subscription = {
   interval: "month" | "year" | null;
   trialEndsAt: string | null; currentPeriodEnd: string | null; cancelAtPeriodEnd: boolean; deleteAfter: string | null;
   canCreateEvents: boolean; canDownload: boolean; readOnly: boolean; showUpgradePrompt: boolean; daysLeft: number | null;
+  /** Additive: set while the account has complimentary access (granted by our team); status is then "active". */
+  compUntil?: string | null;
 };
 /** Per-event access (follows the event owner's subscription). */
-export type OccasionAccess = { canUpload: boolean; canDownload: boolean; readOnly: boolean; reason: "trial" | "trial_ended" | "cancelled" | "past_due" | null };
+/** reason "suspended" (owner suspended) and "locked" (event locked by our team) are additive. */
+export type OccasionAccess = { canUpload: boolean; canDownload: boolean; readOnly: boolean; reason: "trial" | "trial_ended" | "cancelled" | "past_due" | "suspended" | "locked" | null };
 export type Theme = "noir" | "royal" | "ivory" | "dusk" | "mono" | "blush";
 export type Day = {
   id: string; name: string; date: string | null; sortOrder: number;

@@ -43,7 +43,10 @@
   "guest_blocked": "Bu misafir engellendi.",
   "plan_required": "Bunun için aktif bir plan gerekiyor. İndirmek, yeni etkinlik oluşturmak ya da salt okunur bir etkinliği düzenlemek için abone olun.",
   "already_subscribed": "Zaten bir aboneliğiniz var. Değiştirmek için “Ödemeleri yönet” bölümünü kullanın.",
-  "billing_error": "Aboneliğinizi iptal edemedik, bu yüzden hiçbir şey silinmedi. Lütfen tekrar deneyin ya da bize yazın."
+  "billing_error": "Aboneliğinizi iptal edemedik, bu yüzden hiçbir şey silinmedi. Lütfen tekrar deneyin ya da bize yazın.",
+  "account_suspended": "Bu hesap askıya alındı. Bir yanlışlık olduğunu düşünüyorsanız lütfen bizimle iletişime geçin.",
+  "event_locked": "Bu etkinlik ekibimiz tarafından kilitlendi. Lütfen bizimle iletişime geçin.",
+  "reauth_required": "Devam etmek için lütfen tekrar giriş yapın."
  },
  "login": {
   "metaTitle": "Giriş",
@@ -65,7 +68,8 @@
   "resendIn": "{s} sn sonra yeni kod gönderebilirsiniz",
   "changeEmail": "Başka bir e-posta kullan",
   "previewTitle": "Önizleme modu",
-  "previewBody": "Bu kurulumda e-posta ayarlı değil. Kodunuz:"
+  "previewBody": "Bu kurulumda e-posta ayarlı değil. Kodunuz:",
+  "reauth": "Güvenliğiniz için devam etmeden önce lütfen tekrar giriş yapın."
  },
  "account": {
   "menu": "Hesap menüsü",
@@ -504,12 +508,16 @@
    "cancelled": "Aboneliğiniz sona erdi",
    "cancelledBody": "Etkinlikleriniz salt okunur. {date} tarihine kadar her şeyi görüntüleyip indirebilirsiniz; sonra dosyalar silinir.",
    "expired": "Ücretsiz denemeniz sona erdi",
-   "expiredBody": "Etkinlikleriniz salt okunur ve indirmeler kapalı. Dosyalar {date} tarihine kadar saklanır."
+   "expiredBody": "Etkinlikleriniz salt okunur ve indirmeler kapalı. Dosyalar {date} tarihine kadar saklanır.",
+   "comped": "Ücretsiz erişim",
+   "compedBody": "{date} tarihine kadar her şey açık, bizden hediye."
   },
   "readOnly": {
    "trialEnded": "Ücretsiz deneme sona erdiği için bu etkinlik salt okunur ve indirmeler kapalı. Dosyalar {date} tarihine kadar saklanır.",
    "cancelled": "Abonelik sona erdiği için bu etkinlik salt okunur. {date} tarihine kadar her şey indirilebilir.",
-   "cohost": "Yalnızca etkinlik sahibi abone olabilir."
+   "cohost": "Yalnızca etkinlik sahibi abone olabilir.",
+   "locked": "Bu etkinlikte yüklemeler kapalı ve şu an düzenlenemiyor. Lütfen bizimle iletişime geçin.",
+   "suspended": "Bu hesap askıya alındığı için etkinlikleri salt okunur. Lütfen bizimle iletişime geçin."
   },
   "prompt": {
    "trial": {
