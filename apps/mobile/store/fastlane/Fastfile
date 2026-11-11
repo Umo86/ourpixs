@@ -1,0 +1,37 @@
+# Run from apps/mobile/store:  fastlane ios metadata   |   fastlane android metadata
+# Binaries are built and uploaded with EAS (see ../README.md). These lanes only push listing text + screenshots.
+
+platform :ios do
+  desc "Upload App Store listing text, review info and screenshots (no binary, no submission)"
+  lane :metadata do
+    api_key = ENV["APP_STORE_CONNECT_API_KEY_PATH"] ? app_store_connect_api_key(key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"], key_id: ENV["ASC_KEY_ID"], issuer_id: ENV["ASC_ISSUER_ID"]) : nil
+    deliver(
+      api_key: api_key,
+      metadata_path: "./fastlane/metadata",
+      screenshots_path: "./fastlane/screenshots",
+      skip_binary_upload: true,
+      skip_screenshots: !Dir.exist?("./fastlane/screenshots"),
+      overwrite_screenshots: true,
+      submit_for_review: false,
+      automatic_release: false,
+      force: true,
+      run_precheck_before_submit: false,
+      precheck_include_in_app_purchases: false
+    )
+  end
+end
+
+platform :android do
+  desc "Upload Google Play listing text and screenshots (no binary)"
+  lane :metadata do
+    supply(
+      metadata_path: "./fastlane/metadata/android",
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: false,
+      skip_upload_screenshots: false,
+      track: "internal"
+    )
+  end
+end

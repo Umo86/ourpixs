@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Bizim Resimler",
+    "NSCameraUsageDescription": "Bizim Resimler, etkinlik QR kodlarını okutmak ve ortak albüm için fotoğraf çekmek amacıyla kamerayı kullanır.",
+    "NSPhotoLibraryUsageDescription": "Bizim Resimler, etkinlik albümüne eklemek istediğiniz fotoğraf ve videoları seçmenizi sağlar.",
+    "NSPhotoLibraryAddUsageDescription": "Bizim Resimler, indirdiğiniz etkinlik fotoğraf ve videolarını fotoğraf arşivinize kaydeder.",
+    "NSMicrophoneUsageDescription": "Bizim Resimler, etkinlik albümü için çektiğiniz videoların sesini kaydetmek amacıyla mikrofonu kullanır."
+  },
+  "android": {
+    "app_name": "Bizim Resimler"
+  }
+}

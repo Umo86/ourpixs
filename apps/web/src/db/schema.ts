@@ -1,5 +1,5 @@
 import {
-  pgTable, uuid, text, timestamp, integer, boolean, pgEnum, primaryKey, index, uniqueIndex, date, bigint, jsonb,
+  pgTable, uuid, text, timestamp, integer, boolean, pgEnum, primaryKey, index, uniqueIndex, date, bigint, jsonb, real,
 } from "drizzle-orm/pg-core";
 
 export const brandEnum = pgEnum("brand", ["ourpixs", "bizimresimler"]);
@@ -16,6 +16,9 @@ export const mediaStatusEnum = pgEnum("media_status", ["pending", "uploaded", "f
 export const visibilityEnum = pgEnum("visibility", ["visible", "hidden", "deleted"]);
 export const shareScopeEnum = pgEnum("share_scope", ["view", "view_upload"]);
 export const messageKindEnum = pgEnum("message_kind", ["text", "voice", "video"]);
+export const orgStatusEnum = pgEnum("org_status", ["trialing", "active", "past_due", "cancelled"]);
+export const orgRoleEnum = pgEnum("org_role", ["owner", "staff"]);
+export const brandingModeEnum = pgEnum("branding_mode", ["platform", "venue", "couple", "both"]);
 
 /** Hosts = people who create events. Guests never get accounts. */
 export const hosts = pgTable("hosts", {
@@ -47,10 +50,48 @@ export const pushTokens = pgTable("push_tokens", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Partner (white-label) accounts: venues, planners, photographers on the monthly Partner plan. */
+export const organisations = pgTable("organisations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  logoKey: text("logo_key"),
+  primaryColour: text("primary_colour"),
+  accentColour: text("accent_colour"),
+  supportEmail: text("support_email"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id").unique(),
+  /** "cancelled" also covers "never subscribed yet". */
+  status: orgStatusEnum("status").notNull().default("cancelled"),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  /** Set when the subscription first goes past_due; events become read-only 7 days later. */
+  pastDueSince: timestamp("past_due_since", { withTimezone: true }),
+  hidePoweredBy: boolean("hide_powered_by").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const organisationMembers = pgTable("organisation_members", {
+  organisationId: uuid("organisation_id").notNull().references(() => organisations.id, { onDelete: "cascade" }),
+  hostId: uuid("host_id").notNull().references(() => hosts.id, { onDelete: "cascade" }),
+  role: orgRoleEnum("role").notNull().default("staff"),
+}, (t) => [primaryKey({ columns: [t.organisationId, t.hostId] }), index("org_members_host_idx").on(t.hostId)]);
+
+export const organisationInvites = pgTable("organisation_invites", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organisationId: uuid("organisation_id").notNull().references(() => organisations.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const occasions = pgTable("occasions", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug").notNull().unique(),
+  /** Host-chosen custom link name (a–z, 0–9, hyphens). /g/[slug] resolves either this or `slug`. */
+  vanitySlug: text("vanity_slug").unique(),
   ownerId: uuid("owner_id").notNull().references(() => hosts.id, { onDelete: "cascade" }),
+  /** Set when a partner (venue/planner) created the event. */
+  organisationId: uuid("organisation_id").references(() => organisations.id, { onDelete: "set null" }),
+  brandingMode: brandingModeEnum("branding_mode").notNull().default("platform"),
   brand: brandEnum("brand").notNull().default("ourpixs"),
   type: occasionTypeEnum("type").notNull(),
   title: text("title").notNull(),
@@ -71,7 +112,7 @@ export const occasions = pgTable("occasions", {
   storageExpiresAt: timestamp("storage_expires_at", { withTimezone: true }),
   status: statusEnum("status").notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [index("occasions_owner_idx").on(t.ownerId)]);
+}, (t) => [index("occasions_owner_idx").on(t.ownerId), index("occasions_org_idx").on(t.organisationId)]);
 
 export const occasionMembers = pgTable("occasion_members", {
   occasionId: uuid("occasion_id").notNull().references(() => occasions.id, { onDelete: "cascade" }),
@@ -93,6 +134,9 @@ export const days = pgTable("days", {
   name: text("name").notNull(),
   date: date("date"),
   sortOrder: integer("sort_order").notNull().default(0),
+  /** Optional per-day upload window (used by the per-day QR links). */
+  uploadOpensAt: timestamp("upload_opens_at", { withTimezone: true }),
+  uploadClosesAt: timestamp("upload_closes_at", { withTimezone: true }),
 }, (t) => [index("days_occasion_idx").on(t.occasionId)]);
 
 export const guests = pgTable("guests", {
@@ -102,6 +146,8 @@ export const guests = pgTable("guests", {
   deviceTokenHash: text("device_token_hash").notNull(),
   consentedAt: timestamp("consented_at", { withTimezone: true }),
   shotsTaken: integer("shots_taken").notNull().default(0),
+  /** Set when a host blocks this guest: their media is hidden and the device can't upload again. */
+  blockedAt: timestamp("blocked_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index("guests_occasion_idx").on(t.occasionId), uniqueIndex("guests_device_idx").on(t.occasionId, t.deviceTokenHash)]);
 
@@ -128,6 +174,12 @@ export const media = pgTable("media", {
   approved: boolean("approved").notNull().default(true),
   favourite: boolean("favourite").notNull().default(false),
   reactionCount: integer("reaction_count").notNull().default(0),
+  /** 64-bit dHash of the thumbnail (16 hex chars), computed in the browser. */
+  phash: text("phash"),
+  /** Variance of Laplacian on a downscaled greyscale image; low = blurry. */
+  blurScore: real("blur_score"),
+  /** Auto-moderation flags: "duplicate", "blurry", "nsfw". Never auto-deletes. */
+  moderationFlags: text("moderation_flags").array().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index("media_occasion_created_idx").on(t.occasionId, t.createdAt),

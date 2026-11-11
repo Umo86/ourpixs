@@ -1,0 +1,92 @@
+"use client";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight, Download, X } from "lucide-react";
+import type { MediaItem } from "@/lib/api-types";
+
+type Props = {
+  items: MediaItem[];
+  index: number;
+  onIndex: (i: number) => void;
+  onClose: () => void;
+  labels: { close: string; prev: string; next: string; download: string; by: (name: string) => string };
+  /** Extra actions (host: favourite, hide, delete, set as cover). */
+  actions?: (item: MediaItem) => ReactNode;
+  downloadUrl?: (item: MediaItem) => string | null;
+};
+
+/** Full-screen viewer with keyboard (←/→/Esc) and swipe navigation. */
+export function Lightbox({ items, index, onIndex, onClose, labels, actions, downloadUrl }: Props) {
+  const item = items[index];
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const touchX = useRef<number | null>(null);
+  const go = useCallback((d: number) => {
+    const n = index + d;
+    if (n >= 0 && n < items.length) onIndex(n);
+  }, [index, items.length, onIndex]);
+
+  useEffect(() => {
+    closeRef.current?.focus();
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") go(-1);
+      if (e.key === "ArrowRight") go(1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [go, onClose]);
+
+  if (!item) return null;
+  const dl = downloadUrl ? downloadUrl(item) : item.originalUrl || item.displayUrl;
+  const btn = "inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky disabled:opacity-30";
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={item.guestName ? labels.by(item.guestName) : undefined}
+      className="fixed inset-0 z-50 flex flex-col bg-black/95 text-white"
+      onTouchStart={(e) => { touchX.current = e.touches[0]?.clientX ?? null; }}
+      onTouchEnd={(e) => {
+        const start = touchX.current;
+        const end = e.changedTouches[0]?.clientX;
+        if (start != null && end != null && Math.abs(end - start) > 50) go(end < start ? 1 : -1);
+        touchX.current = null;
+      }}
+    >
+      <div className="flex items-center justify-between gap-3 p-3 sm:p-4">
+        <span className="truncate text-sm font-bold">{item.guestName ? labels.by(item.guestName) : ""}</span>
+        <div className="flex items-center gap-2">
+          {actions?.(item)}
+          {dl ? (
+            <a href={dl} download className={btn} aria-label={labels.download} target="_blank" rel="noopener">
+              <Download size={20} aria-hidden />
+            </a>
+          ) : null}
+          <button ref={closeRef} type="button" className={btn} onClick={onClose} aria-label={labels.close}>
+            <X size={22} aria-hidden />
+          </button>
+        </div>
+      </div>
+      <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-4 sm:px-16">
+        {item.kind === "video" ? (
+          <video key={item.id} src={item.originalUrl} poster={item.displayUrl ?? undefined} controls playsInline className="max-h-full max-w-full rounded-2xl" />
+        ) : item.displayUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={item.id} src={item.displayUrl} alt={item.guestName ? labels.by(item.guestName) : ""} className="max-h-full max-w-full rounded-2xl object-contain" />
+        ) : null}
+        <button type="button" onClick={() => go(-1)} disabled={index === 0} aria-label={labels.prev} className={`${btn} absolute left-2 top-1/2 hidden -translate-y-1/2 sm:inline-flex`}>
+          <ChevronLeft size={24} aria-hidden />
+        </button>
+        <button type="button" onClick={() => go(1)} disabled={index >= items.length - 1} aria-label={labels.next} className={`${btn} absolute right-2 top-1/2 hidden -translate-y-1/2 sm:inline-flex`}>
+          <ChevronRight size={24} aria-hidden />
+        </button>
+      </div>
+    </div>
+  );
+}

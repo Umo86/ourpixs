@@ -1,1 +1,804 @@
-{}
+{
+  "meta": {
+    "home": {
+      "title": "{brand} — Özel gününüzün her karesi tek albümde",
+      "description": "Misafirleriniz QR kodu okutup fotoğraf ve videolarını yükler. Uygulama yok, üyelik yok. Düğün, kına, doğum günü ve tüm özel günleriniz için."
+    },
+    "features": {
+      "title": "Özellikler",
+      "description": "Canlı ekran, fotoğraf görevleri, tek kullanımlık kamera, sesli anı defteri ve daha fazlası. Misafirlerin ve ev sahiplerinin ihtiyaç duyduğu her şey, uygulama indirmeden."
+    },
+    "pricing": {
+      "title": "Fiyatlar",
+      "description": "Etkinlik başına tek ödeme, herkesi davet edin. Abonelik yok, misafir başına ücret yok. Ücretsiz başlayın."
+    },
+    "partners": {
+      "title": "Partner planı: mekanınızın kendi fotoğraf uygulaması",
+      "description": "Mekanlar, organizatörler, DJ'ler ve fotoğrafçılar için beyaz etiketli misafir fotoğraf albümleri. Logonuz ve renkleriniz, sınırsız etkinlik, tek panel. Aylık, istediğiniz zaman iptal."
+    },
+    "privacy": {
+      "title": "Gizlilik politikası",
+      "description": "{brand} olarak hangi verileri neden topladığımız, kimlerle paylaştığımız ve haklarınızı nasıl kullanabileceğiniz."
+    },
+    "terms": {
+      "title": "Kullanım koşulları",
+      "description": "{brand} hizmetini kullanan ev sahipleri ve misafirler için koşullar."
+    },
+    "credits": {
+      "title": "Emeği geçenler",
+      "description": "Bu sitede kullanılan fotoğraf ve videoların kaynakları."
+    }
+  },
+  "site": {
+    "skip": "İçeriğe geç",
+    "menu": "Menüyü aç",
+    "closeMenu": "Menüyü kapat",
+    "language": "Dil",
+    "product": "Ürün",
+    "company": "Şirket",
+    "creditsLink": "Emeği geçenler",
+    "copyright": "© {year} {brands} · Londra",
+    "backHome": "Ana sayfaya dön",
+    "demo": "Canlı demo",
+    "compare": "Karşılaştırma",
+    "templates": "QR şablonları",
+    "help": "Yardım merkezi",
+    "guides": "Rehberler",
+    "resources": "Kaynaklar",
+    "occasions": "Etkinlik türleri",
+    "comingSoon": "Yakında",
+    "cookieLabel": "Çerez bildirimi",
+    "cookieText": "Yalnızca zorunlu çerezler kullanıyoruz: oturum, dil ve misafir cihaz anahtarı. İzleme ve reklam çerezi yok.",
+    "cookieLink": "Gizlilik politikası",
+    "cookieOk": "Tamam",
+    "emailUs": "Bize e-posta gönderin"
+  },
+  "notFound": {
+    "title": "Bu sayfa",
+    "accent": "kayıplara karıştı.",
+    "body": "Aradığınızı bulamadık. Gelin, sizi partiye geri götürelim."
+  },
+  "home": {
+    "hero": {
+      "sticker": "Okut · Çek · Paylaş",
+      "title": "Gecenin her anı,",
+      "accent": "her telefondan.",
+      "sub": "Tek bir QR kod, misafirlerinizin çektiği tüm fotoğraf ve videoları toplar. Uygulama yok, üyelik yok, tam kalite.",
+      "cta": "Etkinliğinizi oluşturun →",
+      "ctaSecondary": "Nasıl çalışır?",
+      "stats": [
+        {
+          "value": "3 dk",
+          "label": "kurulum süresi"
+        },
+        {
+          "value": "0",
+          "label": "indirilecek uygulama"
+        },
+        {
+          "value": "Sınırsız",
+          "label": "misafir, tek fiyat"
+        },
+        {
+          "value": "{days} gün",
+          "label": "para iade garantisi"
+        }
+      ]
+    },
+    "occasions": {
+      "title": "Her türlü",
+      "accent": "özel gün için.",
+      "lead": "Her etkinlik türü kendine özgü anları, metinleri ve QR kartlarıyla hazır gelir.",
+      "items": [
+        {
+          "key": "wedding",
+          "label": "Düğünler",
+          "tag": "{days} güne kadar",
+          "alt": "Mavi ışık altında dans pistinde gülümseyen gelin"
+        },
+        {
+          "key": "birthday",
+          "label": "Doğum günleri",
+          "tag": "Ücretsiz plan var",
+          "alt": "Doğum günü pastası ve maytaplarla kutlama yapan arkadaşlar"
+        },
+        {
+          "key": "henna",
+          "label": "Kına geceleri",
+          "tag": "Geleneksel",
+          "alt": "Gelin buketinin yanında kınalı bir el"
+        },
+        {
+          "key": "family",
+          "label": "Aile buluşmaları",
+          "tag": "Her yaştan",
+          "alt": "Açık havada akşam yemeğinde kadeh kaldıran aile"
+        },
+        {
+          "key": "grad",
+          "label": "Mezuniyetler",
+          "tag": "2027 mezunları",
+          "alt": "Kep ve cüppeyle kutlama yapan iki mezun"
+        },
+        {
+          "key": "baby",
+          "label": "Baby shower",
+          "tag": "Küçük gruplar",
+          "alt": "Baby shower'da kadeh kaldıran arkadaşlar"
+        },
+        {
+          "key": "nisan",
+          "label": "Nişanlar",
+          "tag": "Yüzük takma anı",
+          "alt": "Siyah beyaz bir karede birlikte gülen gelin ve damat"
+        },
+        {
+          "key": "sunnet",
+          "label": "Sünnet düğünleri",
+          "tag": "Aile kutlaması",
+          "alt": ""
+        }
+      ]
+    },
+    "how": {
+      "title": "Herkes",
+      "accent": "fotoğrafçı.",
+      "uploaded": "Yüklendi · 2 sn önce",
+      "loves": "24 kalp",
+      "selfieAlt": "Partide toplu selfie çeken arkadaşlar",
+      "steps": [
+        {
+          "title": "Etkinliğinizi oluşturun",
+          "body": "Etkinlik türünü seçin, isimleri ve tarihi girin, QR kartlarınızı yazdırın. Üç dakikada hazır."
+        },
+        {
+          "title": "Misafirler okutur",
+          "body": "Adlarını yazıp yüklemeye başlarlar. İnternet kesilirse yüklemeler kaldığı yerden devam eder."
+        },
+        {
+          "title": "Keyfini çıkarın",
+          "body": "Kareler anında büyük ekrana düşer, ardından albümünüzde yerini alır. Hepsini tek dokunuşla indirin."
+        }
+      ]
+    },
+    "bento": {
+      "title": "Ortak bir klasörden",
+      "accent": "çok daha eğlenceli.",
+      "items": [
+        {
+          "title": "Canlı ekran",
+          "body": "Yüklenen kareler saniyeler içinde mekandaki büyük ekranda belirir."
+        },
+        {
+          "title": "Fotoğraf görevleri",
+          "body": "Misafirlere eğlenceli görevler verin: “Damatla selfie”, “En iyi dans figürü”."
+        },
+        {
+          "title": "Tek kullanımlık kamera",
+          "body": "Misafir başına sınırlı poz; kareler ertesi sabah ortaya çıkar."
+        },
+        {
+          "title": "Sesli anı defteri",
+          "body": "Misafirler yazılı ya da sesli bir mesaj bırakır, siz de saklarsınız."
+        },
+        {
+          "title": "Yurt dışındaki aile",
+          "body": "Uzaktaki akrabalarınız özel bir bağlantıyla izler, kendi karelerini de ekler."
+        },
+        {
+          "title": "Özet video",
+          "body": "En güzel anlardan otomatik oluşturulan, paylaşmaya hazır bir video.",
+          "soon": true
+        }
+      ]
+    },
+    "night": {
+      "eyebrow": "Adım adım",
+      "title": "Gece",
+      "accent": "böyle geçer.",
+      "sticker": "Canlı ekran",
+      "imageAlt": "Siyah beyaz bir karede gülen gelin ve damat",
+      "cta": "Tüm özellikleri görün",
+      "items": [
+        {
+          "title": "Her masada QR kart",
+          "body": "Panelinizden kendi renklerinizle, Türkçe ve İngilizce olarak yazdırın."
+        },
+        {
+          "title": "Misafirler okutup paylaşır",
+          "body": "Uygulama yok, hesap yok. Adlarını yazmaları yeterli."
+        },
+        {
+          "title": "Ekran dolmaya başlar",
+          "body": "Fotoğraf ve videolar yüklendikçe mekandaki ekranda belirir."
+        },
+        {
+          "title": "Ertesi sabah",
+          "body": "Albümünüz hazır; tüm orijinal dosyaları indirebilirsiniz."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Siz partinin keyfini çıkarın,",
+      "accent": "kareleri biz toplayalım.",
+      "cta": "Etkinliğinizi oluşturun →",
+      "note": "Ücretsiz deneyin · Kredi kartı gerekmez · {days} gün para iade garantisi"
+    }
+  },
+  "features": {
+    "sticker": "{count} özellik · Uygulama indirmeden",
+    "title": "Ortak bir klasörden",
+    "accent": "çok daha fazlası.",
+    "lead": "Misafirlerin kolayca paylaşması ve ev sahiplerinin kontrolü elinde tutması için gereken her şey; üstüne de geceyi daha eğlenceli kılan birkaç sürpriz.",
+    "groups": [
+      {
+        "kicker": "Misafirler için",
+        "title": "Okut, çek,",
+        "accent": "paylaş.",
+        "items": [
+          {
+            "title": "Uygulama yok, hesap yok",
+            "body": "QR kodu okutun, adınızı yazın, yüklemeye başlayın. Her telefonun tarayıcısında çalışır."
+          },
+          {
+            "title": "Kaldığı yerden devam eden yüklemeler",
+            "body": "İlerleme göstergeli ve kesintide kaldığı yerden otomatik devam eden yükleme sırası; kalabalık mekanların zorlanan Wi-Fi'ı düşünülerek tasarlandı."
+          },
+          {
+            "title": "Canlı akış ve tepkiler",
+            "body": "Herkesin paylaştıklarına göz atın, kalp ya da gülen yüz bırakın."
+          },
+          {
+            "title": "Fotoğraf görevleri",
+            "body": "Ev sahibinin verdiği eğlenceli görevler ve en hevesli misafirler için puan tablosu."
+          },
+          {
+            "title": "Tek kullanımlık kamera modu",
+            "body": "Herkese sınırlı sayıda poz; kareler ertesi sabah hep birlikte ortaya çıkar."
+          },
+          {
+            "title": "Sesli ve görüntülü anı defteri",
+            "body": "Deftere yazmak yerine ev sahiplerine sesli not, 30 saniyelik video ya da yazılı bir mesaj bırakın."
+          }
+        ]
+      },
+      {
+        "kicker": "Ev sahipleri için",
+        "title": "Kontrol",
+        "accent": "sizde.",
+        "items": [
+          {
+            "title": "Tüm anlar tek albümde",
+            "body": "Kareleri gün, an ya da misafir bazında sıralayın. Düzenlediğiniz tüm etkinlikler panelinizde durur."
+          },
+          {
+            "title": "QR stüdyosu",
+            "body": "Masa kartlarını ve afişleri kendi renklerinizle, Türkçe ve İngilizce olarak tasarlayın."
+          },
+          {
+            "title": "Yayından önce onay",
+            "body": "İsteğe bağlı onay özelliğiyle hiçbir kare siz onaylamadan büyük ekrana çıkmaz."
+          },
+          {
+            "title": "Tam kalite indirme",
+            "body": "Sıkıştırılmış kopyalar değil, orijinal dosyalar. Hepsini tek bir ZIP dosyası olarak indirin."
+          },
+          {
+            "title": "Ortak ev sahipleri ve aile bağlantıları",
+            "body": "Kardeşiniz ya da organizatörünüz size yardım etsin; yurt dışındaki akrabalarınıza da ayrı bir bağlantı verin."
+          },
+          {
+            "title": "Varsayılan olarak gizli",
+            "body": "Tahmin edilemez bağlantılar ve isteğe bağlı PIN kodu. Albümünüz arama motorlarının dışında tutulur."
+          },
+          {
+            "title": "WhatsApp ile paylaşım",
+            "body": "Misafir bağlantısını hazır bir mesajla tek dokunuşta aile ve arkadaş gruplarınıza gönderin."
+          },
+          {
+            "title": "Özel kapak ve bağlantı adı",
+            "body": "Kapak fotoğrafınızı ve akılda kalıcı kısa bir bağlantı adı seçin."
+          },
+          {
+            "title": "Her gün için ayrı QR",
+            "body": "Kına gecesine ve düğüne ayrı QR kodlar verin; her buluşmanın kendi misafirleri ve fotoğrafları olsun."
+          },
+          {
+            "title": "Otomatik denetim",
+            "body": "Bulanık, tekrar eden ya da uygunsuz görünen fotoğrafları incelemeniz için işaretler."
+          }
+        ]
+      },
+      {
+        "kicker": "Gece ve sonrası",
+        "title": "Eğlenceli",
+        "accent": "ekstralar.",
+        "items": [
+          {
+            "title": "Canlı ekran",
+            "body": "Misafirler yükledikçe güncellenen, televizyon ya da projeksiyon için slayt gösterisi."
+          },
+          {
+            "title": "Çok günlü etkinlikler",
+            "body": "Kına, düğün ve after party tek albümde; her birinin kendi bölümü var."
+          },
+          {
+            "title": "Etkinlik şablonları",
+            "body": "Düğün, doğum günü, sünnet, baby shower ve daha fazlası; anlar ve metinler sizin için hazır."
+          },
+          {
+            "title": "Özet video",
+            "body": "En iyi karelerden otomatik oluşturulan, Instagram'a hazır bir video.",
+            "soon": true
+          },
+          {
+            "title": "Fotoğraf kitabı",
+            "body": "En sevdiğiniz kareleri basılı bir fotoğraf kitabına dönüştürün, kapınıza kadar gelsin.",
+            "soon": true
+          }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "Bir sonraki",
+      "accent": "partinizde deneyin.",
+      "primary": "Ücretsiz başlayın →",
+      "secondary": "Fiyatları görün"
+    }
+  },
+  "pricing": {
+    "title": "Bir kez ödeyin.",
+    "accent": "Herkesi davet edin.",
+    "lead": "Abonelik yok, misafir başına ücret yok. İster 50 kişi olsun ister 500, fiyat aynı.",
+    "perEvent": "etkinlik başına, tek seferlik",
+    "badge": "En popüler",
+    "plans": {
+      "free": {
+        "note": "Küçük bir buluşmada deneyin",
+        "cta": "Ücretsiz başlayın",
+        "items": [
+          "{days} gün, en fazla {media} fotoğraf",
+          "Yazdırılabilir QR kartları",
+          "Canlı akış ve tepkiler",
+          "{storage} saklama süresi"
+        ]
+      },
+      "tek": {
+        "note": "Doğum günü, nişan, parti",
+        "cta": "{name} planını seçin",
+        "items": [
+          "Sınırsız misafir ve fotoğraf",
+          "{minutes} dakikaya kadar video",
+          "Canlı ekran ve fotoğraf görevleri",
+          "Tek kullanımlık kamera modu",
+          "{storage} saklama süresi"
+        ]
+      },
+      "buyuk": {
+        "note": "Düğünler ve çok günlü etkinlikler",
+        "cta": "{name} planını seçin",
+        "items": [
+          "{tekName} planındaki her şey",
+          "Tek albümde {days} güne kadar",
+          "{minutes} dakikaya kadar video",
+          "Sesli anı defteri",
+          "Ortak ev sahipleri ve yurt dışındaki aile için bağlantılar",
+          "{storage} saklama süresi",
+          "Özet video (yakında)"
+        ]
+      }
+    },
+    "partner": {
+      "kicker": "Mekanlar ve organizatörler için · Aylık {price}",
+      "title": "Mekanınızın kendi",
+      "accent": "fotoğraf uygulaması.",
+      "body": "Ağırladığınız her etkinlik için beyaz etiketli albümler: logonuz ve renkleriniz, sınırsız etkinlik, tek panel. Aylık, istediğiniz zaman iptal.",
+      "cta": "Partner planını görün →"
+    },
+    "faqTitle": "Merak",
+    "faqAccent": "edilenler",
+    "faq": [
+      {
+        "q": "Gerçekten tek ödeme mi?",
+        "a": "Evet, etkinlik planlarında: etkinlik başına bir kez ödersiniz, sonrasında iptal edilecek bir şey yoktur. (İstisna, mekanlar için Partner planıdır: o aylık bir aboneliktir.)"
+      },
+      {
+        "q": "Para iadesi alabilir miyim?",
+        "a": "Evet. Tüm ücretli etkinlik planlarında {days} gün para iade garantisi vardır. Satın almanızdan sonraki {days} gün içinde {email} adresine yazın, sebep sormadan ödemenizin tamamını iade edelim."
+      },
+      {
+        "q": "Sonradan yükseltebilir miyim?",
+        "a": "Evet. İstediğiniz zaman {tekName} planından {bigName} planına geçebilir, yalnızca {upgrade} farkı ödersiniz."
+      },
+      {
+        "q": "Saklama süresi bitince ne olur?",
+        "a": "Süre dolmadan 30 gün ve 7 gün önce size e-postayla hatırlatırız; böylece her şeyi indirebilirsiniz. Daha uzun süre mi gerekiyor? Saklama süresini uzatmak için bizimle iletişime geçin."
+      },
+      {
+        "q": "Misafirler ücret öder mi?",
+        "a": "Asla. Misafirler uygulama indirmeden, hesap açmadan ücretsiz olarak okutup yükler."
+      },
+      {
+        "q": "Partner planı nasıl işliyor?",
+        "a": "Mekanlar, organizatörler, DJ'ler ve fotoğrafçılar için aylık bir aboneliktir: sınırsız etkinlik oluşturursunuz ve her biri sizin markanızı taşıyan bir Büyük Gün albümüyle gelir. İstediğiniz zaman iptal edebilirsiniz. İçinde bulunulan ay için iade yapılmaz; erişiminiz o ayın sonuna kadar sürer."
+      }
+    ],
+    "guarantee": "{days} gün para iade garantisi"
+  },
+  "partners": {
+    "sticker": "Partner planı · Beyaz etiket",
+    "title": "Mekanınızın kendi",
+    "accent": "fotoğraf uygulaması.",
+    "lead": "Ağırladığınız her etkinliğin sizin markanızı taşıyan kendi misafir albümü olur. Misafirler okutur, yükler, geceyi yeniden yaşar; bizim adımızı hiç görmez.",
+    "cta": "Bize ulaşın →",
+    "ctaSecondary": "Fiyatları görün",
+    "priceKicker": "Partner planı",
+    "perMonth": "/ ay",
+    "priceNote": "Aylık. İstediğiniz zaman iptal edin.",
+    "priceFine": "Mekanlar, organizatörler, DJ'ler ve fotoğrafçılar için.",
+    "benefitsTitle": "Neler",
+    "benefitsAccent": "kazanırsınız?",
+    "benefits": [
+      {
+        "title": "Her etkinliğe bir Büyük Gün albümü",
+        "body": "Her etkinlik Büyük Gün deneyimini tam olarak alır: çok günlü albüm, canlı ekran, sesli anı defteri, ortak ev sahipleri ve aile bağlantıları."
+      },
+      {
+        "title": "Sizin markanız, bizimki değil",
+        "body": "Misafirlere {platform} markası gösterilmez. Logonuz, renkleriniz, mekan adınız."
+      },
+      {
+        "title": "Sınırsız etkinlik",
+        "body": "Ağırladığınız kadar etkinlik oluşturun. Etkinlik başına ücret yok."
+      },
+      {
+        "title": "Kendi QR kart tasarımlarınız",
+        "body": "Masa kartlarını ve tabelaları kendi tasarımlarınızla, logonuzla yazdırın."
+      },
+      {
+        "title": "Tek partner paneli",
+        "body": "Tüm etkinlikleri tek yerden yönetin, gece bitince her albümü teslim edin."
+      },
+      {
+        "title": "Aylık, istediğiniz zaman iptal",
+        "body": "Sözleşme ya da uzun vadeli taahhüt yok. Başlamış bir ay için iade yapılmaz."
+      }
+    ],
+    "brandingTitle": "Markalama",
+    "brandingAccent": "sizin seçiminiz.",
+    "brandingLead": "Her etkinliğin nasıl görüneceğine siz karar verirsiniz; her etkinlikte farklı bir seçenek kullanabilirsiniz.",
+    "branding": [
+      {
+        "title": "Mekanın markası",
+        "body": "Kapakta, QR kartlarında ve canlı ekranda sizin logonuz, renkleriniz ve mekan adınız.",
+        "example": "The Grand Hall"
+      },
+      {
+        "title": "Çiftin markası",
+        "body": "Onların isimleri, kapak fotoğrafı ve renkleri; bizden hiçbir iz yok.",
+        "example": "Elif & Can"
+      },
+      {
+        "title": "İkisi birlikte",
+        "body": "Kapakta çiftin isimlerinin yanında mekanınızın adı ve logosu.",
+        "example": "Elif & Can · The Grand Hall"
+      }
+    ],
+    "roiTitle": "Kendini",
+    "roiAccent": "amorti edebilir.",
+    "roiBody": "Örneğin düğün paketlerinize çift başına {price} karşılığında ekleyin; Partner planı {events} etkinlikte kendini amorti eder. Sonraki her etkinlik ek kâr demektir.",
+    "roiNote": "Bu bir örnektir, tahmin değildir. Paketlerinize uygun fiyatı siz belirleyin.",
+    "whoTitle": "Kimler",
+    "whoAccent": "için?",
+    "who": [
+      {
+        "title": "Mekanlar",
+        "body": "Her çifte misafir fotoğraflarını toplamanın hazır bir yolunu, sizin adınızla sunun."
+      },
+      {
+        "title": "Organizatörler",
+        "body": "Koordine ettiğiniz her etkinliğe müşterinizin ya da sizin markanızla bir misafir albümü ekleyin."
+      },
+      {
+        "title": "DJ'ler ve sunucular",
+        "body": "QR kodu dans pistine koyun, kalabalık sizin için en iyi içeriği üretsin."
+      },
+      {
+        "title": "Fotoğrafçılar ve video çekimcileri",
+        "body": "Orada olamadığınız anları da yakalayın, tek ve eksiksiz bir albüm teslim edin."
+      }
+    ],
+    "stepsTitle": "Nasıl",
+    "stepsAccent": "çalışır?",
+    "steps": [
+      {
+        "title": "Bize kendinizi anlatın",
+        "body": "Aşağıdaki formu işletmenizle ilgili birkaç bilgiyle doldurun."
+      },
+      {
+        "title": "Markanızı ekleriz",
+        "body": "Logonuzu ve renklerinizi eklemek, partner panelini göstermek için sizinle iletişime geçeriz."
+      },
+      {
+        "title": "Müşterileriniz için etkinlik oluşturun",
+        "body": "Bir sonraki rezervasyonunuzda QR kodları paylaşmaya başlayın."
+      }
+    ],
+    "sample": {
+      "eyebrow": "Örnek",
+      "title": "Markanızla",
+      "accent": "böyle görünür.",
+      "body": "Bir çiftin misafirleri şunu görür: kapakta çiftin isimleri ve mekan logonuz, altında kendi fotoğrafları. Örnek içerikli bir taslaktır.",
+      "label": "Ortak markalı örnek albüm",
+      "logo": "Logonuz",
+      "venue": "The Grand Hall",
+      "album": "Elif & Can",
+      "at": "Mekan:",
+      "by": "Misafirlerinin çektiği fotoğraflar",
+      "alt": "Ortak markalı misafir albümü taslağı"
+    },
+    "referral": {
+      "title": "Tavsiye kodu",
+      "body": "Tavsiye kodu için bize yazın; işletmenize özel bir kod oluşturalım."
+    },
+    "formTitle": "Bize",
+    "formAccent": "yazın.",
+    "formLead": "İşletmenizden kısaca bahsedin, size e-postayla dönelim.",
+    "form": {
+      "name": "Adınız",
+      "email": "E-posta",
+      "company": "İşletme adı (isteğe bağlı)",
+      "type": "İşletme türü",
+      "message": "Bilmemiz gereken bir şey var mı? (isteğe bağlı)",
+      "types": {
+        "venue": "Mekan",
+        "dj": "DJ ya da sunucu",
+        "photographer": "Fotoğrafçı ya da video çekimcisi",
+        "planner": "Organizatör",
+        "other": "Diğer"
+      },
+      "submit": "Gönder",
+      "sending": "Gönderiliyor…",
+      "errName": "Lütfen adınızı yazın.",
+      "errEmail": "Lütfen geçerli bir e-posta adresi girin.",
+      "errServer": "Mesajınızı şu anda gönderemedik. Lütfen biraz sonra tekrar deneyin.",
+      "okTitle": "Teşekkürler!",
+      "okBody": "Mesajınız bize ulaştı. En kısa sürede e-postayla dönüş yapacağız.",
+      "privacy": "Bilgilerinizi yalnızca size yanıt vermek için kullanırız.",
+      "privacyLink": "Gizlilik politikası",
+      "emailLine": "E-postayı mı tercih edersiniz? {email} adresine yazabilirsiniz."
+    }
+  },
+  "credits": {
+    "title": "Fotoğraf ve videolar,",
+    "accent": "teşekkürlerle.",
+    "lead": "Bu sitedeki fotoğraflar ve video Pexels'ten alınmıştır. Aşağıdaki fotoğrafçılara ve video çekimcilerine teşekkür ederiz.",
+    "roles": {
+      "video": "Ana sayfa videosu",
+      "wedding": "Düğün fotoğrafı",
+      "couple": "Çift fotoğrafı",
+      "birthday": "Doğum günü fotoğrafı",
+      "selfie": "Toplu selfie",
+      "henna": "Kına fotoğrafı",
+      "family": "Aile fotoğrafı",
+      "grad": "Mezuniyet fotoğrafı",
+      "baby": "Baby shower fotoğrafı",
+      "poster": "Kapak görseli"
+    },
+    "link": "Pexels'i ziyaret edin"
+  },
+  "legal": {
+    "updated": "Son güncelleme: 11 Kasım 2026"
+  },
+  "privacy": {
+    "title": "Gizlilik",
+    "accent": "politikası.",
+    "intro": "{brand}, ev sahiplerinin misafirlerinden fotoğraf, video ve mesaj toplamasını sağlar. Bu sayfada hangi kişisel verileri neden işlediğimizi açıklıyoruz. Merkezimiz Londra'dadır.",
+    "sections": [
+      {
+        "h": "Biz kimiz",
+        "p": [
+          "{brand}, Londra'dan işletilmektedir. Veri sorumlusu; [COMPANY NAME] (TODO) unvanlı, [COMPANY NUMBER] (TODO) şirket numaralı, kayıtlı adresi [REGISTERED ADDRESS] (TODO) olan ve [ICO REGISTRATION NUMBER] (TODO) ICO kayıt numarasına sahip şirkettir.",
+          "Sorularınız ve talepleriniz için: {email}."
+        ]
+      },
+      {
+        "h": "Hangi verileri topluyoruz",
+        "list": [
+          "Ev sahipleri: e-posta adresiniz, adınız, oluşturduğunuz etkinliklerin bilgileri ve ödeme kayıtları. Kart bilgileriniz Stripe tarafından işlenir, bize ulaşmaz.",
+          "Misafirler: yazdığınız ad ile yüklediğiniz fotoğraf, video, sesli mesaj ve tepkiler.",
+          "Talepler: bizimle iletişime geçtiğinizde ya da partner formunu kullandığınızda bize ilettiğiniz bilgiler.",
+          "Teknik veriler: IP adresi, cihaz türü ve temel kullanım kayıtları. Hizmetin güvenli ve çalışır durumda kalması için kullanılır."
+        ]
+      },
+      {
+        "h": "Verileri neden kullanıyoruz ve hukuki dayanaklarımız",
+        "p": [
+          "Birleşik Krallık GDPR'ının 6. maddesi uyarınca aşağıdaki hukuki dayanaklara güveniriz:"
+        ],
+        "list": [
+          "Sözleşme (m. 6(1)(b)): etkinlikleri oluşturmak ve yürütmek, yüklenenleri ev sahibinin seçtiği kişilere saklayıp göstermek, giriş kodları ve makbuzlar göndermek ve ödemeyi almak için.",
+          "Meşru menfaat (m. 6(1)(f)): hizmetin güvenliğini sağlamak, kötüye kullanımı önlemek, sorunları gidermek ve hizmeti geliştirmek için. Misafirler açısından bu, katılmayı seçtiğiniz albümün yürütülmesini de kapsar. Bu menfaatleri haklarınızla dengeleriz.",
+          "Hukuki yükümlülük (m. 6(1)(c)): muhasebe ve vergi kayıtlarını tutmak ve yasal taleplere yanıt vermek için.",
+          "Açık rıza (m. 6(1)(a)): yalnızca ayrıca rızanızı istediğimizde; rızanızı dilediğiniz zaman geri alabilirsiniz."
+        ]
+      },
+      {
+        "h": "Otomatik görsel denetim",
+        "p": [
+          "Ev sahiplerinin yüklenenleri incelemesine yardımcı olmak için görseller, uygunsuz, bulanık ya da tekrar eden olabilecek içerikleri işaretleyen OpenAI'ın denetim hizmetine gönderilebilir. Bu hizmet yalnızca bu amaçla kullanılır. Hukuki sonuç doğuran ya da sizi benzer biçimde önemli ölçüde etkileyen hiçbir karar yalnızca otomatik yollarla verilmez: neyin saklanacağına, gösterileceğine veya kaldırılacağına ev sahibi karar verir."
+        ]
+      },
+      {
+        "h": "Çerezler",
+        "p": [
+          "Yalnızca zorunlu çerezler kullanırız: ev sahipleri için oturum, dil tercihi ve bir misafirin cihazındaki yüklemeleri bir arada tutan etkinliğe özel bir anahtar. Bu anahtarın yalnızca özetini (hash) saklarız. Bunlar, sizin istediğiniz hizmeti sunmak için kesinlikle gerekli olduğundan PECR'ın (Gizlilik ve Elektronik İletişim Yönetmeliği) onay şartından muaftır. Reklam, analiz ya da izleme çerezi kullanmayız."
+        ]
+      },
+      {
+        "h": "Verilerinizi kimler işliyor",
+        "p": [
+          "Aşağıdaki sağlayıcılar, yalnızca hizmeti çalıştırmak için ve bizim adımıza veri işler:"
+        ],
+        "list": [
+          "Vercel: barındırma",
+          "Neon: veritabanı (Londra)",
+          "Vercel Blob: fotoğraf, video ve ses depolama (Londra)",
+          "Resend: e-posta gönderimi",
+          "Stripe: ödemeler",
+          "OpenAI: otomatik görsel denetim"
+        ]
+      },
+      {
+        "h": "Uluslararası aktarımlar",
+        "p": [
+          "Veritabanımız ve medya depolamamız Londra'dadır. Ödeme, e-posta gönderimi ya da görsel denetim gibi alanlardaki bazı sağlayıcılar sınırlı verileri Birleşik Krallık dışında işleyebilir. Bu durumda yalnızca Birleşik Krallık yeterlilik düzenlemelerinin kapsadığı sağlayıcıları kullanırız ya da Birleşik Krallık Uluslararası Veri Aktarım Sözleşmesi (IDTA) veya AB standart sözleşme maddelerine ek Birleşik Krallık Eki gibi güvenceler uygularız."
+        ]
+      },
+      {
+        "h": "Ne kadar süre saklıyoruz",
+        "list": [
+          "Etkinlik fotoğrafları, videoları ve mesajları: ev sahibinin planındaki saklama süresi boyunca (Ücretsiz planda {freeStorage}, Tek Gün planında {tekStorage}, Büyük Gün planında {bigStorage}); ev sahibi süreyi uzatmazsa silinir. Ev sahipleri bir etkinliği ya da tek tek yüklemeleri dilediği zaman silebilir.",
+          "Hesap bilgileri: hesabınız etkin olduğu sürece; sonrasında talep üzerine silinir veya anonim hale getirilir.",
+          "Ödeme ve fatura kayıtları: vergi ve muhasebe nedeniyle altı yıl.",
+          "Talepler: ilgili talebi sonuçlandırmak için gereken süre boyunca."
+        ]
+      },
+      {
+        "h": "Başkalarının fotoğrafları",
+        "p": [
+          "Fotoğraf ve videoların toplanıp paylaşılacağını misafirlerine bildirmek ev sahibinin sorumluluğundadır. Bir fotoğrafta yer alıyor ve kaldırılmasını istiyorsanız önce ev sahibine başvurun ya da bize e-posta gönderin."
+        ]
+      },
+      {
+        "h": "Çocuklar",
+        "p": [
+          "Hizmetimiz çocuklara yönelik değildir. Aile etkinliklerinde ev sahipleri ve misafirler çocuk fotoğrafları yükleyebilir; bunların uygun biçimde paylaşılmasından ev sahipleri ve ebeveynler sorumludur, talep üzerine içeriği kaldırırız."
+        ]
+      },
+      {
+        "h": "Haklarınız",
+        "p": [
+          "Birleşik Krallık GDPR'ı uyarınca şu haklara sahipsiniz:"
+        ],
+        "list": [
+          "hakkınızda tuttuğumuz kişisel verilere erişme",
+          "yanlış verilerin düzeltilmesini isteme (düzeltme)",
+          "verilerinizin silinmesini isteme (silme)",
+          "verilerinizi kullanma biçimimizi kısıtlama",
+          "verilerinizi taşınabilir bir biçimde alma",
+          "meşru menfaate dayalı işlemeye itiraz etme"
+        ]
+      },
+      {
+        "h": "Haklarınızı nasıl kullanırsınız ve şikâyet edersiniz",
+        "p": [
+          "{email} adresine yazın. Ücretsiz olarak bir ay içinde yanıt veririz. Kimliğinizi doğrulamamız gerekebilir; karmaşık taleplerde süreyi en fazla iki ay daha uzatabiliriz ve nedenini size bildiririz.",
+          "Verilerinizi ele alış biçimimizden memnun değilseniz Birleşik Krallık Bilgi Komiserliği Ofisi'ne (ICO) ico.org.uk adresinden ya da 0303 123 1113 numaralı telefondan şikâyette bulunabilirsiniz. Önce durumu düzeltmemize fırsat verirseniz seviniriz."
+        ]
+      },
+      {
+        "h": "Değişiklikler",
+        "p": [
+          "Bu politikayı güncelleyebiliriz; güncelleme tarihini yukarıda gösteririz."
+        ]
+      },
+      {
+        "h": "İletişim",
+        "p": [
+          "{email} adresine yazabilirsiniz."
+        ]
+      }
+    ]
+  },
+  "terms": {
+    "title": "Kullanım",
+    "accent": "koşulları.",
+    "intro": "Bu koşullar, {brand} hizmetini ev sahibi ya da misafir olarak kullandığınızda geçerlidir. Hizmeti kullanarak bu koşulları kabul etmiş olursunuz.",
+    "sections": [
+      {
+        "h": "Hizmet",
+        "p": [
+          "{brand}, ev sahibinin bir etkinlik sayfası ve QR kod oluşturmasını, misafirlerin de fotoğraf, video ve mesaj yükleyip görüntülemesini sağlar. Özellikler ev sahibinin planına göre değişir."
+        ]
+      },
+      {
+        "h": "Ev sahipleri",
+        "list": [
+          "Oluşturduğunuz etkinliklerden ve bağlantıyı kimlerle paylaştığınızdan siz sorumlusunuz.",
+          "İçeriği toplama hakkına sahip olmalı ve misafirlere içeriğin paylaşılacağını bildirmelisiniz.",
+          "Etkinlikte yer almaması gereken içerikleri kaldırmak sizin sorumluluğunuzdadır."
+        ]
+      },
+      {
+        "h": "Misafirler",
+        "p": [
+          "Yalnızca paylaşma hakkınız olan içerikleri yükleyebilirsiniz. Yasa dışı, taciz edici ya da başkalarının haklarını ihlal eden içerik yüklemeyin. Yüklediğiniz içeriğin sahibi olmaya devam edersiniz; ev sahibine ve bize, içeriği etkinliğin bir parçası olarak saklama ve gösterme izni verirsiniz."
+        ]
+      },
+      {
+        "h": "Kabul edilebilir kullanım",
+        "p": [
+          "Hizmeti kötüye kullanmayın, hizmete saldırmaya ya da otomatik araçlarla veri toplamaya (scraping) çalışmayın ve zararlı yazılım yüklemeyin. Bu koşulları ihlal eden içerikleri kaldırabilir ya da etkinlikleri askıya alabiliriz."
+        ]
+      },
+      {
+        "h": "Planlar ve ödeme",
+        "p": [
+          "Ücretli etkinlik planları, etkinlik başına sterlin (GBP) cinsinden tek seferlik bir ödemedir ve Stripe aracılığıyla işlenir. Plan limitleri ve saklama süreleri fiyatlar sayfasında yer alır. Partner planı, siz iptal edene kadar her ay yenilenen aylık bir aboneliktir."
+        ]
+      },
+      {
+        "h": "İptal ve iadeler",
+        "list": [
+          "Para iade garantisi: satın almanızdan sonraki {days} gün içinde, sebep belirtmeden, ücretli etkinlik planınızın ücretinin tamamının iadesini isteyebilirsiniz. Hesabınızdaki e-posta adresinden {email} adresine yazmanız yeterlidir. İadeler Stripe aracılığıyla ilk ödeme yöntemine yapılır.",
+          "Yasal cayma hakkınız: Birleşik Krallık'ta 2013 tarihli Tüketici Sözleşmeleri (Bilgilendirme, İptal ve Ek Ücretler) Yönetmeliği uyarınca dijital bir hizmeti genellikle 14 gün içinde iptal edebilirsiniz. Bir etkinlik oluşturarak hizmetin hemen başlamasını talep etmiş olursunuz. Etkinlik başlamışsa ya da yüklemeler başlamışsa bu yasal hak kaybolabilir veya orantılı bir iadeyle sınırlanabilir; ancak para iade garantimiz, satın almanızdan sonraki {days} gün boyunca yine de geçerlidir.",
+          "Partner planı: aşağıdaki “Partner planı” bölümüne bakın."
+        ]
+      },
+      {
+        "h": "Saklama",
+        "p": [
+          "Etkinlik içeriğini ev sahibinin planındaki süre boyunca saklarız. Bu süre dolmadan albümünüzü indirin. Kesintisiz hizmet garantisi veremeyiz; bu yüzden önemli içeriklerin kendi kopyalarını saklayın."
+        ]
+      },
+      {
+        "h": "Partner planı",
+        "p": [
+          "Partner planı; mekanlar, organizatörler, DJ'ler ve fotoğrafçılar gibi işletmeler içindir, bu nedenle yukarıdaki tüketici cayma hakları bu plana uygulanmaz. Plan aylık olarak peşin faturalandırılır ve istediğiniz zaman iptal edebilirsiniz. İptal, içinde bulunulan ayın sonunda yürürlüğe girer; o ay için iade yapılmaz ve erişiminiz o zamana kadar sürer.",
+          "Yüklediğiniz logolar ve içerikler üzerinde gerekli haklara sahip olmalı, müşterilerinize ve onların misafirlerine fotoğrafların nasıl toplanıp kullanılacağını bildirmelisiniz."
+        ]
+      },
+      {
+        "h": "Sorumluluk",
+        "p": [
+          "Hizmeti makul özenle ancak “olduğu gibi” sunarız. Yasaların izin verdiği ölçüde dolaylı zararlardan sorumlu değiliz ve toplam sorumluluğumuz ilgili etkinlik için ödenen tutarla sınırlıdır. İhmalden kaynaklanan ölüm veya kişisel yaralanma ve hile dahil, yasayla sınırlandırılamayacak hiçbir sorumluluk bu koşullarla sınırlandırılmaz."
+        ]
+      },
+      {
+        "h": "Yasal haklarınız",
+        "p": [
+          "Tüketiciyseniz, bu koşulların hiçbir hükmü 2015 tarihli Tüketici Hakları Yasası (Consumer Rights Act 2015) kapsamındaki yasal haklarınızı etkilemez; buna dijital hizmetlerin makul özen ve beceriyle sunulması şartı da dahildir."
+        ]
+      },
+      {
+        "h": "Değişiklikler",
+        "p": [
+          "Bu koşulları güncelleyebiliriz; güncelleme tarihini yukarıda gösteririz. Önemli bir değişiklik olursa etkin etkinliği bulunan ev sahiplerine e-postayla bildiririz."
+        ]
+      },
+      {
+        "h": "Geçerli hukuk",
+        "p": [
+          "Bu koşullar İngiltere ve Galler hukukuna tabidir ve İngiltere ile Galler mahkemeleri yetkilidir; ancak Birleşik Krallık'ın başka bir bölgesinde yaşıyorsanız yerel mahkemelerinizde de dava açabilirsiniz."
+        ]
+      },
+      {
+        "h": "İletişim",
+        "p": [
+          "{email} adresine yazabilirsiniz."
+        ]
+      }
+    ]
+  }
+}

@@ -109,10 +109,16 @@ export const PLANS: Record<Plan, {
     liveWall: false, voiceGuestbook: false, shareLinks: false, cohosts: false, missions: false, disposable: false, storageDays: 30 },
   tek: { name: { en: "One Day", tr: "Tek Gün" }, pricePence: 1900, maxDays: 1, maxMedia: null, video: true, maxVideoSeconds: 120, maxVideoBytes: 300 * 1024 * 1024,
     liveWall: true, voiceGuestbook: false, shareLinks: false, cohosts: false, missions: true, disposable: true, storageDays: 365 },
-  buyuk: { name: { en: "Big Day", tr: "Büyük Gün" }, pricePence: 3900, maxDays: 5, maxMedia: null, video: true, maxVideoSeconds: 600, maxVideoBytes: 1024 * 1024 * 1024,
+  buyuk: { name: { en: "Big Day", tr: "Büyük Gün" }, pricePence: 4900, maxDays: 5, maxMedia: null, video: true, maxVideoSeconds: 600, maxVideoBytes: 1024 * 1024 * 1024,
     liveWall: true, voiceGuestbook: true, shareLinks: true, cohosts: true, missions: true, disposable: true, storageDays: 365 * 3 },
 };
-export const UPGRADE_TEK_TO_BUYUK_PENCE = 2000;
+export const UPGRADE_TEK_TO_BUYUK_PENCE = 3000;
+/** Partner (white-label) plan for venues, planners, DJs and photographers: monthly subscription. */
+export const PARTNER_PENCE = 14900;
+export const PARTNER_FEATURES = { unlimitedEvents: true, planPerEvent: "buyuk" as Plan, removePlatformBranding: true, venueLogo: true, customColours: true, perEventBranding: ["venue", "couple", "both"] as const };
+/** 14-day no-questions money-back guarantee on paid event plans. */
+export const MONEY_BACK_DAYS = 14;
+export const SUPPORT_EMAIL = { ourpixs: process.env.NEXT_PUBLIC_SUPPORT_EMAIL_EN || "hello@ourpixs.com", bizimresimler: process.env.NEXT_PUBLIC_SUPPORT_EMAIL_TR || "merhaba@bizimresimler.com" } as const;
 
 export const THEMES = {
   noir: { bg: "#0A0A0A", fg: "#FFFFFF", accent: "#4D6BFF" },
