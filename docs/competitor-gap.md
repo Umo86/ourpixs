@@ -1,4 +1,4 @@
-# Our Pixs / Bizim Resimler: competitor gap analysis
+# BizimResimler (and Our Pixs): competitor gap analysis
 
 Research date: 2026-11-11. Web research only. Prices are as shown on the pages opened; many are promo or "from" prices and change often. USD figures are not converted (roughly £1 = $1.25-1.30). Facts marked (vendor claim) come from a competitor's own marketing or a rival's comparison page and are unverified.
 
@@ -31,7 +31,7 @@ Not reachable: wedsnap.com (fetch failed), theguest.app (robots blocked), Gather
 | Guestlense (Turkish-language listing) | Browser QR gallery, 7+ templates, password-protected, captions, unlimited guests | $49-$199 (per Fotify list); printed QR cards and Polaroid prints on upper tiers | Turkish listing exists but product is international | https://huntscreens.com/tr/products/guestlense |
 | Wedding Arrivals, Fotify | Both list Turkish UI | see above | Turkish is a checkbox, not a market focus | see above |
 
-Finding: no Turkish-first, web-only, occasion-aware (kına, sünnet, nişan, düğün) QR album with Turkish SEO content showed up in Turkish searches. Results were generic QR-generator blogs. This is a real opening for Bizim Resimler.
+Finding: no Turkish-first, web-only, occasion-aware (kına, sünnet, nişan, düğün) QR album with Turkish SEO content showed up in Turkish searches. Results were generic QR-generator blogs. This is a real opening for BizimResimler.
 
 ## 2. Missing features, ranked by impact
 
@@ -68,7 +68,7 @@ What converting competitors show that we should add:
 
 1. Live demo album plus demo QR (Lense and Kululu both offer try-it demos; POV has a demo camera). Biggest single conversion lever for a no-app product.
 2. How-it-works section with 3 steps and a 30-60 second video (Wedibox has a dedicated how-it-works page).
-3. Compare pages: "Our Pixs vs Google Photos", "vs WhatsApp groups", "vs Wedibox / GuestPix / Kululu" (Wedibox, GuestCam, Wedding Studio, Fotify, Knipsmig all run these and rank for competitor names).
+3. Compare pages: "BizimResimler vs Google Photos", "vs WhatsApp groups", "vs Wedibox / GuestPix / Kululu" (Wedibox, GuestCam, Wedding Studio, Fotify, Knipsmig all run these and rank for competitor names).
 4. Money-back guarantee badge on pricing and checkout (six competitors have one).
 5. Pricing page with "what is included" comparison table, FAQ under it, and "pay once, no subscription" line (most competitors lead with this).
 6. Use-case landing pages per occasion: wedding, birthday, henna/kına, sünnet, engagement/nişan, baby shower, graduation, corporate, house party (Wedibox has /occasions/weddings; Kululu and Knipsmig similar). In Turkish: düğün, kına gecesi, nişan, sünnet, doğum günü.

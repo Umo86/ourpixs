@@ -1,36 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BizimResimler web (Next.js)
 
-## Getting Started
+One Next.js 15 app serves both domains:
 
-First, run the development server:
+| Domain | Brand | Language |
+| --- | --- | --- |
+| **bizimresimler.com** (main) | BizimResimler | Follows the visitor's phone/browser on first visit (Turkish → TR, anything else → EN) |
+| ourpixs.com (English alias) | Our Pixs | English by default |
+
+The EN/TR switch (`lang` cookie) always wins; `?lang=en|tr` on any URL pins a language. Any other host (`*.vercel.app`, previews, localhost) uses `DEFAULT_BRAND` (default `bizimresimler`). Brand, occasion, price and email settings live in `src/lib/config.ts`.
+
+Contact and sender address for both brands: `hello@bizimresimler.com`.
+
+## Develop
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local   # fill in values (see comments in the file)
+npm install
+npm run dev                  # http://localhost:3000 (BizimResimler)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Before every push:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npx tsc --noEmit
+npm run build
+npx eslint src
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Project conventions: [`../../AGENTS.md`](../../AGENTS.md). Going live: [`../../docs/SETUP.md`](../../docs/SETUP.md). Mobile API contract: [`../../docs/API.md`](../../docs/API.md).

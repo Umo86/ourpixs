@@ -49,9 +49,9 @@ export function planSummary(sub: Subscription, t: T, locale: "en" | "tr"): { hea
 
 /** Non-store dev builds only (EXPO_PUBLIC_EXTERNAL_CHECKOUT=1). Store builds never render this. */
 export function ChoosePlanButton({ sub }: { sub: Subscription | null }) {
-  const { t, brand } = useI18n();
+  const { t, brand, locale } = useI18n();
   if (!EXTERNAL_CHECKOUT || !sub?.showUpgradePrompt) return null;
-  return <Button label={t("account.choosePlan")} icon="sparkles" size="md" onPress={() => openSite(siteUrl(brand, "/pricing"))} />;
+  return <Button label={t("account.choosePlan")} icon="sparkles" size="md" onPress={() => openSite(siteUrl(brand, "/pricing", locale))} />;
 }
 
 /** Plan status card for app settings. */

@@ -1,1 +1,1 @@
-wedding,sharing,party,camera,disposable,video,guestbook,henna,birthday,engagement,memories,upload
+event,album,wedding,party,camera,disposable,video,guestbook,henna,birthday,engagement,ourpixs

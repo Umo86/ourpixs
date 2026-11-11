@@ -2,7 +2,7 @@ import "server-only";
 import type Stripe from "stripe";
 import { eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { BRANDS, brandBaseUrl, intervalPence, type Brand, type Locale, type PlanInterval } from "./config";
+import { BRANDS, MAIN_BRAND, brandBaseUrl, intervalPence, type Brand, type Locale, type PlanInterval } from "./config";
 import { ApiError } from "./http";
 import { subscriptionAccess } from "./access";
 import { paymentsEnabled, stripe } from "./stripe";
@@ -41,7 +41,8 @@ export async function createSubscriptionCheckout(host: HostRow, interval: PlanIn
         unit_amount: intervalPence(interval),
         tax_behavior: "inclusive",
         recurring: { interval },
-        product_data: { name: `${BRANDS[brand].name} — ${t(interval === "year" ? "billing.yearly" : "billing.monthly")}` },
+        // One merchant on every domain: the product (and card statement wording) is always the main brand.
+        product_data: { name: `${BRANDS[MAIN_BRAND].name} — ${t(interval === "year" ? "billing.yearly" : "billing.monthly")}` },
       },
     }],
     metadata: { hostId: host.id, interval },

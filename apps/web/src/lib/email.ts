@@ -1,5 +1,5 @@
 import "server-only";
-import { BRANDS, SUBSCRIPTION, YEARLY_SAVING_PERCENT, brandBaseUrl, type Brand, type Locale } from "./config";
+import { BRANDS, CONTACT_EMAIL, SUBSCRIPTION, YEARLY_SAVING_PERCENT, brandBaseUrl, type Brand, type Locale } from "./config";
 import { makeT } from "@/i18n/shared";
 import { ApiError } from "./http";
 
@@ -12,9 +12,10 @@ export function previewCodesAllowed(): boolean {
   return process.env.PREVIEW_SHOW_CODE === "1" && !emailConfigured() && process.env.VERCEL_ENV !== "production";
 }
 
+/** One sending address for both brands (hello@bizimresimler.com); only the display name follows the brand. */
 function fromAddress(brand: Brand): string {
   const v = brand === "bizimresimler" ? process.env.EMAIL_FROM_TR : process.env.EMAIL_FROM_EN;
-  return v || `${BRANDS[brand].name} <hello@${BRANDS[brand].domain}>`;
+  return v || `${BRANDS[brand].name} <${CONTACT_EMAIL}>`;
 }
 
 function esc(s: string) {

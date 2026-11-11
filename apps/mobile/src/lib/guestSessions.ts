@@ -38,7 +38,7 @@ export async function savePin(slug: string, pin: string): Promise<void> {
 
 /**
  * Extracts an event slug from a scanned QR / pasted text.
- * Accepts https://ourpixs.com/g/<slug>, https://bizimresimler.com/g/<slug>?x=y, ourpixs://g/<slug>, or a bare code.
+ * Accepts https://bizimresimler.com/g/<slug>?x=y, https://ourpixs.com/g/<slug>, bizimresimler://g/<slug>, or a bare code.
  */
 export function parseEventCode(input: string): string | null {
   const s = input.trim();

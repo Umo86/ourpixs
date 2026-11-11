@@ -27,7 +27,7 @@ export const DEMO_SLUG = "elif-can";
 export const DEMO_ID = "demo-wedding";
 export const DEMO_GUEST_TOKEN = "demo-guest-token";
 
-export const demoHost: Host = { id: "demo-host", email: "elif@example.com", name: "Elif", locale: "en", brand: "ourpixs" };
+export const demoHost: Host = { id: "demo-host", email: "elif@example.com", name: "Elif", locale: "en", brand: "bizimresimler" };
 
 const now = Date.now();
 const iso = (minsAgo: number) => new Date(now - minsAgo * 60_000).toISOString();
@@ -61,7 +61,7 @@ export function demoOccasion(id: string): Occasion {
     venueName: "The Grand Hall",
     city: "London",
     theme: "noir",
-    brand: "ourpixs",
+    brand: "bizimresimler",
     approvalMode: false,
     revealMode: "live",
     revealAt: null,
@@ -71,8 +71,8 @@ export function demoOccasion(id: string): Occasion {
     disposableShots: null,
     storageExpiresAt: "2030-06-14T00:00:00.000Z",
     days,
-    guestUrl: `https://ourpixs.com/g/${s.slug}`,
-    wallUrl: `https://ourpixs.com/wall/${s.slug}`,
+    guestUrl: `https://bizimresimler.com/g/${s.slug}`,
+    wallUrl: `https://bizimresimler.com/wall/${s.slug}`,
     access: demoAccess,
   };
 }
@@ -124,7 +124,7 @@ export function demoGuestMissions(): GuestMission[] {
 }
 
 export const demoShareLinks: ShareLink[] = [
-  { id: "s1", token: "fam-izmir", url: "https://ourpixs.com/s/fam-izmir", scope: "all", label: "Family in Izmir", expiresAt: "2027-09-14T00:00:00.000Z" },
+  { id: "s1", token: "fam-izmir", url: "https://bizimresimler.com/s/fam-izmir", scope: "all", label: "Family in Izmir", expiresAt: "2027-09-14T00:00:00.000Z" },
 ];
 
 export function demoPublic(): PublicOccasion {

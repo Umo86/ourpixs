@@ -8,20 +8,24 @@ export type Locale = "en" | "tr";
 export type Brand = "ourpixs" | "bizimresimler";
 type L = { en: string; tr: string };
 
-export const BRANDS: Record<Brand, { name: string; domain: string; defaultLocale: Locale }> = {
-  ourpixs: { name: "Our Pixs", domain: "ourpixs.com", defaultLocale: "en" },
-  bizimresimler: { name: "Bizim Resimler", domain: "bizimresimler.com", defaultLocale: "tr" },
+/** BizimResimler is the main brand (bilingual); Our Pixs is the English alias on ourpixs.com. */
+export const BRANDS: Record<Brand, { name: string; domain: string }> = {
+  bizimresimler: { name: "BizimResimler", domain: "bizimresimler.com" },
+  ourpixs: { name: "Our Pixs", domain: "ourpixs.com" },
 };
 
-/** The brand the app presents in a given UI language. */
-export function brandForLocale(locale: Locale): Brand {
-  return locale === "tr" ? "bizimresimler" : "ourpixs";
+/** The brand the app presents and signs hosts up under: BizimResimler in every language (EXPO_PUBLIC_BRAND overrides). */
+export const APP_BRAND: Brand = process.env.EXPO_PUBLIC_BRAND === "ourpixs" ? "ourpixs" : "bizimresimler";
+
+/** The brand the app presents in a given UI language (the same in both: the app is BizimResimler). */
+export function brandForLocale(_locale: Locale): Brand {
+  return APP_BRAND;
 }
 
 const extra = (Constants.expoConfig?.extra ?? {}) as { apiUrl?: string; demo?: boolean };
 
 /** API base URL. EXPO_PUBLIC_API_URL wins, then app.config extra, then production. */
-export const API_URL = (process.env.EXPO_PUBLIC_API_URL || extra.apiUrl || "https://ourpixs.com").replace(/\/+$/, "");
+export const API_URL = (process.env.EXPO_PUBLIC_API_URL || extra.apiUrl || "https://bizimresimler.com").replace(/\/+$/, "");
 
 /** Demo mode: every screen is reachable with built-in sample data (store screenshots). */
 export const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO === "1" || extra.demo === true;
@@ -37,21 +41,23 @@ export const EXTERNAL_CHECKOUT = process.env.EXPO_PUBLIC_EXTERNAL_CHECKOUT === "
 /** Show the dev-only login code when the backend returns one. */
 export const SHOW_PREVIEW_CODE = __DEV__ || process.env.EXPO_PUBLIC_SHOW_PREVIEW_CODE === "1";
 
-export const SUPPORT_EMAILS: Record<Brand, string> = {
-  ourpixs: process.env.EXPO_PUBLIC_SUPPORT_EMAIL_EN || "hello@ourpixs.com",
-  bizimresimler: process.env.EXPO_PUBLIC_SUPPORT_EMAIL_TR || "merhaba@bizimresimler.com",
-};
-export function supportEmail(brand: Brand): string {
-  return SUPPORT_EMAILS[brand];
+/** One contact address for both brands. */
+export const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || "hello@bizimresimler.com";
+export function supportEmail(_brand?: Brand): string {
+  return SUPPORT_EMAIL;
 }
 
-/** Public website for a brand (privacy, terms…). Always the brand's own domain. */
-export function siteUrl(brand: Brand, path = ""): string {
-  return `https://${BRANDS[brand].domain}${path}`;
+/**
+ * Public website for a brand (privacy, terms…). Always the brand's own domain.
+ * Pass the app's locale so the page opens in the same language as the app (`?lang=` pins it on the website).
+ */
+export function siteUrl(brand: Brand, path = "", locale?: Locale): string {
+  const url = `https://${BRANDS[brand].domain}${path}`;
+  return locale ? `${url}${url.includes("?") ? "&" : "?"}lang=${locale}` : url;
 }
 
 /** Hosts whose /g/<slug> links open the join flow. */
-export const GUEST_LINK_HOSTS = ["ourpixs.com", "www.ourpixs.com", "bizimresimler.com", "www.bizimresimler.com"];
+export const GUEST_LINK_HOSTS = ["bizimresimler.com", "www.bizimresimler.com", "ourpixs.com", "www.ourpixs.com"];
 
 export type OccasionType =
   | "dugun" | "nisan" | "kina" | "sunnet" | "dogum_gunu" | "bebek" | "mezuniyet" | "yildonumu" | "ev_partisi" | "kurumsal" | "diger";

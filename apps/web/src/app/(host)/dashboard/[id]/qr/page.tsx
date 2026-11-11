@@ -9,7 +9,7 @@ import { makeT } from "@/i18n/shared";
 import { requireMemberPage } from "@/lib/auth";
 import { BRANDS, OCCASIONS, THEMES } from "@/lib/config";
 import { TEMPLATES } from "@/content/templates";
-import { activeDays, brandLocale, dayGuestUrl, guestUrl } from "@/lib/occasion";
+import { activeDays, dayGuestUrl, guestUrl } from "@/lib/occasion";
 import { loadDays } from "@/lib/queries";
 import { coverUrlFor } from "@/lib/serializers";
 import { ShareButtons } from "@/components/app/ShareButtons";
@@ -52,8 +52,8 @@ export default async function QrPage({ params, searchParams }: { params: Promise
   const template = TEMPLATES.find((x) => x.id === sp.template) ?? TEMPLATES.find((x) => x.theme === o.theme) ?? TEMPLATES[0]!;
   const qr = await QRCode.toDataURL(url, { margin: 1, width: 1200, errorCorrectionLevel: "Q", color: { dark: "#0A0A0A", light: "#FFFFFF" } });
 
-  // Card copy is bilingual: the event's own language first, the other underneath.
-  const primary = brandLocale(o);
+  // Card copy is bilingual: the host's language first, the other underneath.
+  const primary = locale;
   const secondary = primary === "tr" ? "en" : "tr";
   const p = makeT(primary, "host");
   const s = makeT(secondary, "host");

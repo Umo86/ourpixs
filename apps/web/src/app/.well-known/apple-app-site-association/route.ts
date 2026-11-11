@@ -1,9 +1,11 @@
-/** iOS universal links for the Expo app: /g/* opens the app when installed. Served on both domains. */
+import { MOBILE_APP_ID } from "@/lib/config";
+
+/** iOS universal links for the Expo app (com.bizimresimler.app): /g/* opens the app when installed. Served on both domains. */
 export const dynamic = "force-dynamic";
 
 export function GET() {
   const team = process.env.APPLE_TEAM_ID;
-  const appID = `${team || "TEAMID"}.com.ourpixs.app`;
+  const appID = `${team || "TEAMID"}.${MOBILE_APP_ID}`;
   const body = {
     applinks: { apps: [], details: [{ appIDs: [appID], appID, paths: ["/g/*"], components: [{ "/": "/g/*" }] }] },
     webcredentials: { apps: [appID] },

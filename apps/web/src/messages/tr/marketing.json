@@ -33,7 +33,8 @@
     "product": "Ürün",
     "company": "Şirket",
     "creditsLink": "Emeği geçenler",
-    "copyright": "© {year} {brands} · Londra",
+    "copyright": "© {year} {brand} · Londra",
+    "alsoAt": "Ayrıca {domain} adresinde",
     "backHome": "Ana sayfaya dön",
     "demo": "Canlı demo",
     "compare": "Karşılaştırma",
@@ -436,7 +437,7 @@
   "privacy": {
     "title": "Gizlilik",
     "accent": "politikası.",
-    "intro": "{brand}, ev sahiplerinin misafirlerinden fotoğraf, video ve mesaj toplamasını sağlar. Bu sayfada hangi kişisel verileri neden işlediğimizi açıklıyoruz. Merkezimiz Londra'dadır.",
+    "intro": "{brand} ({aliasDomain} adresinde {alias} adıyla da kullanılabilir), ev sahiplerinin misafirlerinden fotoğraf, video ve mesaj toplamasını sağlar. Bu sayfada hangi kişisel verileri neden işlediğimizi açıklıyoruz. Merkezimiz Londra'dadır.",
     "sections": [
       {
         "h": "Biz kimiz",
@@ -557,7 +558,7 @@
   "terms": {
     "title": "Kullanım",
     "accent": "koşulları.",
-    "intro": "Bu koşullar, {brand} hizmetini ev sahibi ya da misafir olarak kullandığınızda geçerlidir. Hizmeti kullanarak bu koşulları kabul etmiş olursunuz.",
+    "intro": "Bu koşullar, {brand} hizmetini ({aliasDomain} adresinde {alias} adıyla da sunulur) ev sahibi ya da misafir olarak kullandığınızda geçerlidir. Hizmeti kullanarak bu koşulları kabul etmiş olursunuz.",
     "sections": [
       {
         "h": "Hizmet",

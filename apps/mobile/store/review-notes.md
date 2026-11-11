@@ -6,7 +6,7 @@ Sign-in is passwordless (email → 6-digit code). Reviewers can't read our email
 
 | Piece | Where | What it does |
 |---|---|---|
-| `REVIEW_EMAIL` | **web** env (server) | The one email address allowed to use the fixed code, e.g. `appreview@ourpixs.com`. |
+| `REVIEW_EMAIL` | **web** env (server) | The one email address allowed to use the fixed code, e.g. `appreview@example.com`: any address works, because the fixed code means no email has to arrive. Support contact for the review team: hello@bizimresimler.com. |
 | `REVIEW_CODE` | **web** env (server, secret) | Fixed 6-digit code for that email only, e.g. a random `482913`. Never in the app bundle. |
 | `EXPO_PUBLIC_REVIEW_EMAIL` | **mobile** env (EAS build) | Same address as `REVIEW_EMAIL`. When typed on the sign-in screen, the app shows the hint "Review account: enter the code from the App Review notes" and moves to the code step even if email sending fails. |
 

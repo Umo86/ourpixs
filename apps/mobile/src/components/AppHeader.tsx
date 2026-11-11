@@ -7,7 +7,7 @@ import { colors, fonts, palette, type Tone } from "@/theme";
 import { IconButton } from "./Button";
 import { Txt } from "./Text";
 
-/** Brand wordmark: Bodoni italic name + blue dot. Brand follows the UI language (Our Pixs / Bizim Resimler). */
+/** Brand wordmark: Bodoni italic name + blue dot. The app is BizimResimler in both languages (APP_BRAND in src/config.ts). */
 export function Wordmark({ tone = "light", size = 22 }: { tone?: Tone; size?: number }) {
   const { brand, t } = useI18n();
   const p = palette(tone);

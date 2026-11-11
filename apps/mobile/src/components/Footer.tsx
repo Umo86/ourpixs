@@ -40,11 +40,11 @@ export function openSite(url: string) {
 
 /** Same footer links as the website: Privacy, Terms, Contact, language switch, copyright. */
 export function Footer({ tone = "light" }: { tone?: Tone }) {
-  const { t, brand } = useI18n();
+  const { t, brand, locale } = useI18n();
   const p = palette(tone);
   const links = [
-    { label: t("footer.privacy"), onPress: () => openSite(siteUrl(brand, "/privacy")), role: "link" as const },
-    { label: t("footer.terms"), onPress: () => openSite(siteUrl(brand, "/terms")), role: "link" as const },
+    { label: t("footer.privacy"), onPress: () => openSite(siteUrl(brand, "/privacy", locale)), role: "link" as const },
+    { label: t("footer.terms"), onPress: () => openSite(siteUrl(brand, "/terms", locale)), role: "link" as const },
     { label: t("footer.contact"), onPress: () => void Linking.openURL(`mailto:${supportEmail(brand)}`), role: "link" as const },
   ];
   return (
@@ -62,7 +62,7 @@ export function Footer({ tone = "light" }: { tone?: Tone }) {
         <LanguageSwitch tone={tone} />
       </View>
       <Txt tone={tone} variant="caption" muted>
-        {t("footer.copyright", { year: new Date().getFullYear() })}
+        {t("footer.copyright", { year: new Date().getFullYear(), brand: t(`brand.${brand}`) })}
       </Txt>
     </View>
   );

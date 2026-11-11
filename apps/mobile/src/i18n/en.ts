@@ -1,5 +1,5 @@
 const en = {
-  brand: { ourpixs: "Our Pixs", bizimresimler: "Bizim Resimler" },
+  brand: { ourpixs: "Our Pixs", bizimresimler: "BizimResimler" },
   common: {
     save: "Save", cancel: "Cancel", continue: "Continue", back: "Back", delete: "Delete", close: "Close",
     download: "Download", copy: "Copy", copied: "Copied", retry: "Try again", loading: "Loading…", done: "Done",
@@ -19,7 +19,7 @@ const en = {
     downloadsLocked: "Downloads aren't available on this account yet.",
   },
   footer: {
-    privacy: "Privacy", terms: "Terms", contact: "Contact", copyright: "© {year} Our Pixs · Bizim Resimler", language: "Language",
+    privacy: "Privacy", terms: "Terms", contact: "Contact", copyright: "© {year} {brand}", language: "Language",
   },
   nav: { home: "Home", settings: "Settings", signIn: "Sign in", backTo: "Go back" },
   welcome: {

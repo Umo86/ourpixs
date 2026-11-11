@@ -1,7 +1,7 @@
 import type { Messages } from "./en";
 
 const tr: Messages = {
-  brand: { ourpixs: "Our Pixs", bizimresimler: "Bizim Resimler" },
+  brand: { ourpixs: "Our Pixs", bizimresimler: "BizimResimler" },
   common: {
     save: "Kaydet", cancel: "Vazgeç", continue: "Devam et", back: "Geri", delete: "Sil", close: "Kapat",
     download: "İndir", copy: "Kopyala", copied: "Kopyalandı", retry: "Tekrar dene", loading: "Yükleniyor…", done: "Bitti",
@@ -21,7 +21,7 @@ const tr: Messages = {
     downloadsLocked: "İndirmeler bu hesapta henüz kullanılamıyor.",
   },
   footer: {
-    privacy: "Gizlilik", terms: "Koşullar", contact: "İletişim", copyright: "© {year} Our Pixs · Bizim Resimler", language: "Dil",
+    privacy: "Gizlilik", terms: "Koşullar", contact: "İletişim", copyright: "© {year} {brand}", language: "Dil",
   },
   nav: { home: "Ana sayfa", settings: "Ayarlar", signIn: "Giriş", backTo: "Geri dön" },
   welcome: {

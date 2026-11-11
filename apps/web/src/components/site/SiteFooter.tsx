@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getBrand, getLocale } from "@/i18n";
-import { BRANDS } from "@/lib/config";
+import { BRANDS, MAIN_BRAND, brandBaseUrl, type Brand } from "@/lib/config";
 import { makeT } from "@/i18n/shared";
 import { Container } from "@/components/ui/Container";
 import { Logo } from "@/components/ui/Logo";
@@ -15,7 +15,11 @@ export async function SiteFooter({ compact = false, className = "" }: { compact?
   const m = makeT(locale, "marketing");
   const name = BRANDS[brand].name;
   const mailto = supportMailto(brand);
-  const copyright = m("site.copyright", { year: new Date().getFullYear(), brands: `${BRANDS.ourpixs.name} · ${BRANDS.bizimresimler.name}` });
+  // BizimResimler is the main brand: it leads the copyright line; the alias site adds its own name after it.
+  const owner = BRANDS[MAIN_BRAND].name;
+  const copyright = m("site.copyright", { year: new Date().getFullYear(), brand: brand === MAIN_BRAND ? owner : `${owner} · ${name}` });
+  const other: Brand = brand === MAIN_BRAND ? "ourpixs" : MAIN_BRAND;
+  const alsoAt = { href: brandBaseUrl(other), label: m("site.alsoAt", { domain: BRANDS[other].domain }) };
   const link = "rounded-md py-1 text-white no-underline hover:text-sky-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky";
 
   if (compact) {
@@ -75,7 +79,9 @@ export async function SiteFooter({ compact = false, className = "" }: { compact?
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#2E2E2E] pt-6 text-sm">
-          <span className="text-muted-dark">{copyright}</span>
+          <span className="text-muted-dark">
+            {copyright} · <a href={alsoAt.href} className="text-muted-dark underline hover:text-white">{alsoAt.label}</a>
+          </span>
           <LanguageSwitch tone="dark" label={m("site.language")} />
         </div>
         <p className="m-0 text-[12.5px] leading-relaxed text-muted-dark">

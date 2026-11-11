@@ -1,5 +1,5 @@
 {
-  "brand": { "ourpixs": "Our Pixs", "bizimresimler": "Bizim Resimler" },
+  "brand": { "ourpixs": "Our Pixs", "bizimresimler": "BizimResimler" },
   "nav": { "features": "Features", "pricing": "Pricing", "signIn": "Sign in", "startFree": "Start free", "dashboard": "Dashboard" },
   "actions": { "save": "Save", "cancel": "Cancel", "continue": "Continue", "back": "Back", "delete": "Delete", "close": "Close", "download": "Download", "copy": "Copy", "copied": "Copied", "retry": "Try again", "loading": "Loading…" },
   "errors": { "generic": "Something went wrong. Please try again.", "notFound": "We couldn't find that page.", "offline": "You're offline. We'll keep trying." },

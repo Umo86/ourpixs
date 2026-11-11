@@ -1,6 +1,6 @@
-# Our Pixs mobile (Expo, iOS + Android)
+# BizimResimler mobile (Expo, iOS + Android)
 
-The host app for **Our Pixs / Bizim Resimler**: create events, get a QR code, manage the album. Anyone can also join an event by scanning its QR code. It talks to the web app's JSON API (`/api/v1`, contract in [`../../docs/API.md`](../../docs/API.md)).
+The host app for **BizimResimler** (bundle id / package `com.bizimresimler.app`, URL scheme `bizimresimler://`; the web also runs as the English alias Our Pixs at ourpixs.com): create events, get a QR code, manage the album. Anyone can also join an event by scanning its QR code. It talks to the web app's JSON API (`/api/v1`, contract in [`../../docs/API.md`](../../docs/API.md)).
 
 - Expo SDK 58, Expo Router (typed routes), TypeScript strict, React Compiler
 - Standalone npm project (not a workspace). Product config is copied from `apps/web/src/lib/config.ts` into `src/config.ts`; keep them in sync.
@@ -31,7 +31,7 @@ EXPO_PUBLIC_API_URL=http://192.168.1.20:3000 npx expo start   # use your LAN IP,
 
 ```bash
 EXPO_PUBLIC_DEMO=1 npx expo start
-# open a screen directly: ourpixs://demo/album?lang=tr  (see store/screenshot-plan.md for the list)
+# open a screen directly: bizimresimler://demo/album?lang=tr  (see store/screenshot-plan.md for the list)
 ```
 
 ### Checks
@@ -47,12 +47,13 @@ node store/check-metadata.mjs       # store text length limits
 
 | Variable | Where | Default | Purpose |
 |---|---|---|---|
-| `EXPO_PUBLIC_API_URL` | app | `https://ourpixs.com` | API base URL |
+| `EXPO_PUBLIC_API_URL` | app | `https://bizimresimler.com` | API base URL |
+| `EXPO_PUBLIC_BRAND` | app | `bizimresimler` | Brand the app presents and signs hosts up under (`ourpixs` only for an alias build) |
 | `EXPO_PUBLIC_DEMO` | app | off | `1` = built-in demo data, `/demo/<screen>` deep links |
 | `EXPO_PUBLIC_SHOW_PREVIEW_CODE` | app | on in `__DEV__` | Show the `previewCode` the API returns when email isn't configured |
 | `EXPO_PUBLIC_EXTERNAL_CHECKOUT` | app | off | `1` = show a "Choose a plan" button that opens the website pricing page. **Keep off in store builds** (Apple 3.1.1 / Play payments policy); store builds show plan status only, with no prices |
 | `EXPO_PUBLIC_REVIEW_EMAIL` | app | none | App Review account email (see `store/review-notes.md`) |
-| `EXPO_PUBLIC_SUPPORT_EMAIL_EN` / `_TR` | app | hello@ourpixs.com / merhaba@bizimresimler.com | Contact links |
+| `EXPO_PUBLIC_SUPPORT_EMAIL` | app | hello@bizimresimler.com | Contact links (one address for both languages) |
 | `APP_VARIANT` | build | `production` | `development` / `preview` change the bundle ID and name so they install side by side |
 | `EAS_PROJECT_ID` | build | none | Set after `eas init`; required for push tokens |
 | `EAS_OWNER` | build | none | Expo account/organisation |
@@ -93,12 +94,12 @@ The full ordered list of manual App Store Connect / Play Console steps is in **[
 
 | | EN (en-GB) | TR |
 |---|---|---|
-| App Store name | Our Pixs: Event Photo Album | Bizim Resimler: Ortak Albüm |
+| App Store / Play name | BizimResimler | BizimResimler |
 | Subtitle | Guest photos from one QR code | Misafir fotoğrafları tek QR'da |
-| Keywords | wedding,photo,sharing,guest,album,qr,event,party,camera,disposable,video,guestbook,henna | düğün,nişan,kına,fotoğraf,paylaşım,misafir,qr,etkinlik,sünnet,doğum günü,anı defteri,video |
+| Keywords | event,album,wedding,party,camera,disposable,video,guestbook,henna,birthday,engagement,ourpixs | ortak albüm,düğün,nişan,kına,sünnet,paylaşım,doğum günü,anı defteri,video,hatıra,bizim resimler |
 | Play short description | Every guest's photos and videos in one private album. Guests just scan a QR. | Misafirlerin tüm fotoğraf ve videoları tek albümde. QR okut, yükle, bitti. |
 
-On a Turkish iPhone the home-screen name is "Bizim Resimler" (`locales/tr.json`); elsewhere it is "Our Pixs".
+The home-screen name is "BizimResimler" in every language (`locales/en.json`, `locales/tr.json`). The app language follows the phone (Turkish → TR, anything else → EN) until the user picks one in Settings.
 
 ### Privacy label (summary; full answers in `store/privacy.md`)
 Collected, linked to the user, **not** used for tracking, all for App Functionality: email address, name, photos/videos, other user content (guestbook), user ID. No analytics, ads, diagnostics or location (decide on EXIF GPS stripping first). Encrypted in transit. Deletion on request (in-app request + web page).

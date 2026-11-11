@@ -1,4 +1,4 @@
-Bizim Resimler; düğün, nişan, kına gecesi, doğum günü ya da partinizde misafirlerin çektiği tüm fotoğraf ve videoları tek bir özel albümde toplar. Misafirler yalnızca QR kodunuzu okutur. Onlar için uygulama yok, üyelik yok, şifre yok.
+BizimResimler; düğün, nişan, kına gecesi, doğum günü ya da partinizde misafirlerin çektiği tüm fotoğraf ve videoları tek bir özel albümde toplar. Misafirler yalnızca QR kodunuzu okutur. Onlar için uygulama yok, üyelik yok, şifre yok.
 
 NASIL ÇALIŞIR?
 1. Etkinliğinizi bir dakikada oluşturun: türünü seçin, isimleri, tarihi ve mekanı ekleyin.
@@ -35,4 +35,4 @@ Uygulama ve misafir sayfaları Türkçe ve İngilizce çalışır, her misafirin
 GİZLİLİK
 Albümünüz yalnızca etkinliğinize özeldir. Misafirler yüklemeden önce onay verir, kendi yüklemelerini silebilir; siz de istediğiniz zaman her şeyi kaldırabilirsiniz. Verilerinizi asla satmayız ve reklam için kullanmayız.
 
-Sorularınız için: merhaba@bizimresimler.com
+Sorularınız için: hello@bizimresimler.com

@@ -33,7 +33,8 @@
     "product": "Product",
     "company": "Company",
     "creditsLink": "Credits",
-    "copyright": "© {year} {brands} · London",
+    "copyright": "© {year} {brand} · London",
+    "alsoAt": "Also at {domain}",
     "backHome": "Back to home",
     "demo": "Live demo",
     "compare": "Compare",
@@ -436,7 +437,7 @@
   "privacy": {
     "title": "Privacy",
     "accent": "policy.",
-    "intro": "{brand} lets hosts collect photos, videos and messages from their guests. This page explains what personal data we handle and why. We are based in London, UK.",
+    "intro": "{brand} (also available as {alias} at {aliasDomain}) lets hosts collect photos, videos and messages from their guests. This page explains what personal data we handle and why. We are based in London, UK.",
     "sections": [
       {
         "h": "Who we are",
@@ -557,7 +558,7 @@
   "terms": {
     "title": "Terms",
     "accent": "of use.",
-    "intro": "These terms apply when you use {brand} as a host or as a guest. By using the service you agree to them.",
+    "intro": "These terms apply when you use {brand} (also available as {alias} at {aliasDomain}) as a host or as a guest. By using the service you agree to them.",
     "sections": [
       {
         "h": "The service",

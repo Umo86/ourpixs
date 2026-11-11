@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generates PLACEHOLDER app icons and splash images for Our Pixs.
+ * Generates PLACEHOLDER app icons and splash images for BizimResimler.
  * Pure Node (zlib only) — no native deps. Replace the output with real brand artwork before launch.
  *
  *   node scripts/generate-placeholder-assets.mjs

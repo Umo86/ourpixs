@@ -6,17 +6,39 @@
 export type Locale = "en" | "tr";
 export type Brand = "ourpixs" | "bizimresimler";
 
-export const BRANDS: Record<Brand, { name: string; domain: string; defaultLocale: Locale; envUrl: string }> = {
-  ourpixs: { name: "Our Pixs", domain: "ourpixs.com", defaultLocale: "en", envUrl: "NEXT_PUBLIC_URL_EN" },
-  bizimresimler: { name: "Bizim Resimler", domain: "bizimresimler.com", defaultLocale: "tr", envUrl: "NEXT_PUBLIC_URL_TR" },
+/**
+ * BizimResimler is the main brand (bizimresimler.com): Turkish + English, the language follows the visitor's phone.
+ * Our Pixs is the English alias brand on ourpixs.com: English by default, same product and backend.
+ * - defaultLocale: language when there is no `lang` cookie (and, for browserLocale brands, no usable Accept-Language).
+ * - browserLocale: first-time visitors get their browser/phone language (Turkish → tr, anything else → en).
+ * - contentLocale: language that event data (default day names, moment tags) is stored in for events of this brand.
+ *   Kept as before so existing events stay consistent; it is not the UI language.
+ */
+export const BRANDS: Record<Brand, { name: string; domain: string; defaultLocale: Locale; browserLocale: boolean; contentLocale: Locale; envUrl: string }> = {
+  bizimresimler: { name: "BizimResimler", domain: "bizimresimler.com", defaultLocale: "en", browserLocale: true, contentLocale: "tr", envUrl: "NEXT_PUBLIC_URL_TR" },
+  ourpixs: { name: "Our Pixs", domain: "ourpixs.com", defaultLocale: "en", browserLocale: false, contentLocale: "en", envUrl: "NEXT_PUBLIC_URL_EN" },
 };
 
-export function brandFromHost(host: string | null | undefined): Brand {
-  const h = (host || "").toLowerCase();
-  if (h.includes("bizimresimler")) return "bizimresimler";
-  if (h.includes("ourpixs")) return "ourpixs";
-  return (process.env.DEFAULT_BRAND as Brand) || "ourpixs";
+/** The main brand: legal entity name, Stripe product, store listings, JSON-LD. */
+export const MAIN_BRAND: Brand = "bizimresimler";
+
+function isBrand(v: string | undefined): v is Brand {
+  return v === "bizimresimler" || v === "ourpixs";
 }
+
+/** Exact host (or a subdomain) of one of our domains; anything else (vercel.app, previews, localhost) → DEFAULT_BRAND. */
+export function brandFromHost(host: string | null | undefined): Brand {
+  const h = (host || "").toLowerCase().trim().split(",")[0]!.trim().replace(/:\d+$/, "").replace(/\.$/, "");
+  for (const b of Object.keys(BRANDS) as Brand[]) {
+    const d = BRANDS[b].domain;
+    if (h === d || h.endsWith(`.${d}`)) return b;
+  }
+  const env = process.env.DEFAULT_BRAND;
+  return isBrand(env) ? env : "bizimresimler";
+}
+
+/** iOS bundle identifier and Android package of the Expo app (apps/mobile/app.config.ts). */
+export const MOBILE_APP_ID = "com.bizimresimler.app";
 
 export function brandBaseUrl(brand: Brand): string {
   const v = brand === "bizimresimler" ? process.env.NEXT_PUBLIC_URL_TR : process.env.NEXT_PUBLIC_URL_EN;
@@ -139,7 +161,9 @@ export const intervalPence = (i: PlanInterval): number => (i === "year" ? SUBSCR
 export const YEARLY_SAVING_PERCENT = Math.round((1 - SUBSCRIPTION.yearlyPence / (SUBSCRIPTION.monthlyPence * 12)) * 100);
 /** 14-day money-back guarantee on a host's first subscription payment (refunded by support). */
 export const MONEY_BACK_DAYS = 14;
-export const SUPPORT_EMAIL = { ourpixs: process.env.NEXT_PUBLIC_SUPPORT_EMAIL_EN || "hello@ourpixs.com", bizimresimler: process.env.NEXT_PUBLIC_SUPPORT_EMAIL_TR || "merhaba@bizimresimler.com" } as const;
+/** One address for both brands: support inbox and email sender. */
+export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "hello@bizimresimler.com";
+export const SUPPORT_EMAIL: Record<Brand, string> = { bizimresimler: CONTACT_EMAIL, ourpixs: CONTACT_EMAIL };
 
 export const THEMES = {
   noir: { bg: "#0A0A0A", fg: "#FFFFFF", accent: "#4D6BFF" },

@@ -9,16 +9,18 @@ const inter = Inter_Tight({ subsets: ["latin", "latin-ext"], weight: ["400", "50
 const bodoni = Bodoni_Moda({ subsets: ["latin", "latin-ext"], style: ["italic"], weight: ["400", "500"], variable: "--font-bodoni", display: "swap" });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = await getBrand();
+  const [brand, locale] = await Promise.all([getBrand(), getLocale()]);
   const name = BRANDS[brand].name;
-  const tr = brand === "bizimresimler";
+  const tr = locale === "tr";
+  // hreflang alternates are per page (src/components/marketing/meta.ts); app pages are noindex.
   return {
     metadataBase: new URL(brandBaseUrl(brand)),
+    applicationName: name,
     title: { default: tr ? `${name} — Özel gününüzün her karesi tek albümde` : `${name} — Every guest photo, one album`, template: `%s · ${name}` },
     description: tr
       ? "Misafirler QR kodu okutur, fotoğraf ve videolarını yükler. Uygulama yok, üyelik yok. Düğün, kına, doğum günü ve her özel gün için."
       : "Guests scan a QR code and share their photos and videos. No app, no sign-up. For weddings, birthdays, parties and every special day.",
-    alternates: { languages: { en: brandBaseUrl("ourpixs"), tr: brandBaseUrl("bizimresimler") } },
+    openGraph: { siteName: name, locale: tr ? "tr_TR" : "en_GB" },
     icons: { icon: "/favicon.ico" },
   };
 }

@@ -1,5 +1,5 @@
-# Our Pixs — fastlane app identifiers (metadata/screenshot uploads only; binaries go through EAS Submit).
-app_identifier("com.ourpixs.app")
+# BizimResimler — fastlane app identifiers (metadata/screenshot uploads only; binaries go through EAS Submit).
+app_identifier("com.bizimresimler.app")
 # apple_id / team_id come from env: FASTLANE_USER, FASTLANE_TEAM_ID (or use an App Store Connect API key: APP_STORE_CONNECT_API_KEY_PATH)
 json_key_file(ENV["GOOGLE_PLAY_JSON_KEY"] || "../google-service-account.json")
-package_name("com.ourpixs.app")
+package_name("com.bizimresimler.app")

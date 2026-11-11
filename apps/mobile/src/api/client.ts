@@ -1,5 +1,5 @@
 /**
- * Typed client for the Our Pixs JSON API (docs/API.md, /api/v1).
+ * Typed client for the BizimResimler JSON API (docs/API.md, /api/v1).
  * - Host calls send `Authorization: Bearer <jwt>`.
  * - Guest calls send `X-Guest-Token` (and `X-Occasion-Pin` when the event has a PIN).
  * - Errors are normalised to ApiError { status, code, message }.

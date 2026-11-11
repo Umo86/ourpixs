@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { and, eq, ne, notInArray, or, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { OCCASIONS, SUBSCRIPTION, type Brand, type OccasionType } from "./config";
+import { OCCASIONS, SUBSCRIPTION, type Brand, type Locale, type OccasionType } from "./config";
 import { ApiError, badRequest, planLimit } from "./http";
 import { brandLocale } from "./occasion";
 import { loadDays, occasionExtras } from "./queries";
@@ -60,12 +60,13 @@ export const patchSchema = z.object({
  * Creates an event owned by `hostId`. The host's first event starts their free trial (no card).
  * Returns `trialStarted: true` when this call started it.
  */
-export async function createOccasion(hostId: string, brand: Brand, input: z.infer<typeof createSchema>) {
+export async function createOccasion(hostId: string, brand: Brand, input: z.infer<typeof createSchema>, locale?: Locale) {
   const billing = await loadOwnerBilling(hostId);
   if (!billing) throw new ApiError(401, "unauthorized", "Sign in required");
   assertCanCreateEvents(computeAccess(billing));
   const id = crypto.randomUUID();
-  const loc = brandLocale({ brand });
+  // Default day name in the host's language (BizimResimler hosts may be English or Turkish).
+  const loc = locale ?? brandLocale({ brand });
   const days = input.days?.length
     ? input.days
     : [{ name: OCCASIONS[input.type].days[0]![loc], date: input.startsOn ?? null }];

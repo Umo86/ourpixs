@@ -37,12 +37,19 @@ export async function pushToHosts(hostIds: string[], msg: Push) {
   }
 }
 
+/** Hosts of an occasion with their own app language (hosts.locale). */
+async function hostLocalesFor(occasionId: string) {
+  return db.select({ id: schema.occasionMembers.hostId, locale: schema.hosts.locale }).from(schema.occasionMembers)
+    .innerJoin(schema.hosts, eq(schema.hosts.id, schema.occasionMembers.hostId))
+    .where(eq(schema.occasionMembers.occasionId, occasionId));
+}
+
 /**
  * Event pushes to an occasion's hosts, rate-limited per occasion+kind so a busy wedding doesn't spam phones.
+ * Each host gets the push in their own language (the brand no longer implies one: BizimResimler is bilingual).
  * kinds: first_upload (once per day), message (≤3 / 10 min), pending (≤1 / 30 min)
  */
-export async function notifyHosts(o: { id: string; title: string; brand: string }, kind: "first_upload" | "message" | "pending", locale: "en" | "tr" = "en") {
-  const tr = locale === "tr" || o.brand === "bizimresimler";
+export async function notifyHosts(o: { id: string; title: string; brand: string }, kind: "first_upload" | "message" | "pending") {
   if (kind === "first_upload") {
     const day = new Date().toISOString().slice(0, 10);
     const ins = await db.insert(schema.rateLimits).values({ key: `mark:push:first:${o.id}:${day}`, tokens: 0 }).onConflictDoNothing().returning();
@@ -51,12 +58,16 @@ export async function notifyHosts(o: { id: string; title: string; brand: string 
     const ok = await consume(`push:${kind}:${o.id}`, kind === "message" ? 3 : 1, kind === "message" ? 600 : 1800);
     if (!ok.allowed) return;
   }
-  const copy = {
+  const copyFor = (tr: boolean) => ({
     first_upload: tr ? { title: "Misafirler yüklüyor!", body: `${o.title} albümüne ilk kareler geldi.` } : { title: "Guests are uploading!", body: `The first shots just landed in ${o.title}.` },
     message: tr ? { title: "Yeni anı mesajı", body: `${o.title} için yeni bir mesaj var.` } : { title: "New guestbook message", body: `Someone left a message for ${o.title}.` },
     pending: tr ? { title: "Onay bekleyen kareler", body: `${o.title} albümünde onayınızı bekleyen kareler var.` } : { title: "Shots waiting for approval", body: `New shots in ${o.title} are waiting for your approval.` },
-  }[kind];
-  await pushToHosts(await hostIdsFor(o.id), { ...copy, data: { occasionId: o.id, kind } });
+  }[kind]);
+  const hosts = await hostLocalesFor(o.id);
+  for (const tr of [true, false]) {
+    const ids = hosts.filter((h) => (h.locale === "tr") === tr).map((h) => h.id);
+    if (ids.length) await pushToHosts(ids, { ...copyFor(tr), data: { occasionId: o.id, kind } });
+  }
 }
 
 export { hostIdsFor };

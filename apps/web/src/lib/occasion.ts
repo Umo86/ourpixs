@@ -7,8 +7,9 @@ import { hmac, requireEnv } from "./crypto";
 type OccasionRow = typeof schema.occasions.$inferSelect;
 type DayRow = typeof schema.days.$inferSelect;
 
+/** Language an event's stored data (moment tags) is kept in. Not the UI language: see BRANDS.contentLocale. */
 export function brandLocale(o: Pick<OccasionRow, "brand">): Locale {
-  return BRANDS[o.brand].defaultLocale;
+  return BRANDS[o.brand].contentLocale;
 }
 
 /** Public link: the vanity name when set, otherwise the random slug (which keeps working as an alias). */

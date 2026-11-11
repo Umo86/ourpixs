@@ -3,7 +3,7 @@
  * Nothing touches the DB or storage: the server renders static data and the browser simulates the API.
  */
 import type { GuestMission, MediaItem, PublicOccasion } from "./api-types";
-import type { Locale } from "./config";
+import { MAIN_BRAND, type Locale } from "./config";
 
 export const DEMO_SLUG = "demo";
 export const DEMO_COOKIE = "op_demo_name";
@@ -19,7 +19,7 @@ export function demoOccasion(locale: Locale): PublicOccasion {
   const yesterday = new Date(today.getTime() - 86400000);
   return {
     slug: DEMO_SLUG, type: "dugun", title: "Elif & Can", honorees: ["Elif", "Can"], startsOn: iso(today), venueName: "The Grand", city: "London",
-    theme: "noir", brand: tr ? "bizimresimler" : "ourpixs",
+    theme: "noir", brand: MAIN_BRAND,
     days: [
       { id: "demo-day-1", name: tr ? "Kına" : "Henna night", date: iso(yesterday), sortOrder: 0, uploadOpen: true },
       { id: "demo-day-2", name: tr ? "Düğün" : "Wedding", date: iso(today), sortOrder: 1, uploadOpen: true },

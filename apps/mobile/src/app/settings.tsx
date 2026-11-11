@@ -173,8 +173,8 @@ export default function AppSettings() {
 
       <Card style={{ gap: 4 }}>
         <Txt weight="extrabold">{t("appSettings.legal")}</Txt>
-        <Row icon="lock" label={t("appSettings.privacy")} onPress={() => openSite(siteUrl(brand, "/privacy"))} />
-        <Row icon="book" label={t("appSettings.terms")} onPress={() => openSite(siteUrl(brand, "/terms"))} />
+        <Row icon="lock" label={t("appSettings.privacy")} onPress={() => openSite(siteUrl(brand, "/privacy", locale))} />
+        <Row icon="book" label={t("appSettings.terms")} onPress={() => openSite(siteUrl(brand, "/terms", locale))} />
         <Row icon="mail" label={t("footer.contact")} onPress={() => void Linking.openURL(`mailto:${supportEmail(brand)}`)} />
       </Card>
 

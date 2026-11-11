@@ -154,7 +154,7 @@ export default function JoinEvent() {
           maxLength={40}
         />
         <Checkbox tone="dark" checked={consent} onChange={setConsent} label={t("join.consent")}>
-          <Txt tone="dark" variant="small" color={colors.blueOnDarkSoft} style={{ textDecorationLine: "underline", marginTop: 4 }} accessibilityRole="link" onPress={() => openSite(siteUrl(brand, "/privacy"))}>
+          <Txt tone="dark" variant="small" color={colors.blueOnDarkSoft} style={{ textDecorationLine: "underline", marginTop: 4 }} accessibilityRole="link" onPress={() => openSite(siteUrl(brand, "/privacy", locale))}>
             {t("join.privacyLink")}
           </Txt>
         </Checkbox>

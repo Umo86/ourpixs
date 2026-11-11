@@ -1,9 +1,10 @@
 import type { ConfigContext, ExpoConfig } from "expo/config";
 
 /**
- * Our Pixs — Expo app config.
+ * BizimResimler — Expo app config.
  * Env:
- *   EXPO_PUBLIC_API_URL   API base (default https://ourpixs.com)
+ *   EXPO_PUBLIC_API_URL   API base (default https://bizimresimler.com)
+ *   EXPO_PUBLIC_BRAND     brand the app presents (default bizimresimler)
  *   EXPO_PUBLIC_DEMO=1    demo data on every screen (store screenshots)
  *   EAS_PROJECT_ID        EAS project id (set after `eas init`; needed for push tokens)
  *   APP_VARIANT           development | preview | production (set per EAS profile)
@@ -12,23 +13,24 @@ const VARIANT = process.env.APP_VARIANT ?? "production";
 const IS_DEV = VARIANT === "development";
 const IS_PREVIEW = VARIANT === "preview";
 
-const bundleId = IS_DEV ? "com.ourpixs.app.dev" : IS_PREVIEW ? "com.ourpixs.app.preview" : "com.ourpixs.app";
-const name = IS_DEV ? "Our Pixs (Dev)" : IS_PREVIEW ? "Our Pixs (Preview)" : "Our Pixs";
+const bundleId = IS_DEV ? "com.bizimresimler.app.dev" : IS_PREVIEW ? "com.bizimresimler.app.preview" : "com.bizimresimler.app";
+const name = IS_DEV ? "BizimResimler (Dev)" : IS_PREVIEW ? "BizimResimler (Preview)" : "BizimResimler";
 
-const GUEST_DOMAINS = ["ourpixs.com", "www.ourpixs.com", "bizimresimler.com", "www.bizimresimler.com"];
+// Universal links / App Links on both domains: the main brand and the English alias.
+const GUEST_DOMAINS = ["bizimresimler.com", "www.bizimresimler.com", "ourpixs.com", "www.ourpixs.com"];
 
 const IOS_STRINGS = {
-  NSCameraUsageDescription: "Our Pixs uses the camera to scan event QR codes and take photos for the shared album.",
-  NSPhotoLibraryUsageDescription: "Our Pixs lets you choose photos and videos to add to an event album.",
-  NSPhotoLibraryAddUsageDescription: "Our Pixs saves event photos and videos you download to your photo library.",
-  NSMicrophoneUsageDescription: "Our Pixs uses the microphone to record sound with videos for the event album.",
+  NSCameraUsageDescription: "BizimResimler uses the camera to scan event QR codes and take photos for the shared album.",
+  NSPhotoLibraryUsageDescription: "BizimResimler lets you choose photos and videos to add to an event album.",
+  NSPhotoLibraryAddUsageDescription: "BizimResimler saves event photos and videos you download to your photo library.",
+  NSMicrophoneUsageDescription: "BizimResimler uses the microphone to record sound with videos for the event album.",
 };
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name,
-  slug: "ourpixs",
-  scheme: "ourpixs",
+  slug: "bizimresimler",
+  scheme: "bizimresimler",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
@@ -152,7 +154,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     reactCompiler: true,
   },
   extra: {
-    apiUrl: process.env.EXPO_PUBLIC_API_URL ?? "https://ourpixs.com",
+    apiUrl: process.env.EXPO_PUBLIC_API_URL ?? "https://bizimresimler.com",
     demo: process.env.EXPO_PUBLIC_DEMO === "1",
     eas: process.env.EAS_PROJECT_ID ? { projectId: process.env.EAS_PROJECT_ID } : undefined,
     router: { origin: false },

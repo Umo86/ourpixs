@@ -2,12 +2,12 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getBrand, getT } from "@/i18n";
 import { makeT } from "@/i18n/shared";
-import { BRANDS, brandBaseUrl } from "@/lib/config";
+import { BRANDS, MAIN_BRAND, brandBaseUrl } from "@/lib/config";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Display } from "@/components/ui/SectionHeading";
 import { START_HREF } from "@/components/site/constants";
-import { buildMetadata } from "@/components/marketing/meta";
+import { buildMetadata, withLang } from "@/components/marketing/meta";
 import { GUIDES, GUIDES_UI, counterpart, findGuideAnyLocale } from "@/content/guides";
 
 export const dynamicParams = false;
@@ -51,9 +51,9 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
     inLanguage: hit.locale,
     datePublished: g.date,
     dateModified: g.date,
-    mainEntityOfPage: `${base}/guides/${g.slug}`,
-    author: { "@type": "Organization", name: BRANDS[brand].name },
-    publisher: { "@type": "Organization", name: BRANDS[brand].name },
+    mainEntityOfPage: brand === MAIN_BRAND ? `${base}${withLang(`/guides/${g.slug}`, hit.locale)}` : `${base}/guides/${g.slug}`,
+    author: { "@type": "Organization", name: BRANDS[MAIN_BRAND].name, url: brandBaseUrl(MAIN_BRAND) },
+    publisher: { "@type": "Organization", name: BRANDS[MAIN_BRAND].name, url: brandBaseUrl(MAIN_BRAND) },
   };
   return (
     <article>

@@ -10,7 +10,7 @@ Capture store screenshots from the demo web export (Playwright + Chromium).
 
 These are full-bleed UI renders of the real React Native screens (react-native-web), at exact store sizes.
 For final submission, prefer native captures from a simulator/emulator build with EXPO_PUBLIC_DEMO=1
-(open ourpixs://demo/<screen>?lang=en) — see store/screenshot-plan.md.
+(open bizimresimler://demo/<screen>?lang=en) — see store/screenshot-plan.md.
 """
 import argparse
 import asyncio
@@ -45,8 +45,8 @@ h1{margin:18px 0 0;font-weight:900;font-size:76px;line-height:.95;letter-spacing
 .s{position:absolute;right:80px;top:80px;width:150px;height:150px;border-radius:50%;background:#2347E0;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:900;font-size:22px;transform:rotate(12deg)}</style></head>
 <body><div class="g"><div class="s">%STICKER%</div><div class="b">%BRAND%<span>.</span></div><h1>%L1%<br><em>%L2%</em></h1></div></body></html>"""
 FG_TEXT = {
-    "en": {"BRAND": "Our Pixs", "L1": "Every guest's photos,", "L2": "one album.", "STICKER": "No app for guests"},
-    "tr": {"BRAND": "Bizim Resimler", "L1": "Tüm misafirlerin karesi,", "L2": "tek albümde.", "STICKER": "Misafire uygulama yok"},
+    "en": {"BRAND": "BizimResimler", "L1": "Every guest's photos,", "L2": "one album.", "STICKER": "No app for guests"},
+    "tr": {"BRAND": "BizimResimler", "L1": "Tüm misafirlerin karesi,", "L2": "tek albümde.", "STICKER": "Misafire uygulama yok"},
 }
 
 

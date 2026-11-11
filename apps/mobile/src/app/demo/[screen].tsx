@@ -10,7 +10,7 @@ import { colors } from "@/theme";
 
 /**
  * Demo deep links for store screenshots (only when EXPO_PUBLIC_DEMO=1):
- *   ourpixs://demo/<screen>?lang=en|tr        (native)
+ *   bizimresimler://demo/<screen>?lang=en|tr        (native)
  *   http://localhost:8081/demo/<screen>?lang=tr (web export, Playwright)
  */
 const TARGETS: Record<string, { href: Href; host?: boolean }> = {

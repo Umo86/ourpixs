@@ -1,12 +1,12 @@
 {
   "ios": {
-    "CFBundleDisplayName": "Our Pixs",
-    "NSCameraUsageDescription": "Our Pixs uses the camera to scan event QR codes and take photos for the shared album.",
-    "NSPhotoLibraryUsageDescription": "Our Pixs lets you choose photos and videos to add to an event album.",
-    "NSPhotoLibraryAddUsageDescription": "Our Pixs saves event photos and videos you download to your photo library.",
-    "NSMicrophoneUsageDescription": "Our Pixs uses the microphone to record sound with videos for the event album."
+    "CFBundleDisplayName": "BizimResimler",
+    "NSCameraUsageDescription": "BizimResimler uses the camera to scan event QR codes and take photos for the shared album.",
+    "NSPhotoLibraryUsageDescription": "BizimResimler lets you choose photos and videos to add to an event album.",
+    "NSPhotoLibraryAddUsageDescription": "BizimResimler saves event photos and videos you download to your photo library.",
+    "NSMicrophoneUsageDescription": "BizimResimler uses the microphone to record sound with videos for the event album."
   },
   "android": {
-    "app_name": "Our Pixs"
+    "app_name": "BizimResimler"
   }
 }

@@ -51,4 +51,4 @@ Guideline 1.2 checklist (UGC):
 - [x] Filter / moderate: host approval mode; host hide/delete.
 - [x] Report mechanism: guest viewer → Report.
 - [ ] Block abusive users: hosts need a "remove this guest" action (backend endpoint required; see checklist).
-- [x] Published contact info: hello@ourpixs.com / merhaba@bizimresimler.com, shown in the app footer and settings.
+- [x] Published contact info: hello@bizimresimler.com (one address for both languages), shown in the app footer and settings.

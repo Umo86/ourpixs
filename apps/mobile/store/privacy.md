@@ -2,7 +2,7 @@
 
 Applies to the app as built (no analytics, ads, crash-reporting or tracking SDKs; no IDFA; `NSPrivacyTracking: false` in the iOS privacy manifest). If you add Sentry, analytics or similar, update both forms.
 
-Privacy policy URLs: https://ourpixs.com/privacy (EN) · https://bizimresimler.com/privacy (TR translation of the same UK policy).
+Privacy policy URLs: https://bizimresimler.com/privacy?lang=en (EN) · https://bizimresimler.com/privacy?lang=tr (TR translation of the same UK policy). The English alias site serves the same policy at https://ourpixs.com/privacy.
 
 ## Decision needed first: photo location metadata
 Originals are uploaded untouched, so phone photos can carry **EXIF GPS location**. Either:
@@ -31,7 +31,7 @@ Tracking: **No.** We don't link data with third-party data for advertising or sh
 
 - **Does your app collect or share any of the required user data types?** Yes.
 - **Is all of the user data collected by your app encrypted in transit?** Yes (HTTPS only; uploads use HTTPS presigned URLs).
-- **Do you provide a way for users to request that their data is deleted?** Yes. In-app: Settings → Delete my account. Web link (required by Play): `https://ourpixs.com/account/delete` (create it; see checklist). Guests: delete own uploads in the app; hosts: delete an event (removes all its media).
+- **Do you provide a way for users to request that their data is deleted?** Yes. In-app: Settings → Delete my account. Web link (required by Play): `https://bizimresimler.com/account/delete` (create it; see checklist). Guests: delete own uploads in the app; hosts: delete an event (removes all its media).
 
 | Category → type | Collected | Shared | Optional? | Purpose | Processed ephemerally |
 |---|---|---|---|---|---|

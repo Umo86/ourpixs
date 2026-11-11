@@ -1,31 +1,56 @@
 import type { Metadata } from "next";
-import { getBrand, getT } from "@/i18n";
-import { BRANDS, SUPPORT_EMAIL, brandBaseUrl } from "@/lib/config";
+import { getBrand, getLocale, getT } from "@/i18n";
+import { BRANDS, MAIN_BRAND, SUPPORT_EMAIL, brandBaseUrl, type Brand, type Locale } from "@/lib/config";
 import { pricingVars } from "./format";
 
 type Page = "home" | "features" | "pricing" | "privacy" | "terms" | "credits";
+type Paths = { en: string; tr: string };
 
-/** Shared metadata builder: canonical + hreflang alternates (ourpixs.com = en, bizimresimler.com = tr). */
+/** `/features` + en → `/features?lang=en` (middleware pins `?lang=`, so the URL always serves that language). */
+export function withLang(path: string, locale: Locale): string {
+  return `${path}${path.includes("?") ? "&" : "?"}lang=${locale}`;
+}
+
+/**
+ * hreflang cluster. BizimResimler (bizimresimler.com) is bilingual and language-adaptive, so each language has its
+ * own `?lang=` URL and the bare URL is x-default (Turkish phone → tr, anything else → en).
+ * ourpixs.com is the English alias: it stays outside the cluster with a self canonical.
+ */
+export function languageAlternates(brand: Brand, locale: Locale, p: Paths, current: string): NonNullable<Metadata["alternates"]> {
+  if (brand !== MAIN_BRAND) return { canonical: current };
+  const base = brandBaseUrl(MAIN_BRAND);
+  return {
+    canonical: withLang(p[locale], locale),
+    languages: { en: base + withLang(p.en, "en"), tr: base + withLang(p.tr, "tr"), "x-default": base + p.en },
+  };
+}
+
+/** Shared metadata builder: canonical + hreflang alternates + OpenGraph. */
 export async function buildMetadata(opts: {
   title: string;
   description: string;
   path: string;
-  /** Per-brand paths when the URL differs between sites (e.g. localized guide slugs). */
-  paths?: { en: string; tr: string };
+  /** Per-language paths when the URL differs between languages (e.g. localized guide slugs). */
+  paths?: Paths;
   absolute?: boolean;
   type?: "website" | "article";
 }): Promise<Metadata> {
-  const brand = await getBrand();
+  const [brand, locale] = await Promise.all([getBrand(), getLocale()]);
   const name = BRANDS[brand].name;
   const p = opts.paths ?? { en: opts.path, tr: opts.path };
+  const alternates = languageAlternates(brand, locale, p, opts.path);
   return {
     title: opts.absolute ? { absolute: opts.title } : opts.title,
     description: opts.description,
-    alternates: {
-      canonical: opts.path,
-      languages: { en: brandBaseUrl("ourpixs") + p.en, tr: brandBaseUrl("bizimresimler") + p.tr },
+    alternates,
+    openGraph: {
+      title: opts.absolute ? opts.title : `${opts.title} · ${name}`,
+      description: opts.description,
+      url: typeof alternates.canonical === "string" ? alternates.canonical : opts.path,
+      siteName: name,
+      locale: locale === "tr" ? "tr_TR" : "en_GB",
+      type: opts.type ?? "website",
     },
-    openGraph: { title: opts.absolute ? opts.title : `${opts.title} · ${name}`, description: opts.description, url: opts.path, siteName: name, type: opts.type ?? "website" },
   };
 }
 

@@ -1,10 +1,10 @@
 # Mobile / JSON API contract (`/api/v1`)
 
-Base URL: `https://ourpixs.com` (or `https://bizimresimler.com`; same backend). All bodies JSON. Errors: `{ "error": { "code": string, "message": string } }` with a 4xx/5xx status.
+Base URL: `https://bizimresimler.com` (or `https://ourpixs.com`; same backend). The request host decides the brand: bizimresimler.com and any host that is not one of our domains → `bizimresimler`; ourpixs.com → `ourpixs`. Language: `lang` cookie > `Accept-Language` (first supported language; Turkish → `tr`, anything else → `en`) > `en`. All bodies JSON. Errors: `{ "error": { "code": string, "message": string } }` with a 4xx/5xx status.
 Auth: `Authorization: Bearer <jwt>` (same JWT as the web `op_session` cookie, 30-day expiry).
 
 ## Auth
-- `POST /api/v1/auth/request-code` `{ email, locale?: "en"|"tr", brand?: "ourpixs"|"bizimresimler" }` → `{ ok: true, previewCode?: string }` (previewCode only when PREVIEW_SHOW_CODE=1 and email not configured)
+- `POST /api/v1/auth/request-code` `{ email, locale?: "en"|"tr", brand?: "bizimresimler"|"ourpixs" }` (brand defaults to the request host's brand; the app sends `bizimresimler`) → `{ ok: true, previewCode?: string }` (previewCode only when PREVIEW_SHOW_CODE=1 and email not configured)
 - `POST /api/v1/auth/verify` `{ email, code }` → `{ token, host: Host }` (also sets the `op_session` cookie for web). If env `REVIEW_EMAIL` and `REVIEW_CODE` are both set, that email signs in with that code (app-store review).
 - `GET /api/v1/me` → `{ host: Host & { subscription: Subscription } }` (see "Account subscription" below)
 - `PATCH /api/v1/me` `{ name?, locale? }` → `{ host }` (same shape as GET)
@@ -129,10 +129,10 @@ One subscription per host account: Monthly £9.99 or Yearly £69.99 (GBP, VAT in
 - `POST /api/v1/billing/portal` → `{ url }` — Stripe Customer Portal (card, switch monthly/yearly, cancel at period end, invoices). `409 no_subscription` before the first subscription.
 
 ### Push notifications (Expo)
-Tokens from `POST /api/v1/push-tokens` receive: first guest upload of the day ("Guests are uploading!"), new guestbook message (≤3 / 10 min), shots awaiting approval (≤1 / 30 min). Payload `data: { occasionId, kind: "first_upload"|"message"|"pending" }`.
+Tokens from `POST /api/v1/push-tokens` receive: first guest upload of the day ("Guests are uploading!"), new guestbook message (≤3 / 10 min), shots awaiting approval (≤1 / 30 min). Payload `data: { occasionId, kind: "first_upload"|"message"|"pending" }`. Each host gets the text in their own `locale`.
 
 ### Universal links
-`/.well-known/apple-app-site-association` (appID `$APPLE_TEAM_ID.com.ourpixs.app`, paths `/g/*`) and `/.well-known/assetlinks.json` (`com.ourpixs.app`, fingerprints from `ANDROID_SHA256_FINGERPRINTS`) are served on both domains.
+`/.well-known/apple-app-site-association` (appID `$APPLE_TEAM_ID.com.bizimresimler.app`, paths `/g/*`) and `/.well-known/assetlinks.json` (`com.bizimresimler.app`, fingerprints from `ANDROID_SHA256_FINGERPRINTS`) are served on both domains.
 
 ### Admin overrides (additive)
 Set by our team from the web admin dashboard (`/admin`, web only; not part of this API).

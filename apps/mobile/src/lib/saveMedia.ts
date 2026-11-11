@@ -35,7 +35,7 @@ export async function saveToCameraRoll(list: MediaItem[]): Promise<number> {
   for (const item of list) {
     const url = item.originalUrl || item.displayUrl;
     if (!url || item.kind === "voice") continue;
-    const dest = new File(Paths.cache, `ourpixs-${item.id}.${extFor(item, url)}`);
+    const dest = new File(Paths.cache, `bizimresimler-${item.id}.${extFor(item, url)}`);
     try {
       const file = await File.downloadFileAsync(url, dest, { idempotent: true });
       await Asset.create(file.uri);

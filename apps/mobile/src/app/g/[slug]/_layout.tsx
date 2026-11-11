@@ -12,7 +12,7 @@ import { getGuestSession, type GuestSession } from "@/lib/guestSessions";
 import { colors } from "@/theme";
 
 /**
- * Guest area for one event (also the target of https://ourpixs.com/g/<slug> universal links).
+ * Guest area for one event (also the target of https://bizimresimler.com/g/<slug> and https://ourpixs.com/g/<slug> universal links).
  * No stored guest token → the join screen.
  */
 export default function GuestLayout() {

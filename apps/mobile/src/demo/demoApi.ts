@@ -81,7 +81,7 @@ export async function demoRequest<T>(method: string, path: string, body?: unknow
   if ((m = p.match(/^\/occasions\/([^/]+)\/share-links$/))) {
     if (method === "POST") {
       const token = `link-${links.length + 1}`;
-      links = [...links, { id: token, token, url: `https://ourpixs.com/s/${token}`, scope: String(b.scope), label: (b.label as string) ?? null, expiresAt: null }];
+      links = [...links, { id: token, token, url: `https://bizimresimler.com/s/${token}`, scope: String(b.scope), label: (b.label as string) ?? null, expiresAt: null }];
     }
     return { links } as T;
   }

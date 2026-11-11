@@ -73,7 +73,7 @@ export async function sharePngBase64(base64: string, slug: string, fallbackUrl: 
     await Share.share({ message: fallbackUrl });
     return;
   }
-  const file = new File(Paths.cache, `ourpixs-qr-${slug}.png`);
+  const file = new File(Paths.cache, `bizimresimler-qr-${slug}.png`);
   if (file.exists) file.delete();
   file.create();
   file.write(base64, { encoding: "base64" });

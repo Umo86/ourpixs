@@ -1,10 +1,11 @@
-# Our Pixs / Bizim Resimler — engineering conventions
+# BizimResimler (+ Our Pixs alias) — engineering conventions
 
-One platform, two brands, three surfaces:
-- **ourpixs.com** — English-first brand "Our Pixs"
-- **bizimresimler.com** — Turkish-first brand "Bizim Resimler"
-- Both domains are served by ONE Next.js app (`apps/web`). The brand comes from the request host (`src/lib/config.ts → brandFromHost`). Never hard-code a brand name in UI; use `t("brand.<brand>")` or `BRANDS[brand].name`.
-- **apps/mobile** — Expo (React Native) app for iOS and Android. It talks to the web app's JSON API under `/api/v1/*`.
+One platform, one main brand plus an English alias, three surfaces:
+- **bizimresimler.com** — the main brand **"BizimResimler"** (one word, capital R). Turkish + English: a first-time visitor's language follows their phone/browser (Turkish → `tr`, anything else → `en`); the EN/TR switch wins after that. Turkish suffixes take an apostrophe: BizimResimler'e, BizimResimler'de, BizimResimler'i, BizimResimler'in.
+- **ourpixs.com** — "Our Pixs", the English alias brand (English by default, switch still works). Secondary: wherever both names appear, BizimResimler comes first (or alone).
+- Both domains are served by ONE Next.js app (`apps/web`). The brand comes from the request host (`src/lib/config.ts → brandFromHost`, exact domains + subdomains; any other host, e.g. `*.vercel.app` or localhost, → `DEFAULT_BRAND`, default `bizimresimler`). Never hard-code a brand name in UI; use `t("brand.<brand>")` or `BRANDS[brand].name` (`MAIN_BRAND` for legal/Stripe/JSON-LD).
+- **apps/mobile** — Expo (React Native) app "BizimResimler" (`com.bizimresimler.app`) for iOS and Android. It talks to the web app's JSON API under `/api/v1/*` (default `https://bizimresimler.com`) and follows the phone language.
+- One email address for everything: **hello@bizimresimler.com** (support + sender for both brands).
 
 Guests never install anything: they scan a QR code and use the web guest app at `/g/[slug]`. The mobile app is primarily for hosts (and also lets anyone join an event by scanning a QR).
 
@@ -29,7 +30,8 @@ apps/mobile/             Expo SDK (latest), Expo Router, TypeScript
 - Supported locales: `en`, `tr`. Every user-facing string goes through i18n. No string literals in JSX except proper nouns.
 - Server: `const { t, locale } = await getT("marketing")`. Client: `const t = useT("guest")` (inside `<I18nProvider>`).
 - Message namespaces: `common`, `marketing`, `host`, `guest`, `admin`. Each namespace has an EN and TR JSON file. Add keys to BOTH files. Write natural Turkish (not translated-sounding): "Harika! 3 fotoğraf yüklendi", "İnternet zayıf, yüklemeler devam edecek".
-- Language switch sets the `lang` cookie (`setLanguage` in `src/i18n/client.tsx`). Guest pages use `getT(ns, { preferBrowser: true })` so a Turkish phone gets Turkish.
+- Locale (`getLocale` in `src/i18n/index.ts`): `lang` cookie (the EN/TR switch via `setLanguage` in `src/i18n/client.tsx`, or `?lang=en|tr` pinned by middleware) > Accept-Language (`src/i18n/negotiate.ts`) on bizimresimler.com > brand default (`en`). On ourpixs.com only guest pages (`getT(ns, { preferBrowser: true })`) follow the phone. Pages read cookies/headers, so they render per request with `Cache-Control: private, no-store` and a response is never shared between visitors: never make a language-dependent page static (`force-static`, ISR, `revalidate`).
+- SEO: bizimresimler.com pages list hreflang `en` → `?lang=en`, `tr` → `?lang=tr`, `x-default` → bare URL (`src/components/marketing/meta.ts`, `sitemap.ts`); ourpixs.com pages have a self canonical and no hreflang.
 
 ## Design system (Version 2 — "stylish, fun, high-end")
 - Colours: black `#0A0A0A`, white `#FFFFFF`, royal blue `#2347E0` (hover `#16309F`), on-dark blue `#4D6BFF` / `#8097FF`, tint `#F2F4FB`, greys `#3A3A3A` text-2, `#6B6B6B` muted (on white only), `#C8CAD2` muted-on-dark, `#15171F` dark surface, `#23262F` dark surface-2.
