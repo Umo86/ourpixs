@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Live wall</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&amp;family=Inter+Tight:wght@400;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1600px; height: 900px; box-sizing: border-box; background: #0A0A0A; color: #FFFFFF; font-family: 'Inter Tight', system-ui, sans-serif; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 4px;">
+  <div role="img" aria-label="Son yüklenen: halay" style="grid-column: span 2; grid-row: span 3; background: #2B2B2B; padding: 40px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+    <span style="font-size: 13px; letter-spacing: 4px; text-transform: uppercase;">Az önce · Halay</span>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-family: 'Bodoni Moda', Didot, serif; font-style: italic; font-size: 72px; line-height: 1;">Mert'in karesi</span>
+      <span style="font-size: 13px; letter-spacing: 4px; text-transform: uppercase; color: #CFCFCF;">Elif &amp; Can · 14.06.2027</span>
+    </div>
+  </div>
+  <div role="img" aria-label="Misafir fotoğrafı" style="background: #8C8C8C;"></div>
+  <div role="img" aria-label="Misafir fotoğrafı" style="background: #4A4A4A;"></div>
+  <div role="img" aria-label="Misafir fotoğrafı" style="background: #5E5E5E;"></div>
+  <div role="img" aria-label="Misafir fotoğrafı" style="background: #1C1C1C;"></div>
+  <div role="img" aria-label="Misafir fotoğrafı" style="background: #A6A6A6;"></div>
+  <div style="background: #2347E0; color: #FFFFFF; padding: 26px; box-sizing: border-box; display: flex; gap: 22px; align-items: center;">
+    <div role="img" aria-label="QR kod" style="width: 140px; height: 140px; flex: none; background: #FFFFFF; color: #0A0A0A; display: flex; align-items: center; justify-content: center; font-size: 13px; letter-spacing: 3px;">QR</div>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-family: 'Bodoni Moda', Didot, serif; font-size: 40px; line-height: 0.95;">Sen de <em>paylaş.</em></span>
+      <span style="font-size: 11px; letter-spacing: 3px; text-transform: uppercase;">Share yours</span>
+      <span style="font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #DDE4FF;">1.284 kare · 212 misafir</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

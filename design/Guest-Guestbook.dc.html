@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guest · Guestbook</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,400;1,6..96,500&amp;family=Inter+Tight:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#8097FF}a:hover{color:#B3C0FF}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #0A0A0A; color: #FFFFFF; font-family: 'Inter Tight', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden;">
+  <header style="padding: 18px 20px 10px; display: flex; flex-direction: column; gap: 6px;">
+    <h1 style="margin: 0; font-size: 34px; font-weight: 900; letter-spacing: -1.5px; line-height: 1;">Leave a <span style="font-family: 'Bodoni Moda', Didot, serif; font-style: italic; font-weight: 400; color: #8097FF;">message</span></h1>
+    <span style="font-size: 14px; color: #C8CAD2;">Only Elif &amp; Can will hear it.</span>
+  </header>
+
+  <div role="group" aria-label="Message type" style="margin: 6px 20px 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: #15171F; border-radius: 999px; padding: 4px;">
+    <sc-for list="{{modes}}" as="m" hint-placeholder-count="3">
+      <button type="button" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}" style="{{m.style}}">{{m.label}}</button>
+    </sc-for>
+  </div>
+
+  <div style="margin: 14px 20px 0; background: #2347E0; border-radius: 28px; padding: 22px 20px; display: flex; flex-direction: column; align-items: center; gap: 16px;">
+    <span style="font-size: 44px; font-weight: 900; letter-spacing: -2px; line-height: 1;">0:14 <span style="font-size: 16px; font-weight: 600; letter-spacing: 0; color: #E3E8FF;">/ 0:30</span></span>
+    <div role="img" aria-label="Recording waveform" style="width: 100%; height: 56px; display: flex; align-items: center; gap: 3px;">
+      <sc-for list="{{bars}}" as="b" hint-placeholder-count="40">
+        <span style="{{b.style}}"></span>
+      </sc-for>
+    </div>
+    <div style="display: flex; align-items: center; gap: 18px;">
+      <button type="button" aria-label="Delete recording" style="width: 48px; height: 48px; border-radius: 50%; border: 0; background: #16309F; color: #FFFFFF; font: inherit; font-size: 20px;">×</button>
+      <button type="button" aria-pressed="{{recStr}}" aria-label="Record" onClick="{{toggleRec}}" style="width: 76px; height: 76px; border-radius: 50%; border: 5px solid #FFFFFF; background: #0A0A0A; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+        <span style="{{recDot}}"></span>
+      </button>
+      <button type="button" style="min-height: 48px; padding: 0 18px; border-radius: 999px; border: 0; background: #FFFFFF; color: #2347E0; font: inherit; font-size: 14px; font-weight: 800;">Send</button>
+    </div>
+  </div>
+
+  <div style="flex: 1; overflow: hidden; padding: 16px 20px 0; display: flex; flex-direction: column; gap: 10px;">
+    <span style="font-size: 13px; font-weight: 700; color: #C8CAD2;">47 messages so far</span>
+    <sc-for list="{{notes}}" as="n" hint-placeholder-count="3">
+      <div style="background: #15171F; border-radius: 20px; padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
+        <span aria-hidden="true" style="width: 40px; height: 40px; flex: none; border-radius: 50%; background: {{n.tone}}; display: flex; align-items: center; justify-content: center; font-weight: 800;">{{n.initial}}</span>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 14px; font-weight: 800;">{{n.who}}</span>
+          <span style="font-size: 13px; color: #C8CAD2;">{{n.kind}}</span>
+        </div>
+        <span style="font-size: 12px; color: #A8ACB8;">{{n.when}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <nav aria-label="Tabs" style="margin: 10px 14px 14px; background: #15171F; border-radius: 999px; padding: 8px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center;">
+    <a href="Guest-Feed.dc.html" style="min-height: 48px; display: flex; align-items: center; justify-content: center; color: #C8CAD2; text-decoration: none; font-size: 12px; font-weight: 600;">Feed</a>
+    <a href="Guest-Challenges.dc.html" style="min-height: 48px; display: flex; align-items: center; justify-content: center; color: #C8CAD2; text-decoration: none; font-size: 12px; font-weight: 600;">Missions</a>
+    <a href="Guest-Upload.dc.html" aria-label="Add photos and videos" style="justify-self: center; width: 52px; height: 52px; border-radius: 50%; background: #2347E0; color: #FFFFFF; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 500;">+</a>
+    <a href="Guest-Camera.dc.html" style="min-height: 48px; display: flex; align-items: center; justify-content: center; color: #C8CAD2; text-decoration: none; font-size: 12px; font-weight: 600;">Camera</a>
+    <a href="Guest-Guestbook.dc.html" aria-current="page" style="min-height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: #FFFFFF; color: #0A0A0A; text-decoration: none; font-size: 12px; font-weight: 800;">Book</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mode: 'voice', rec: true };
+  }
+  renderVals() {
+    const seg = 'min-height: 44px; border: 0; border-radius: 999px; font: inherit; font-size: 14px; cursor: pointer;';
+    const modes = [['voice', 'Voice'], ['video', 'Video'], ['text', 'Write']].map(([id, label]) => {
+      const on = this.state.mode === id;
+      return { label, pressed: on ? 'true' : 'false', pick: () => this.setState({ mode: id }),
+        style: seg + (on ? ' background: #FFFFFF; color: #0A0A0A; font-weight: 800;' : ' background: transparent; color: #C8CAD2; font-weight: 700;') };
+    });
+    const bars = [];
+    for (let i = 0; i < 40; i++) {
+      const h = 14 + Math.round(Math.abs(Math.sin(i * 1.7) * 38));
+      bars.push({ style: 'flex: 1; border-radius: 999px; height: ' + h + 'px; background: ' + (i < 19 ? '#FFFFFF' : '#5C78F0') + ';' });
+    }
+    const rec = this.state.rec;
+    const notes = [
+      { who: 'Hakan Amca', initial: 'H', kind: 'Voice message · 0:28', when: '2 min', tone: '#2347E0' },
+      { who: 'Zeynep', initial: 'Z', kind: 'Video message · 0:19', when: '9 min', tone: '#5A6380' },
+      { who: 'Derya & Ömer', initial: 'D', kind: 'Written note', when: '21 min', tone: '#16309F' }
+    ];
+    return {
+      modes, bars, notes, recStr: rec ? 'true' : 'false', toggleRec: () => this.setState({ rec: !rec }),
+      recDot: rec ? 'width: 26px; height: 26px; border-radius: 6px; background: #FFFFFF;' : 'width: 44px; height: 44px; border-radius: 50%; background: #4D6BFF;'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guest · Disposable camera</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,400;1,6..96,500&amp;family=Inter+Tight:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#8097FF}a:hover{color:#B3C0FF}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #0A0A0A; color: #FFFFFF; font-family: 'Inter Tight', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden;">
+  <header style="padding: 18px 20px 12px; display: flex; justify-content: space-between; align-items: center;">
+    <h1 style="margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -1px;">Disposable <span style="font-family: 'Bodoni Moda', Didot, serif; font-style: italic; font-weight: 400; color: #8097FF;">cam</span></h1>
+    <span style="background: #FFFFFF; color: #0A0A0A; font-size: 13px; font-weight: 800; padding: 9px 14px; border-radius: 999px;">{{left}} shots left</span>
+  </header>
+
+  <div role="img" aria-label="Camera viewfinder showing the dance floor" style="margin: 0 14px; flex: 1; border-radius: 32px; background: #1B2440; position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 18px; box-sizing: border-box;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="background: rgba(10,10,10,0.6); font-size: 12px; font-weight: 700; padding: 7px 12px; border-radius: 999px;">Film look · Grain</span>
+      <button type="button" aria-pressed="{{flashStr}}" onClick="{{toggleFlash}}" style="{{flashStyle}}">Flash {{flashLabel}}</button>
+    </div>
+    <div aria-hidden="true" style="align-self: center; width: 200px; height: 200px; border: 1.5px solid rgba(255,255,255,0.55); border-radius: 24px;"></div>
+    <span style="align-self: center; background: #2347E0; font-size: 13px; font-weight: 700; padding: 9px 16px; border-radius: 999px; transform: rotate(-2deg);">Photos reveal tomorrow at 10:00</span>
+  </div>
+
+  <div style="padding: 18px 28px 6px; display: flex; align-items: center; justify-content: space-between;">
+    <a href="Guest-Feed.dc.html" aria-label="Open my roll" style="width: 56px; height: 56px; border-radius: 16px; background: #23262F; border: 2px solid #FFFFFF; box-sizing: border-box; display: flex; align-items: flex-end; justify-content: flex-end; text-decoration: none;">
+      <span style="background: #2347E0; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 999px; margin: -6px;">{{taken}}</span>
+    </a>
+    <button type="button" aria-label="Take photo" onClick="{{shoot}}" style="width: 84px; height: 84px; border-radius: 50%; border: 5px solid #FFFFFF; background: #2347E0; cursor: pointer;"></button>
+    <button type="button" aria-label="Flip camera" style="width: 56px; height: 56px; border-radius: 50%; border: 0; background: #23262F; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M20 4v4h-4M4 20v-4h4"/></svg>
+    </button>
+  </div>
+  <div aria-label="Film roll" style="padding: 6px 28px 0; display: flex; gap: 4px;">
+    <sc-for list="{{roll}}" as="r" hint-placeholder-count="12">
+      <span style="{{r.style}}"></span>
+    </sc-for>
+  </div>
+
+  <nav aria-label="Tabs" style="margin: 14px 14px 14px; background: #15171F; border-radius: 999px; padding: 8px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center;">
+    <a href="Guest-Feed.dc.html" style="min-height: 48px; display: flex; align-items: center; justify-content: center; color: #C8CAD2; text-decoration: none; font-size: 12px; font-weight: 600;">Feed</a>
+    <a href="Guest-Challenges.dc.html" style="min-height: 48px; display: flex; align-items: center; justify-content: center; color: #C8CAD2; text-decoration: none; font-size: 12px; font-weight: 600;">Missions</a>
+    <a href="Guest-Upload.dc.html" aria-label="Add photos and videos" style="justify-self: center; width: 52px; height: 52px; border-radius: 50%; background: #2347E0; color: #FFFFFF; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 500;">+</a>
+    <a href="Guest-Camera.dc.html" aria-current="page" style="min-height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: #FFFFFF; color: #0A0A0A; text-decoration: none; font-size: 12px; font-weight: 800;">Camera</a>
+    <a href="Guest-Guestbook.dc.html" style="min-height: 48px; display: flex; align-items: center; justify-content: center; color: #C8CAD2; text-decoration: none; font-size: 12px; font-weight: 600;">Book</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { taken: 5, flash: true };
+  }
+  renderVals() {
+    const total = 12;
+    const taken = this.state.taken;
+    const flash = this.state.flash;
+    const roll = [];
+    for (let i = 0; i < total; i++) roll.push({ style: 'flex: 1; height: 6px; border-radius: 999px; background: ' + (i < taken ? '#4D6BFF' : '#2A2E3B') + ';' });
+    return {
+      taken, left: total - taken, roll,
+      shoot: () => this.setState({ taken: Math.min(total, taken + 1) }),
+      flashStr: flash ? 'true' : 'false', flashLabel: flash ? 'on' : 'off',
+      toggleFlash: () => this.setState({ flash: !flash }),
+      flashStyle: 'min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer;' + (flash ? ' background: #FFFFFF; color: #0A0A0A;' : ' background: rgba(10,10,10,0.6); color: #FFFFFF;')
+    };
+  }
+}
+</script>
+</body>
+</html>

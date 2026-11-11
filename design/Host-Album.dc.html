@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Host album dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&amp;family=Inter+Tight:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0A0A0A}a:hover{color:#555555}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 960px; background: #FFFFFF; color: #0A0A0A; font-family: 'Inter Tight', system-ui, sans-serif; display: flex; flex-wrap: wrap;">
+  <aside style="flex: 1 1 240px; max-width: 280px; border-right: 1px solid #0A0A0A; padding: 28px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px;">
+    <span style="font-family: 'Bodoni Moda', Didot, serif; font-size: 22px; letter-spacing: 0.5px; text-transform: uppercase; padding-bottom: 28px;">Bizim Resimler<span style="color: #2347E0;">.</span></span>
+    <span style="font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: #6B6B6B; padding-bottom: 8px;">Özel günlerim</span>
+    <a href="#elif-can" aria-current="page" style="font-family: 'Bodoni Moda', Didot, serif; font-size: 19px; text-decoration: none; padding: 8px 0; border-bottom: 1px solid #0A0A0A;"><em>Elif &amp; Can</em></a>
+    <a href="#ayse" style="font-family: 'Bodoni Moda', Didot, serif; font-size: 19px; text-decoration: none; padding: 8px 0; color: #6B6B6B;">Ayşe 30 Yaşında</a>
+    <a href="#deniz" style="font-family: 'Bodoni Moda', Didot, serif; font-size: 19px; text-decoration: none; padding: 8px 0; color: #6B6B6B;">Deniz'in Sünneti</a>
+    <div style="height: 1px; background: #E2E2E2; margin: 20px 0;"></div>
+    <a href="#album" style="font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; text-decoration: none; padding: 10px 0; font-weight: 600;">Albüm</a>
+    <a href="#qr" style="font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; text-decoration: none; padding: 10px 0; color: #6B6B6B;">QR kartları</a>
+    <a href="#wall" style="font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; text-decoration: none; padding: 10px 0; color: #6B6B6B;">Canlı ekran</a>
+    <a href="#ani" style="font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; text-decoration: none; padding: 10px 0; color: #6B6B6B;">Anı defteri</a>
+    <a href="#ayar" style="font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; text-decoration: none; padding: 10px 0; color: #6B6B6B;">Ayarlar</a>
+    <a href="#yeni" style="margin-top: 20px; border: 1px solid #0A0A0A; text-decoration: none; padding: 14px; text-align: center; font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; font-weight: 600;">+ Yeni özel gün</a>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 32px 44px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px;">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px; border-bottom: 1px solid #0A0A0A; padding-bottom: 22px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 11px; letter-spacing: 3px; text-transform: uppercase;">Büyük Gün · Kına + Düğün · 13–14.06.2027</span>
+        <h1 style="margin: 0; font-family: 'Bodoni Moda', Didot, serif; font-weight: 400; font-size: 64px; line-height: 0.95; letter-spacing: -1.5px;">Elif <em>&amp;</em> Can</h1>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <button type="button" style="min-height: 48px; padding: 0 22px; border: 1px solid #0A0A0A; border-radius: 999px; background: #FFFFFF; color: #0A0A0A; font: inherit; font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; font-weight: 600;">Paylaşım linki</button>
+        <button type="button" style="min-height: 48px; padding: 0 22px; border: 1px solid #2347E0; border-radius: 999px; background: #2347E0; color: #FFFFFF; font: inherit; font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; font-weight: 600;">Tümünü indir</button>
+      </div>
+    </div>
+
+    <dl style="margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0;">
+      <sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
+        <div style="padding: 4px 20px 4px 0; border-right: 1px solid #E2E2E2; display: flex; flex-direction: column-reverse; gap: 4px;">
+          <dt style="font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: #6B6B6B;">{{s.label}}</dt>
+          <dd style="margin: 0; font-family: 'Bodoni Moda', Didot, serif; font-size: 48px; line-height: 1;">{{s.value}}</dd>
+        </div>
+      </sc-for>
+    </dl>
+
+    <div style="background: #2347E0; color: #FFFFFF; border-radius: 16px; padding: 16px 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
+      <span style="font-size: 14px;"><span style="font-family: 'Bodoni Moda', Didot, serif; font-style: italic; font-size: 20px;">8 kare</span> onay bekliyor. Onaylanınca canlı ekranda görünecek.</span>
+      <a href="#onay" style="color: #FFFFFF; font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase; font-weight: 600; text-underline-offset: 5px;">İncele</a>
+    </div>
+
+    <div role="group" aria-label="Filtreler" style="display: flex; flex-wrap: wrap; gap: 6px;">
+      <sc-for list="{{filters}}" as="f" hint-placeholder-count="8">
+        <button type="button" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}" style="{{f.style}}">{{f.label}}</button>
+      </sc-for>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 4px;">
+      <sc-for list="{{tiles}}" as="t" hint-placeholder-count="18">
+        <div role="img" aria-label="{{t.alt}}" style="aspect-ratio: 4 / 5; background: {{t.tone}}; position: relative; display: flex; align-items: flex-end; padding: 10px; box-sizing: border-box;">
+          <sc-if value="{{t.video}}" hint-placeholder-val="{{ false }}">
+            <span style="position: absolute; top: 10px; right: 10px; color: #FFFFFF; font-size: 11px; letter-spacing: 1.5px;">VIDEO {{t.len}}</span>
+          </sc-if>
+          <span style="color: #FFFFFF; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;">{{t.who}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { f: 'all' };
+  }
+  renderVals() {
+    const base = 'min-height: 40px; padding: 0 16px; border: 1px solid #0A0A0A; border-radius: 999px; font: inherit; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer;';
+    const defs = [['all', 'Tümü'], ['kina', 'Kına'], ['dugun', 'Düğün'], ['halay', 'Halay'], ['taki', 'Takı töreni'], ['video', 'Videolar'], ['fav', 'Favoriler'], ['gizli', 'Gizlenenler']];
+    const filters = defs.map(([id, label]) => {
+      const on = this.state.f === id;
+      return {
+        label,
+        pressed: on ? 'true' : 'false',
+        style: base + (on ? ' background: #2347E0; border-color: #2347E0; color: #FFFFFF;' : ' background: #FFFFFF; color: #0A0A0A;'),
+        pick: () => this.setState({ f: id })
+      };
+    });
+    const stats = [
+      { label: 'Misafir', value: '212' }, { label: 'Fotoğraf', value: '1.148' },
+      { label: 'Video', value: '136' }, { label: 'Anı mesajı', value: '47' }
+    ];
+    const tones = ['#2B2B2B', '#5E5E5E', '#1C1C1C', '#4A4A4A', '#3A3A3A', '#6B6B6B'];
+    const people = ['Mert', 'Zeynep', 'Ayşe Teyze', 'Burak', 'Selin', 'Hakan Amca', 'Elif', 'Ömer', 'Derya'];
+    const tiles = [];
+    for (let i = 0; i < 18; i++) {
+      const video = i % 5 === 2;
+      tiles.push({ tone: tones[(i * 5) % 6], who: people[i % people.length], alt: 'Fotoğraf: ' + people[i % people.length], video, len: '0:' + String(12 + (i * 11) % 47).padStart(2, '0') });
+    }
+    return { filters, stats, tiles };
+  }
+}
+</script>
+</body>
+</html>

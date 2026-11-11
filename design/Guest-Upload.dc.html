@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guest · Upload</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,400;1,6..96,500&amp;family=Inter+Tight:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#8097FF}a:hover{color:#B3C0FF}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #0A0A0A; color: #FFFFFF; font-family: 'Inter Tight', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden;">
+  <header style="padding: 18px 20px 6px; display: flex; justify-content: space-between; align-items: center;">
+    <h1 style="margin: 0; font-size: 34px; font-weight: 900; letter-spacing: -1.5px; line-height: 1;">Add your <span style="font-family: 'Bodoni Moda', Didot, serif; font-style: italic; font-weight: 400; color: #8097FF;">shots</span></h1>
+    <a href="Guest-Feed.dc.html" aria-label="Close" style="width: 44px; height: 44px; border-radius: 50%; background: #15171F; color: #FFFFFF; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 20px;">×</a>
+  </header>
+
+  <div style="flex: 1; padding: 14px 20px; display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
+    <div role="group" aria-label="Day" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: #15171F; border-radius: 999px; padding: 4px;">
+      <button type="button" aria-pressed="false" style="min-height: 44px; border: 0; border-radius: 999px; background: transparent; color: #C8CAD2; font: inherit; font-size: 14px; font-weight: 700;">Henna · 13 Jun</button>
+      <button type="button" aria-pressed="true" style="min-height: 44px; border: 0; border-radius: 999px; background: #FFFFFF; color: #0A0A0A; font: inherit; font-size: 14px; font-weight: 800;">Wedding · 14 Jun</button>
+    </div>
+
+    <button type="button" style="border: 0; border-radius: 28px; background: #2347E0; color: #FFFFFF; padding: 26px 18px; font: inherit; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;">
+      <span aria-hidden="true" style="width: 56px; height: 56px; border-radius: 50%; background: #FFFFFF; color: #2347E0; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 500;">+</span>
+      <span style="font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">Choose photos and videos</span>
+      <span style="font-size: 13px; color: #E3E8FF;">Pick as many as you like. Full quality.</span>
+    </button>
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 13px; font-weight: 700; color: #C8CAD2;">Tag the moment</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <sc-for list="{{moments}}" as="m" hint-placeholder-count="6">
+          <button type="button" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}" style="{{m.style}}">{{m.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="background: #15171F; border-radius: 24px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline;">
+        <span style="font-size: 15px; font-weight: 800;">Uploading</span>
+        <span style="font-size: 13px; font-weight: 700; color: #8097FF;">12 of 15 done</span>
+      </div>
+      <sc-for list="{{queue}}" as="q" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; flex: none; background: {{q.tone}};"></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="font-weight: 600;">{{q.name}}</span><span style="color: #C8CAD2;">{{q.status}}</span></div>
+            <div style="height: 6px; background: #2A2E3B; border-radius: 999px; overflow: hidden;"><div style="height: 100%; border-radius: 999px; background: #4D6BFF; width: {{q.pct}};"></div></div>
+          </div>
+        </div>
+      </sc-for>
+      <span style="font-size: 12px; color: #A8ACB8;">Weak signal? Uploads keep going and resume by themselves.</span>
+    </div>
+  </div>
+
+  <nav aria-label="Tabs" style="margin: 10px 14px 14px; background: #15171F; border-radius: 999px; padding: 8px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center;">
+    <a href="Guest-Feed.dc.html" style="min-height: 48px; display: flex; align-items: center; justify-content: center; color: #C8CAD2; text-decoration: none; font-size: 12px; font-weight: 600;">Feed</a>
+    <a href="Guest-Challenges.dc.html" style="min-height: 48px; display: flex; align-items: center; justify-content: center; color: #C8CAD2; text-decoration: none; font-size: 12px; font-weight: 600;">Missions</a>
+    <a href="Guest-Upload.dc.html" aria-current="page" aria-label="Add photos and videos" style="justify-self: center; width: 52px; height: 52px; border-radius: 50%; background: #FFFFFF; color: #2347E0; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 500;">+</a>
+    <a href="Guest-Camera.dc.html" style="min-height: 48px; display: flex; align-items: center; justify-content: center; color: #C8CAD2; text-decoration: none; font-size: 12px; font-weight: 600;">Camera</a>
+    <a href="Guest-Guestbook.dc.html" style="min-height: 48px; display: flex; align-items: center; justify-content: center; color: #C8CAD2; text-decoration: none; font-size: 12px; font-weight: 600;">Book</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { picked: 'halay' };
+  }
+  renderVals() {
+    const base = 'min-height: 44px; padding: 0 16px; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;';
+    const moments = [['entrance', 'Grand entrance'], ['dance', 'First dance'], ['taki', 'Gold ceremony'], ['halay', 'Halay'], ['cake', 'Cake'], ['family', 'Family']].map(([id, label]) => {
+      const on = this.state.picked === id;
+      return { label, pressed: on ? 'true' : 'false', pick: () => this.setState({ picked: on ? null : id }),
+        style: base + (on ? ' border: 1.5px solid #FFFFFF; background: #FFFFFF; color: #0A0A0A;' : ' border: 1.5px solid #3A3F52; background: transparent; color: #FFFFFF;') };
+    });
+    const queue = [
+      { name: 'IMG_4821.HEIC', status: 'Done', pct: '100%', tone: '#1B2440' },
+      { name: 'Halay.mov · 1:42', status: '64%', pct: '64%', tone: '#2347E0' },
+      { name: 'IMG_4823.HEIC', status: 'Waiting', pct: '0%', tone: '#5A6380' }
+    ];
+    return { moments, queue };
+  }
+}
+</script>
+</body>
+</html>

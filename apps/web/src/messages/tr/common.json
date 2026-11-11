@@ -1,0 +1,7 @@
+{
+  "brand": { "ourpixs": "Our Pixs", "bizimresimler": "Bizim Resimler" },
+  "nav": { "features": "Özellikler", "pricing": "Fiyatlar", "partners": "Partnerler", "signIn": "Giriş", "startFree": "Ücretsiz başla", "dashboard": "Panel" },
+  "actions": { "save": "Kaydet", "cancel": "Vazgeç", "continue": "Devam et", "back": "Geri", "delete": "Sil", "close": "Kapat", "download": "İndir", "copy": "Kopyala", "copied": "Kopyalandı", "retry": "Tekrar dene", "loading": "Yükleniyor…" },
+  "errors": { "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.", "notFound": "Bu sayfayı bulamadık.", "offline": "İnternet bağlantınız yok. Denemeye devam edeceğiz." },
+  "footer": { "privacy": "Gizlilik / KVKK", "terms": "Koşullar", "contact": "İletişim", "credits": "Fotoğraf ve videolar Pexels'ten." }
+}
