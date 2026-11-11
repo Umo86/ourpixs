@@ -6,14 +6,18 @@ import { occasionBySlug, requireGuest } from "@/lib/guest";
 import { liveMedia, mediaPage } from "@/lib/queries";
 import { toMediaItems } from "@/lib/serializers";
 import { deleteObjects } from "@/lib/storage";
+import { accessForOccasion } from "@/lib/access";
 
 const { media } = schema;
 
 export const GET = route<{ slug: string }>(async (_req, { slug }) => {
   const o = await occasionBySlug(slug);
   const guest = await requireGuest(o);
-  const { rows } = await mediaPage({ where: [...liveMedia(o.id), eq(media.guestId, guest.id), ne(media.kind, "voice")], limit: 500, guestIdForReaction: guest.id });
-  return json({ items: await toMediaItems(rows, "guest", { withOriginal: true }) });
+  const [{ rows }, access] = await Promise.all([
+    mediaPage({ where: [...liveMedia(o.id), eq(media.guestId, guest.id), ne(media.kind, "voice")], limit: 500, guestIdForReaction: guest.id }),
+    accessForOccasion(o),
+  ]);
+  return json({ items: await toMediaItems(rows, "guest", { withOriginal: true, canDownload: access.canDownload }) });
 });
 
 export const DELETE = route<{ slug: string }>(async (req, { slug }) => {

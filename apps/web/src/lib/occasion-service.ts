@@ -2,14 +2,14 @@ import "server-only";
 import { z } from "zod";
 import { and, eq, ne, notInArray, or, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { OCCASIONS, PLANS, type Brand, type OccasionType, type Plan } from "./config";
-import { ApiError, badRequest, planFeature, planLimit } from "./http";
-import { brandLocale, storageExpiryFor } from "./occasion";
+import { OCCASIONS, SUBSCRIPTION, type Brand, type OccasionType } from "./config";
+import { ApiError, badRequest, planLimit } from "./http";
+import { brandLocale } from "./occasion";
 import { loadDays, occasionExtras } from "./queries";
-import { coverUrlFor, toOccasion } from "./serializers";
+import { coverUrlFor, toOccasion, toSummary } from "./serializers";
 import { randomSlug, vanityError } from "./slug";
 import { hashSecret } from "./crypto";
-import { assertOrgWritable } from "./org";
+import { accessForOccasion, accessForOwners, assertCanCreateEvents, assertWritable, computeAccess, loadOwnerBilling, trialEndFrom, type Access } from "./access";
 
 type OccasionRow = typeof schema.occasions.$inferSelect;
 
@@ -17,7 +17,7 @@ const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const isoDate = z.iso.datetime({ offset: true });
 const THEMES = ["noir", "royal", "ivory", "dusk", "mono", "blush"] as const;
 const TYPES = Object.keys(OCCASIONS) as [OccasionType, ...OccasionType[]];
-const MAX_DAYS_STORED = 5;
+const MAX_DAYS_STORED = SUBSCRIPTION.features.maxDays;
 
 export const createSchema = z.object({
   type: z.enum(TYPES),
@@ -28,8 +28,6 @@ export const createSchema = z.object({
   city: z.string().trim().max(80).optional().nullable(),
   theme: z.enum(THEMES).optional(),
   days: z.array(z.object({ name: z.string().trim().min(1).max(60), date: dateStr.optional().nullable() })).max(MAX_DAYS_STORED).optional(),
-  /** Additive (partner events only): platform | venue | couple | both. */
-  brandingMode: z.enum(["platform", "venue", "couple", "both"]).optional(),
 });
 
 export const patchSchema = z.object({
@@ -53,13 +51,18 @@ export const patchSchema = z.object({
   })).min(1).max(MAX_DAYS_STORED).optional(),
   /** Additive: custom link name, e.g. "elif-and-can". null removes it (the random link always works). */
   vanitySlug: z.string().trim().toLowerCase().max(40).nullable().optional(),
-  /** Additive (partner events only). */
-  brandingMode: z.enum(["platform", "venue", "couple", "both"]).optional(),
   /** Additive: pick the album cover from a photo. */
   coverMediaId: z.string().uuid().nullable().optional(),
 });
 
-export async function createOccasion(hostId: string, brand: Brand, input: z.infer<typeof createSchema>, org?: { id: string } | null) {
+/**
+ * Creates an event owned by `hostId`. The host's first event starts their free trial (no card).
+ * Returns `trialStarted: true` when this call started it.
+ */
+export async function createOccasion(hostId: string, brand: Brand, input: z.infer<typeof createSchema>) {
+  const billing = await loadOwnerBilling(hostId);
+  if (!billing) throw new ApiError(401, "unauthorized", "Sign in required");
+  assertCanCreateEvents(computeAccess(billing));
   const id = crypto.randomUUID();
   const loc = brandLocale({ brand });
   const days = input.days?.length
@@ -69,11 +72,6 @@ export async function createOccasion(hostId: string, brand: Brand, input: z.infe
     id, ownerId: hostId, brand, type: input.type, title: input.title, honorees: input.honorees,
     startsOn: input.startsOn ?? null, venueName: input.venueName || null, city: input.city || null,
     theme: input.theme ?? "noir",
-    // Partner events get the top plan for as long as the venue's subscription is active.
-    plan: (org ? "buyuk" : "free") as Plan,
-    storageExpiresAt: storageExpiryFor(org ? "buyuk" : "free", input.startsOn ?? null),
-    organisationId: org?.id ?? null,
-    brandingMode: org ? (input.brandingMode ?? "both") : ("platform" as const),
   };
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -88,13 +86,21 @@ export async function createOccasion(hostId: string, brand: Brand, input: z.infe
       if (attempt === 2 || !String((e as Error).message).includes("slug")) throw e;
     }
   }
+  // First event: start the trial (conditional, so two parallel creates can't restart it).
+  let trialStarted = false;
+  if (billing.planStatus === "none") {
+    const now = new Date();
+    const started = await db.update(schema.hosts)
+      .set({ planStatus: "trialing", trialStartedAt: now, trialEndsAt: trialEndFrom(now) })
+      .where(and(eq(schema.hosts.id, hostId), eq(schema.hosts.planStatus, "none"))).returning({ id: schema.hosts.id });
+    trialStarted = started.length > 0;
+  }
   const [o] = await db.select().from(schema.occasions).where(eq(schema.occasions.id, id));
-  return o!;
+  return { occasion: o!, trialStarted };
 }
 
 export async function updateOccasion(o: OccasionRow, p: z.infer<typeof patchSchema>) {
-  await assertOrgWritable(o);
-  const plan = PLANS[o.plan as Plan];
+  assertWritable(await accessForOccasion(o));
   const set: Partial<typeof schema.occasions.$inferInsert> = {};
   if (p.title !== undefined) set.title = p.title;
   if (p.honorees !== undefined) set.honorees = p.honorees;
@@ -111,10 +117,7 @@ export async function updateOccasion(o: OccasionRow, p: z.infer<typeof patchSche
   const closes = set.uploadClosesAt !== undefined ? set.uploadClosesAt : o.uploadClosesAt;
   if (opens && closes && opens >= closes) throw badRequest("Uploads must open before they close");
   if (p.pin !== undefined) set.pinHash = p.pin ? await hashSecret(p.pin) : null;
-  if (p.disposableShots !== undefined) {
-    if (p.disposableShots !== null && !plan.disposable) throw planFeature("the disposable camera");
-    set.disposableShots = p.disposableShots;
-  }
+  if (p.disposableShots !== undefined) set.disposableShots = p.disposableShots;
   if (p.coverMediaId !== undefined) {
     if (p.coverMediaId === null) set.coverKey = null;
     else {
@@ -123,10 +126,6 @@ export async function updateOccasion(o: OccasionRow, p: z.infer<typeof patchSche
       if (!m) throw badRequest("Unknown photo");
       set.coverKey = m.keyDisplay ?? m.keyThumb ?? m.keyOriginal;
     }
-  }
-  if (p.brandingMode !== undefined) {
-    if (!o.organisationId && p.brandingMode !== "platform") throw planFeature("custom branding");
-    set.brandingMode = p.brandingMode;
   }
   if (p.vanitySlug !== undefined) {
     if (p.vanitySlug === null || p.vanitySlug === "") set.vanitySlug = null;
@@ -165,13 +164,13 @@ export async function updateOccasion(o: OccasionRow, p: z.infer<typeof patchSche
   return fresh!;
 }
 
-/** Full Occasion payload for a member. */
-export async function occasionPayload(o: OccasionRow, role: "owner" | "cohost") {
-  const [days, extras] = await Promise.all([loadDays(o.id), occasionExtras([o.id])]);
+/** Full Occasion payload for a member (with `access` from the owner's subscription). */
+export async function occasionPayload(o: OccasionRow, role: "owner" | "cohost", access?: Access) {
+  const [days, extras, a] = await Promise.all([loadDays(o.id), occasionExtras([o.id]), access ?? accessForOccasion(o)]);
   const ex = extras.get(o.id);
   return toOccasion(o, days, {
     coverUrl: await coverUrlFor(ex?.coverKey ?? null), mediaCount: ex?.mediaCount ?? 0, guestCount: ex?.guestCount ?? 0, role,
-  });
+  }, a);
 }
 
 /** Occasion ids a host belongs to with their role. */
@@ -184,16 +183,14 @@ export async function memberships(hostId: string) {
 
 export async function summariesFor(hostId: string) {
   const rows = await memberships(hostId);
-  const extras = await occasionExtras(rows.map((r) => r.occasion.id));
+  const [extras, access] = await Promise.all([occasionExtras(rows.map((r) => r.occasion.id)), accessForOwners(rows.map((r) => r.occasion.ownerId))]);
   const list = await Promise.all(rows.map(async (r) => {
     const ex = extras.get(r.occasion.id);
     return {
       row: r.occasion,
-      summary: {
-        id: r.occasion.id, slug: r.occasion.slug, type: r.occasion.type as OccasionType, title: r.occasion.title,
-        startsOn: r.occasion.startsOn, plan: r.occasion.plan as Plan, coverUrl: await coverUrlFor(ex?.coverKey ?? null),
-        mediaCount: ex?.mediaCount ?? 0, guestCount: ex?.guestCount ?? 0, role: r.role as "owner" | "cohost",
-      },
+      summary: toSummary(r.occasion, {
+        coverUrl: await coverUrlFor(ex?.coverKey ?? null), mediaCount: ex?.mediaCount ?? 0, guestCount: ex?.guestCount ?? 0, role: r.role as "owner" | "cohost",
+      }, access.get(r.occasion.ownerId)!),
     };
   }));
   // Newest event date first; undated by creation.

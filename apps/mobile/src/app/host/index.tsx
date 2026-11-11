@@ -1,22 +1,24 @@
 import { Image } from "expo-image";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { FlatList, Pressable, RefreshControl, StyleSheet, View } from "react-native";
 
-import { errorMessage, hostApi, orgApi } from "@/api/client";
-import type { OccasionSummary, Organisation } from "@/api/types";
+import { errorMessage, hostApi } from "@/api/client";
+import type { OccasionSummary } from "@/api/types";
+import { useAuth } from "@/auth/AuthProvider";
 import { AppHeader } from "@/components/AppHeader";
 import { Button, IconButton } from "@/components/Button";
-import { Pill, Sticker } from "@/components/Card";
+import { Pill } from "@/components/Card";
+import { PlanBanner } from "@/components/PlanStatus";
 import { Screen } from "@/components/Screen";
 import { EmptyState, ErrorView, Loading } from "@/components/States";
 import { Heading, Txt } from "@/components/Text";
-import { occasionLabel, PLANS } from "@/config";
+import { occasionLabel } from "@/config";
 import { useI18n } from "@/i18n";
 import { formatDate } from "@/lib/format";
 import { colors, radius } from "@/theme";
 
-function CoverCard({ o, compact }: { o: OccasionSummary; compact?: boolean }) {
+function CoverCard({ o }: { o: OccasionSummary }) {
   const { t, locale } = useI18n();
   const meta = [occasionLabel(o.type, locale), o.startsOn ? formatDate(o.startsOn, locale) : t("host.noDate")].join(" · ");
   return (
@@ -24,7 +26,7 @@ function CoverCard({ o, compact }: { o: OccasionSummary; compact?: boolean }) {
       accessibilityRole="button"
       accessibilityLabel={`${o.title}. ${meta}. ${t("host.mediaCount", { n: o.mediaCount })}`}
       onPress={() => router.push({ pathname: "/host/[id]", params: { id: o.id } })}
-      style={({ pressed }) => [styles.card, compact && styles.compact, { opacity: pressed ? 0.9 : 1 }]}
+      style={({ pressed }) => [styles.card, { opacity: pressed ? 0.9 : 1 }]}
     >
       {o.coverUrl ? (
         <Image source={{ uri: o.coverUrl, cacheKey: `cover-${o.id}` }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
@@ -32,10 +34,9 @@ function CoverCard({ o, compact }: { o: OccasionSummary; compact?: boolean }) {
       <View style={[StyleSheet.absoluteFill, { backgroundColor: o.coverUrl ? "rgba(10,10,10,0.38)" : colors.black }]} />
       <View style={styles.cardTop}>
         <Pill text={meta} tone="dark" />
-        {o.plan !== "free" && !compact ? <Sticker text={PLANS[o.plan].name[locale]} size={64} rotate={10} /> : null}
       </View>
       <View style={{ gap: 6 }}>
-        <Heading tone="dark" size={compact ? "sm" : "md"} numberOfLines={2}>
+        <Heading tone="dark" size="md" numberOfLines={2}>
           {o.title}
         </Heading>
         <Txt tone="dark" variant="small" weight="semibold">
@@ -52,7 +53,7 @@ export default function HostHome() {
   const [list, setList] = useState<OccasionSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [venues, setVenues] = useState<{ org: Organisation; occasions: OccasionSummary[] }[]>([]);
+  const { subscription, refreshMe } = useAuth();
 
   const load = useCallback(async () => {
     try {
@@ -62,17 +63,9 @@ export default function HostHome() {
     } catch (e) {
       setError(errorMessage(e, t));
     }
-    // Venue (Partner) organisations are optional; failures here never block the page.
-    try {
-      const orgs = await orgApi.list();
-      const withEvents = await Promise.all(
-        orgs.map(async (org) => ({ org, occasions: await orgApi.occasions(org.id).then((r) => r.occasions).catch(() => []) })),
-      );
-      setVenues(withEvents);
-    } catch {
-      setVenues([]);
-    }
-  }, [t]);
+    // The plan status (trial days left, read-only…) can change while away; refresh it quietly.
+    void refreshMe();
+  }, [t, refreshMe]);
 
   useFocusEffect(
     useCallback(() => {
@@ -109,41 +102,7 @@ export default function HostHome() {
               <Heading size="lg" accent={t("host.homeAccent")} style={{ marginBottom: 4 }}>
                 {t("host.homeTitle")}
               </Heading>
-              {venues.map(({ org, occasions }) => (
-                <View key={org.id} style={{ gap: 10 }}>
-                  <View style={styles.venueHead}>
-                    {org.logoUrl ? (
-                      <Image source={{ uri: org.logoUrl }} style={{ width: 36, height: 36, borderRadius: 10 }} contentFit="contain" accessibilityIgnoresInvertColors />
-                    ) : (
-                      <View style={[styles.venueDot, { backgroundColor: org.primaryColor ?? colors.blue }]} />
-                    )}
-                    <View style={{ flex: 1 }}>
-                      <Txt variant="caption" weight="extrabold" muted style={{ textTransform: "uppercase", letterSpacing: 0.8 }}>
-                        {t("venue.title")}
-                      </Txt>
-                      <Txt weight="extrabold" variant="lead" numberOfLines={1}>
-                        {org.name}
-                      </Txt>
-                    </View>
-                  </View>
-                  {occasions.length ? (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
-                      {occasions.map((o) => (
-                        <CoverCard key={o.id} o={o} compact />
-                      ))}
-                    </ScrollView>
-                  ) : (
-                    <Txt variant="small" muted>
-                      {t("venue.empty")}
-                    </Txt>
-                  )}
-                </View>
-              ))}
-              {venues.length && list?.length ? (
-                <Txt variant="caption" weight="extrabold" muted style={{ textTransform: "uppercase", letterSpacing: 0.8 }}>
-                  {t("venue.myEvents")}
-                </Txt>
-              ) : null}
+              <PlanBanner sub={subscription} />
             </View>
           }
           ListEmptyComponent={
@@ -159,8 +118,5 @@ export default function HostHome() {
 
 const styles = StyleSheet.create({
   card: { height: 280, borderRadius: radius.card, overflow: "hidden", padding: 18, justifyContent: "space-between", backgroundColor: colors.black },
-  compact: { width: 260, height: 190 },
-  venueHead: { flexDirection: "row", alignItems: "center", gap: 12 },
-  venueDot: { width: 36, height: 36, borderRadius: 10 },
   cardTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
 });

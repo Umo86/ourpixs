@@ -57,7 +57,7 @@ export function ProgressBar({ value, tone = "light", label }: { value: number; t
   );
 }
 
-/** Inline notice (plan upsell, info). */
+/** Inline notice (account/plan status, info). */
 export function Notice({ text, tone = "light", icon = "sparkles", action }: { text: string; tone?: Tone; icon?: IconName; action?: { label: string; onPress: () => void } }) {
   const p = palette(tone);
   return (

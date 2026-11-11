@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { route, json, readJson, planFeature, planLimit } from "@/lib/http";
+import { route, json, readJson, planLimit } from "@/lib/http";
 import { occasionBySlug, requireGuest } from "@/lib/guest";
 import { limit } from "@/lib/rate-limit";
-import { planOf } from "@/lib/occasion";
+import { accessForOccasion, assertCanUpload } from "@/lib/access";
 import { messageKey, presignPut, storageDriver, StorageNotConfigured } from "@/lib/storage";
 
 const MIME = ["audio/webm", "audio/mp4", "audio/m4a", "audio/mpeg", "video/webm", "video/mp4", "video/quicktime"] as const;
@@ -11,7 +11,7 @@ const MIME = ["audio/webm", "audio/mp4", "audio/m4a", "audio/mpeg", "video/webm"
 export const POST = route<{ slug: string }>(async (req, { slug }) => {
   const o = await occasionBySlug(slug);
   const guest = await requireGuest(o);
-  if (!planOf(o).voiceGuestbook) throw planFeature("voice and video messages");
+  assertCanUpload(await accessForOccasion(o));
   if (!storageDriver()) throw new StorageNotConfigured();
   await limit(`msgurl:${guest.id}`, 20, 3600);
   const b = await readJson(req, z.object({ mime: z.enum(MIME), bytes: z.number().int().positive() }));

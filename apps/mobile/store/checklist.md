@@ -4,7 +4,7 @@ Owner: the person with the Apple Developer and Google Play accounts. Items marke
 
 ## A. Backend prerequisites (web)
 1. **web** Deploy `/api/v1/*` per `docs/API.md`, including `POST /api/v1/occasions/:id/uploads/complete` (the app assumes this mirror of the guest route for host uploads).
-2. **web** Review account: `REVIEW_EMAIL` + `REVIEW_CODE` honoured in `/api/v1/auth/verify`, plus a seeded sample event on the Big Day plan (see review-notes.md).
+2. **web** Review account: `REVIEW_EMAIL` + `REVIEW_CODE` honoured in `/api/v1/auth/verify`, plus a seeded sample event on an account with an active subscription (see review-notes.md).
 3. **web** Universal links: serve these with `Content-Type: application/json`, no redirects, on **ourpixs.com, www.ourpixs.com, bizimresimler.com, www.bizimresimler.com**:
    - `/.well-known/apple-app-site-association` →
      `{"applinks":{"details":[{"appIDs":["<TEAMID>.com.ourpixs.app"],"components":[{"/":"/g/*"}]}]}}`
@@ -16,7 +16,7 @@ Owner: the person with the Apple Developer and Google Play accounts. Items marke
 6. **web** Decide EXIF location: strip GPS on upload (recommended) or declare Location (privacy.md).
 7. **web** (UGC 1.2) "Remove guest" endpoint so hosts can block an abusive guest; then add the button to the app.
 8. **web** Push sending: store Expo push tokens from `/api/v1/push-tokens` and send `{ occasionId }` in the notification `data` (the app opens that event on tap).
-9. **web** Add `/api/v1/organisations` (+ `/:id/occasions`) and `brandingMode`/`branding` on `PublicOccasion` to docs/API.md. The app's provisional shapes are in `src/api/types.ts` (`Organisation`, `EventBranding`).
+9. **web** Make sure `GET /api/v1/me` returns `subscription`, host occasions return `access`, guest payloads return `uploadsOpen`, and download endpoints answer 402 `{ "error": "plan_required" }` when locked (docs/API.md). The app's shapes are in `src/api/types.ts` (`Subscription`, `OccasionAccess`).
 
 ## B. One-time setup
 10. Replace placeholder art: `assets/images/{icon,adaptive-icon,adaptive-icon-monochrome,splash-icon,notification-icon,favicon}.png` (regenerate or design; keep sizes). The icon must have no transparency.

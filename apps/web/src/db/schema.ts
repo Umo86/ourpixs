@@ -16,9 +16,9 @@ export const mediaStatusEnum = pgEnum("media_status", ["pending", "uploaded", "f
 export const visibilityEnum = pgEnum("visibility", ["visible", "hidden", "deleted"]);
 export const shareScopeEnum = pgEnum("share_scope", ["view", "view_upload"]);
 export const messageKindEnum = pgEnum("message_kind", ["text", "voice", "video"]);
-export const orgStatusEnum = pgEnum("org_status", ["trialing", "active", "past_due", "cancelled"]);
-export const orgRoleEnum = pgEnum("org_role", ["owner", "staff"]);
-export const brandingModeEnum = pgEnum("branding_mode", ["platform", "venue", "couple", "both"]);
+/** Account subscription state (see src/lib/access.ts). "none" = no trial yet (it starts with the first event). */
+export const hostPlanStatusEnum = pgEnum("host_plan_status", ["none", "trialing", "active", "past_due", "cancelled", "expired"]);
+export const planIntervalEnum = pgEnum("plan_interval", ["month", "year"]);
 
 /** Hosts = people who create events. Guests never get accounts. */
 export const hosts = pgTable("hosts", {
@@ -28,8 +28,27 @@ export const hosts = pgTable("hosts", {
   locale: text("locale").notNull().default("en"),
   brand: brandEnum("brand").notNull().default("ourpixs"),
   stripeCustomerId: text("stripe_customer_id"),
+  // ── Account subscription (Monthly / Yearly). Access rules live in src/lib/access.ts. ──
+  planStatus: hostPlanStatusEnum("plan_status").notNull().default("none"),
+  planInterval: planIntervalEnum("plan_interval"),
+  /** Set when the host creates their first event; the free trial runs until trialEndsAt. */
+  trialStartedAt: timestamp("trial_started_at", { withTimezone: true }),
+  trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+  /** First failed payment; past_due behaves as cancelled once the grace period has passed. */
+  pastDueSince: timestamp("past_due_since", { withTimezone: true }),
+  stripeSubscriptionId: text("stripe_subscription_id").unique(),
+  /** When the account's events became read-only (trial ended unpaid / paid period ended). */
+  readOnlySince: timestamp("read_only_since", { withTimezone: true }),
+  /** When the account's files will be deleted (null while trialing/active). */
+  deleteAfter: timestamp("delete_after", { withTimezone: true }),
+  /** Once-only email markers. */
+  trialPromptSentAt: timestamp("trial_prompt_sent_at", { withTimezone: true }),
+  trialEndEmailSentAt: timestamp("trial_end_email_sent_at", { withTimezone: true }),
+  deletionWarningSentAt: timestamp("deletion_warning_sent_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [index("hosts_plan_status_idx").on(t.planStatus), index("hosts_stripe_customer_idx").on(t.stripeCustomerId)]);
 
 /** One-time email sign-in codes / magic links (web + mobile share this). */
 export const loginTokens = pgTable("login_tokens", {
@@ -50,48 +69,12 @@ export const pushTokens = pgTable("push_tokens", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-/** Partner (white-label) accounts: venues, planners, photographers on the monthly Partner plan. */
-export const organisations = pgTable("organisations", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
-  logoKey: text("logo_key"),
-  primaryColour: text("primary_colour"),
-  accentColour: text("accent_colour"),
-  supportEmail: text("support_email"),
-  stripeCustomerId: text("stripe_customer_id"),
-  stripeSubscriptionId: text("stripe_subscription_id").unique(),
-  /** "cancelled" also covers "never subscribed yet". */
-  status: orgStatusEnum("status").notNull().default("cancelled"),
-  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
-  /** Set when the subscription first goes past_due; events become read-only 7 days later. */
-  pastDueSince: timestamp("past_due_since", { withTimezone: true }),
-  hidePoweredBy: boolean("hide_powered_by").notNull().default(false),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
-
-export const organisationMembers = pgTable("organisation_members", {
-  organisationId: uuid("organisation_id").notNull().references(() => organisations.id, { onDelete: "cascade" }),
-  hostId: uuid("host_id").notNull().references(() => hosts.id, { onDelete: "cascade" }),
-  role: orgRoleEnum("role").notNull().default("staff"),
-}, (t) => [primaryKey({ columns: [t.organisationId, t.hostId] }), index("org_members_host_idx").on(t.hostId)]);
-
-export const organisationInvites = pgTable("organisation_invites", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  organisationId: uuid("organisation_id").notNull().references(() => organisations.id, { onDelete: "cascade" }),
-  email: text("email").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
-
 export const occasions = pgTable("occasions", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug").notNull().unique(),
   /** Host-chosen custom link name (a–z, 0–9, hyphens). /g/[slug] resolves either this or `slug`. */
   vanitySlug: text("vanity_slug").unique(),
   ownerId: uuid("owner_id").notNull().references(() => hosts.id, { onDelete: "cascade" }),
-  /** Set when a partner (venue/planner) created the event. */
-  organisationId: uuid("organisation_id").references(() => organisations.id, { onDelete: "set null" }),
-  brandingMode: brandingModeEnum("branding_mode").notNull().default("platform"),
   brand: brandEnum("brand").notNull().default("ourpixs"),
   type: occasionTypeEnum("type").notNull(),
   title: text("title").notNull(),
@@ -100,6 +83,7 @@ export const occasions = pgTable("occasions", {
   venueName: text("venue_name"),
   city: text("city"),
   theme: themeEnum("theme").notNull().default("noir"),
+  /** Legacy (one-off per-event plans). Kept in the DB, no longer used for features: access follows the owner's subscription. */
   plan: planEnum("plan").notNull().default("free"),
   uploadOpensAt: timestamp("upload_opens_at", { withTimezone: true }),
   uploadClosesAt: timestamp("upload_closes_at", { withTimezone: true }),
@@ -109,10 +93,11 @@ export const occasions = pgTable("occasions", {
   pinHash: text("pin_hash"),
   coverKey: text("cover_key"),
   disposableShots: integer("disposable_shots"),
+  /** Legacy per-event retention. No longer read: retention follows the owner's account (hosts.delete_after). */
   storageExpiresAt: timestamp("storage_expires_at", { withTimezone: true }),
   status: statusEnum("status").notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [index("occasions_owner_idx").on(t.ownerId), index("occasions_org_idx").on(t.organisationId)]);
+}, (t) => [index("occasions_owner_idx").on(t.ownerId)]);
 
 export const occasionMembers = pgTable("occasion_members", {
   occasionId: uuid("occasion_id").notNull().references(() => occasions.id, { onDelete: "cascade" }),
@@ -221,6 +206,7 @@ export const shareLinks = pgTable("share_links", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Legacy one-off per-event orders (before account subscriptions). Kept for records; no longer written. */
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
   occasionId: uuid("occasion_id").notNull().references(() => occasions.id, { onDelete: "cascade" }),
@@ -240,7 +226,7 @@ export const rateLimits = pgTable("rate_limits", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-/** Waitlist / contact / partner enquiries from the marketing site. */
+/** Waitlist / contact enquiries from the marketing site. */
 export const leads = pgTable("leads", {
   id: uuid("id").primaryKey().defaultRandom(),
   kind: text("kind").notNull(),

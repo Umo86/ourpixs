@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { and, desc, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { route, json, readJson, readQuery, planFeature } from "@/lib/http";
+import { route, json, readJson, readQuery } from "@/lib/http";
 import { requireMember } from "@/lib/auth";
-import { planOf } from "@/lib/occasion";
+import { accessForOccasion, assertWritable } from "@/lib/access";
 import { toShareLink } from "@/lib/serializers";
 import { randomSlug } from "@/lib/slug";
 
@@ -28,11 +28,11 @@ const body = z.object({
 
 export const POST = route<{ id: string }>(async (req, { id }) => {
   const { occasion } = await requireMember(id);
-  if (!planOf(occasion).shareLinks) throw planFeature("share links");
+  assertWritable(await accessForOccasion(occasion));
   const b = await readJson(req, body);
   await db.insert(schema.shareLinks).values({
     occasionId: occasion.id, token: randomSlug(24), scope: b.scope, label: b.label || null,
-    expiresAt: b.expiresInDays ? new Date(Date.now() + b.expiresInDays * 86400_000) : occasion.storageExpiresAt,
+    expiresAt: b.expiresInDays ? new Date(Date.now() + b.expiresInDays * 86400_000) : null,
   });
   return json(await list(occasion), { status: 201 });
 });

@@ -1,6 +1,3 @@
-/** Illustrative per-couple add-on price for the Partner ROI line (not a forecast). */
-export const ROI_EXAMPLE_PENCE = 6000;
-
 export const PEXELS_HOME = "https://www.pexels.com";
 
 export const MEDIA = {

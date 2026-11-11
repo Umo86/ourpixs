@@ -30,7 +30,7 @@ export async function SiteHeader({ variant = "light", minimal = false, right, cl
   const items: NavItem[] = [
     { href: "/features", label: c("nav.features") },
     { href: "/pricing", label: c("nav.pricing") },
-    { href: "/partners", label: c("nav.partners") },
+    { href: "/help", label: m("site.help") },
   ];
   const wrap =
     variant === "overlay" ? "absolute inset-x-0 top-0 z-30 text-white"

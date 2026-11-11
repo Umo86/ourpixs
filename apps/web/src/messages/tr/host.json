@@ -31,20 +31,19 @@
   "pin_invalid": "PIN hatalı.",
   "not_joined": "Önce etkinliğe katılın.",
   "upload_closed": "Bu etkinlik için yüklemeler kapalı.",
-  "plan_limit": "Planınızın sınırına ulaştınız. Daha fazlası için planınızı yükseltin.",
-  "plan_feature": "Bu özellik etkinliğin planında yok.",
+  "plan_limit": "Dosya çok büyük (fotoğraflar 60 MB'a, videolar 10 dakika ya da 1 GB'a kadar).",
   "storage_not_configured": "Fotoğraf depolama henüz hazır değil, yüklemeler beklemede. Lütfen daha sonra tekrar deneyin.",
   "storage_error": "Yükleme tamamlanmadı. Tekrar deneyeceğiz.",
   "payments_unavailable": "Ödemeler çok yakında.",
-  "already_on_plan": "Bu etkinlik zaten bu planda.",
   "shots_exhausted": "Tek kullanımlık kamerada kare kalmadı.",
   "slug_taken": "Bu link adı alınmış. Başka bir ad deneyin.",
   "slug_invalid": "3–40 küçük harf, rakam veya tire kullanın.",
   "slug_reserved": "Bu link adı kullanılamıyor. Başka bir ad deneyin.",
-  "partner_inactive": "Partner aboneliği aktif değil, bu yüzden etkinlik sadece görüntülenebilir.",
-  "no_subscription": "Faturalandırmayı yönetmek için önce abone olun.",
-  "org_owner": "Aktif bir partner hesabının sahibisiniz. Önce aboneliği iptal edin ya da sahipliği devredin.",
-  "guest_blocked": "Bu misafir engellendi."
+  "no_subscription": "Bu hesapta henüz bir abonelik yok.",
+  "guest_blocked": "Bu misafir engellendi.",
+  "plan_required": "Bunun için aktif bir plan gerekiyor. İndirmek, yeni etkinlik oluşturmak ya da salt okunur bir etkinliği düzenlemek için abone olun.",
+  "already_subscribed": "Zaten bir aboneliğiniz var. Değiştirmek için “Ödemeleri yönet” bölümünü kullanın.",
+  "billing_error": "Aboneliğinizi iptal edemedik, bu yüzden hiçbir şey silinmedi. Lütfen tekrar deneyin ya da bize yazın."
  },
  "login": {
   "metaTitle": "Giriş",
@@ -82,14 +81,11 @@
   "new": "Yeni etkinlik",
   "cohost": "Ortak ev sahibi",
   "counts": "{media} kare · {guests} misafir",
-  "emptySticker": "Ücretsiz başlayın",
+  "emptySticker": "3 gün ücretsiz",
   "emptyTitle": "İlk",
   "emptyAccent": "albümünüz.",
   "emptyBody": "Bir etkinlik oluşturun, QR kartları yazdırın; misafirlerin bütün fotoğrafları tek bir özel albümde toplansın.",
   "emptyCta": "İlk etkinliğinizi oluşturun",
-  "partnerTitle": "Mekanlar, organizatörler ve fotoğrafçılar",
-  "partnerBody": "Partner planıyla müşterilerinizin etkinliklerini kendi markanızla yönetin.",
-  "partnerCta": "Partner paneli",
   "accountTitle": "Hesabınız",
   "accountBody": "{email} ile giriş yaptınız. Hesabınızı silerseniz sahibi olduğunuz etkinlikler ve içindeki bütün fotoğraflar silinir."
  },
@@ -125,7 +121,6 @@
   "dayName": "Gün adı",
   "newDay": "{n}. gün",
   "addDay": "Gün ekle",
-  "multiDayNote": "Ücretsiz plan bir gün içerir. Diğer günler Büyük Gün planına geçince açılır.",
   "themeTitle": "Bir görünüm",
   "themeAccent": "seçin.",
   "create": "Etkinliği oluştur",
@@ -135,7 +130,12 @@
   "doneAccent": "yayında.",
   "doneBody": "Linki paylaşın ya da QR kartları yazdırın. Misafirler QR kodu okutur, adını yazar ve paylaşmaya başlar.",
   "printQr": "QR kartları yazdır",
-  "openAlbum": "Albümü aç"
+  "openAlbum": "Albümü aç",
+  "trialSticker": "{days} günlük ücretsiz denemeniz şimdi başladı",
+  "trialBody": "Video, canlı ekran ve anı defteri dahil her şey açık. İndirmeler abone olduğunuzda açılır.",
+  "blockedTitle": "Yeni etkinlikler için",
+  "blockedAccent": "abone olun.",
+  "blockedBody": "Ücretsiz denemenizi kullandınız. Tek plan sınırsız etkinliği kapsar: aylık {monthly} ya da yıllık {yearly}."
  },
  "themes": {
   "noir": "Noir",
@@ -153,11 +153,10 @@
   "guestbook": "Anı defteri",
   "download": "İndir",
   "settings": "Ayarlar",
-  "wall": "Canlı ekran",
-  "locked": "açmak için planınızı yükseltin"
+  "wall": "Canlı ekran"
  },
  "occasion": {
-  "archived": "Bu albümün süresi doldu ve dosyaları silindi."
+  "archived": "Hesabın planı sona erdiği için bu etkinliğin dosyaları silindi."
  },
  "stats": {
   "guests": "Misafir",
@@ -168,7 +167,6 @@
  },
  "album": {
   "title": "Albüm",
-  "freeLimit": "Ücretsiz planda {max} karenin {used} tanesi kullanıldı.",
   "pendingCount": "{n} kare",
   "pendingBody": "onayınızı bekliyor. Onaylanınca canlı akışta ve canlı ekranda görünür.",
   "review": "İncele",
@@ -254,8 +252,7 @@
   "headline": "Karelerin",
   "accent": "bizimle kalsın.",
   "body": "QR kodu okut, fotoğraf ve videolarını albümümüze ekle. Uygulama gerekmez.",
-  "atVenue": "{venue}",
-  "poweredBy": "{brand} altyapısıyla"
+  "atVenue": "{venue}"
  },
  "share": {
   "title": "Yurt dışındaki aile için paylaşım linkleri",
@@ -306,11 +303,11 @@
   "coverSaved": "Kapak fotoğrafı güncellendi.",
   "coverFailed": "Bu fotoğrafı kullanamadık. JPEG ya da PNG deneyin.",
   "days": "Günler",
-  "daysHint": "Planınız misafirler için {max} gün içerir. Her günün kendi QR kodu ve yükleme saatleri olabilir.",
+  "daysHint": "{max} güne kadar ekleyebilirsiniz. Her günün kendi QR kodu ve yükleme saatleri olabilir.",
   "removeDay": "{name} gününü kaldır",
   "dayWindow": "Bu günün yükleme saatleri",
   "dayLink": "Gün linki:",
-  "dayLocked": "Bu gün Büyük Gün planıyla açılır.",
+  "dayLocked": "Misafirler bu günü göremez (yalnızca ilk {max} gün gösterilir).",
   "uploads": "Yükleme ve gizlilik",
   "opens": "Yüklemelerin açılış zamanı",
   "opensHint": "Hemen açmak için boş bırakın.",
@@ -326,8 +323,6 @@
   "disposable": "Tek kullanımlık kamera",
   "shots": "Misafir başına kare",
   "shotsHint": "Kamerayı kapatmak için boş bırakın. Tek kullanımlık kareler ertesi sabah açılır.",
-  "needsPaid": "Tek Gün ve Büyük Gün planlarında var.",
-  "needsBig": "Büyük Gün planında var.",
   "pin": "Etkinlik PIN'i",
   "pinOn": "Misafirlerin katılmak için PIN girmesi gerekiyor.",
   "pinOff": "PIN yok. Linki ya da QR kodu olan herkes katılabilir.",
@@ -335,32 +330,9 @@
   "pinSet": "PIN belirle",
   "pinRemove": "PIN'i kaldır"
  },
- "branding": {
-  "title": "Marka",
-  "lead": "Misafirlerin bu etkinliği nasıl göreceğini seçin.",
-  "venue": "Mekan markası",
-  "venueHint": "Sizin logonuz, renkleriniz ve adınız.",
-  "couple": "Çiftin markası",
-  "coupleHint": "Onların isimleri, kapak fotoğrafı ve teması.",
-  "both": "İkisi birden",
-  "bothHint": "Onların isimleri, mekanınızın adı ve logonuzla."
- },
  "plan": {
-  "title": "Plan",
-  "current": "Mevcut plan:",
-  "storedUntil": "fotoğraflar {date} tarihine kadar saklanır",
-  "choose": "{plan} seçin",
-  "upgradeTo": "{plan} planına geçin",
   "comingSoon": "Ödemeler çok yakında",
-  "top": "En üst plandasınız. Keyfini çıkarın!",
-  "moneyBack": "{days} gün içinde para iade garantisi.",
-  "oneOff": "Etkinlik başına tek seferlik ödeme (GBP, KDV dahil). Abonelik yok.",
-  "paidNotice": "Ödemeniz alındı. Etkinliğinizin planı yükseltildi.",
-  "cancelledNotice": "Ödeme iptal edildi. Herhangi bir ücret alınmadı.",
-  "features": {
-   "tek": "Sınırsız fotoğraf ve video|Canlı ekran|Fotoğraf görevleri|Tek kullanımlık kamera|1 yıl saklama",
-   "buyuk": "Tek Gün'deki her şey|5 güne kadar|Sesli ve görüntülü anı defteri|Yurt dışındaki aile için paylaşım linkleri|Ortak ev sahipleri|3 yıl saklama"
-  }
+  "cancelledNotice": "Ödeme iptal edildi. Hiçbir ücret alınmadı."
  },
  "danger": {
   "title": "Etkinliği sil",
@@ -369,17 +341,11 @@
   "confirmPrompt": "Onaylamak için etkinlik adını yazın: {title}",
   "mismatch": "Ad eşleşmedi, hiçbir şey silinmedi."
  },
- "upsell": {
-  "title": "{feature} Tek Gün ve Büyük Gün planlarında var",
-  "body": "Açmak için bu etkinliğin planını yükseltin. Tek seferlik ödeme, abonelik yok.",
-  "cta": "Planları görün"
- },
  "missions": {
   "metaTitle": "Fotoğraf görevleri",
   "title": "Fotoğraf",
   "titleAccent": "görevleri.",
   "lead": "Misafirlere küçük çekim görevleri verin. Listeyi misafir uygulamasında görürler, sıralamada yarışırlar.",
-  "feature": "Fotoğraf görevleri",
   "new": "Yeni görev",
   "placeholder": "ör. Gelinle selfie",
   "add": "Ekle",
@@ -397,7 +363,6 @@
   "title": "Anı",
   "titleAccent": "defteri.",
   "leadVoice": "Misafirlerinizden yazılı, sesli ve görüntülü mesajlar. Sadece ev sahipleri görebilir.",
-  "leadText": "Misafirlerinizden yazılı mesajlar. Sesli ve görüntülü mesajlar Büyük Gün planında var.",
   "empty": "Henüz mesaj yok.",
   "emptyHint": "Misafirler, misafir uygulamasındaki Defter sekmesinden mesaj bırakabilir.",
   "count": "{n} mesaj",
@@ -428,50 +393,6 @@
   "nothing": "Henüz indirilecek bir şey yok.",
   "browserNote": "Büyük albümler en iyi bilgisayarda Chrome ya da Edge ile iner, çünkü bu tarayıcılar dosyaları doğrudan diske kaydeder."
  },
- "partner": {
-  "metaTitle": "Partner paneli",
-  "eyebrow": "Partner planı",
-  "title": "Mekanınız,",
-  "titleAccent": "markanız.",
-  "perMonth": "{price} / ay",
-  "pitchTitle": "Yönettiğiniz her etkinlik için kendi markanızla misafir fotoğrafları.",
-  "pitchPoints": "Büyük Gün planında sınırsız etkinlik|Misafirler logonuzu, renklerinizi ve adınızı görür|Her etkinlikte mekan, çift ya da ikisi birden markası|Personel hesapları|Çiftleri kendi albümlerine davet edin",
-  "vatNote": "Fiyatlara KDV dahildir. Faturalandırma portalından istediğiniz zaman iptal edebilirsiniz.",
-  "createTitle": "Partner hesabınızı oluşturun",
-  "venueName": "İşletme adı",
-  "venuePlaceholder": "ör. Bahçe Düğün Salonu",
-  "create": "Partner hesabı oluştur",
-  "switch": "Partner hesapları",
-  "subscription": "Abonelik",
-  "renews": "{date} tarihinde yenilenir",
-  "inactiveHint": "Markalı etkinlikler oluşturmak için aylık {price} ile abone olun.",
-  "subscribe": "Abone ol · {price}/ay",
-  "manageBilling": "Faturalandırmayı yönet",
-  "subscribedNotice": "Abone oldunuz. Aramıza hoş geldiniz!",
-  "events": "Etkinlikler",
-  "noEvents": "Henüz etkinlik yok.",
-  "newEvent": "Müşteriniz için etkinlik oluşturun",
-  "eventType": "Etkinlik türü",
-  "coupleEmail": "Müşterinin e-postası (isteğe bağlı)",
-  "coupleEmailHint": "Albümlerini görebilmeleri için onları ortak ev sahibi olarak davet ederiz.",
-  "createEvent": "Etkinlik oluştur",
-  "needsSub": "Etkinlik oluşturmak için abone olun.",
-  "brand": "Marka",
-  "supportEmail": "Destek e-postası",
-  "primary": "Ana renk",
-  "accent": "Vurgu rengi",
-  "logo": "Logo yükle",
-  "hidePowered": "\"Altyapı\" bağlantısını gizle",
-  "hidePoweredHint": "Misafir sayfalarının altındaki küçük bağlantıyı kaldırır.",
-  "staff": "Personel",
-  "staffRole": "Personel",
-  "status": {
-   "trialing": "Deneme",
-   "active": "Aktif",
-   "past_due": "Ödeme alınamadı. Etkinlikler 7 gün daha kullanılabilir.",
-   "cancelled": "Abone değil"
-  }
- },
  "support": {
   "metaTitle": "Destek",
   "title": "Nasıl yardımcı",
@@ -483,7 +404,7 @@
   "moreHelp": "Yardım merkezi",
   "deleteLink": "Hesabınızı silin",
   "privacy": "Gizlilik politikası",
-  "faq": "Misafirlerin uygulama indirmesi gerekiyor mu?::Hayır. Misafirler QR kodu okutur ve telefonlarının tarayıcısından yükler. Uygulama isteğe bağlı, daha çok ev sahipleri için.|Fotoğraflar ne kadar saklanır?::Ücretsiz etkinliklerde 30 gün, Tek Gün'de 1 yıl, Büyük Gün'de 3 yıl. Her şeyi istediğiniz zaman indirebilirsiniz.|Ücret iadesi alabilir miyim?::Evet. Ücretli planlarda 14 gün para iade garantisi var. Kayıt olduğunuz adresten bize yazın.|Fotoğrafları kimler görebilir?::Albümün tamamını sadece ev sahipleri ve ortak ev sahipleri görür. Misafirler ortak akışı görür; isterseniz kareleri önce onaylayabilirsiniz."
+  "faq": "Misafirlerin uygulama indirmesi gerekiyor mu?::Hayır. Misafirler QR kodu okutur ve telefonlarının tarayıcısından yükler. Uygulama isteğe bağlı, daha çok ev sahipleri için.|Ne kadar tutar?::Her şeyin dahil olduğu tek plan, sınırsız etkinlik için: aylık {monthly} ya da yıllık {yearly}. İlk etkinliğiniz, kart bilgisi gerekmeden {trialDays} günlük ücretsiz denemeyi başlatır.|Fotoğraflar ne kadar saklanır?::Abone olduğunuz sürece. İptal ederseniz {readOnlyDays} gün boyunca her şeyi görüntüleyip indirebilirsiniz. Ödeme yapılmayan bir deneme, bittikten sonra {trialKeepDays} gün saklanır.|Ücret iadesi alabilir miyim?::Evet. İlk ödemenizde {days} gün para iade garantisi var. Kayıt olduğunuz adresten bize yazın.|Fotoğrafları kimler görebilir?::Albümün tamamını sadece ev sahipleri ve ortak ev sahipleri görür. Misafirler ortak akışı görür; isterseniz kareleri önce onaylayabilirsiniz."
  },
  "accountDelete": {
   "metaTitle": "Hesabınızı silin",
@@ -515,13 +436,6 @@
    "cta": "Albümü açın",
    "footer": "Bu e-postayı, biri adresinizi ortak ev sahibi olarak eklediği için aldınız."
   },
-  "expiry": {
-   "subject": "{title}: albümünüz {date} tarihine kadar saklanıyor",
-   "heading": "Albümünüzü yakında indirin",
-   "body": "{title} fotoğraf ve videoları {date} tarihine kadar saklanıyor. O tarihten önce indirin ya da daha uzun saklamak için planınızı yükseltin.",
-   "cta": "Hemen indirin",
-   "footer": "Bu e-postayı, bu etkinliğin ev sahibi olduğunuz için aldınız."
-  },
   "report": {
    "subject": "{title} etkinliğinde bir fotoğraf bildirildi",
    "heading": "Bir fotoğraf bildirildi",
@@ -529,6 +443,104 @@
    "reason": "Misafirin notu: {reason}",
    "cta": "Albümde inceleyin",
    "footer": "Bu e-postayı, bu etkinliğin ev sahibi olduğunuz için aldınız."
+  },
+  "billing": {
+   "footer": "Bu e-postayı {brand} hesabınız olduğu için aldınız.",
+   "trialPrompt": {
+    "subject": "{brand} ile fotoğraflarınızı tam kalitede saklayın",
+    "heading": "Denemeniz harika gidiyor",
+    "body": "Ücretsiz denemeniz indirmeler dışında her şeyi içeriyor. Abone olun, tüm orijinalleri ve ZIP dosyalarını istediğiniz zaman indirin.",
+    "body2": "Aylık plan ayda {monthly}; yıllık planı seçerseniz {yearly} ödersiniz ve %{saving} tasarruf edersiniz. İstediğiniz zaman iptal edebilirsiniz.",
+    "cta": "Aylık abone olun"
+   },
+   "trialEnded": {
+    "subject": "{brand} ücretsiz denemeniz sona erdi",
+    "heading": "Denemeniz sona erdi",
+    "body": "Etkinlikleriniz artık salt okunur: misafirler yeni fotoğraf ekleyemez ve indirmeler kapalı. Hiçbir şey silinmedi.",
+    "body2": "Dosyalarınızı {date} tarihine kadar saklıyoruz. Bu tarihten önce abone olursanız indirmeler dahil her şey hemen açılır.",
+    "cta": "Hemen abone olun"
+   },
+   "cancelled": {
+    "subject": "{brand} aboneliğiniz sona erdi",
+    "heading": "Aboneliğiniz sona erdi",
+    "body": "Etkinlikleriniz artık yeni yükleme almıyor. {date} tarihine kadar her şeyi görüntüleyip indirebilirsiniz.",
+    "body2": "Bu tarihten sonra dosyalar silinir. Daha önce yeniden abone olursanız etkinlikleriniz hemen yeniden açılır.",
+    "cta": "Fotoğraflarınızı indirin"
+   },
+   "deletionSoon": {
+    "subject": "{brand} fotoğraflarınız {date} tarihinde silinecek",
+    "heading": "Dosyalarınız yakında silinecek",
+    "body": "Etkinliklerinizdeki fotoğraf, video ve mesajlar {date} tarihinde, {days} gün sonra silinecek.",
+    "body2": "Her şeyi saklamak için bu tarihten önce abone olun. İndirme hakkınız devam ediyorsa albümlerinizi şimdi indirin.",
+    "cta": "Panelinizi açın"
+   }
+  }
+ },
+ "billing": {
+  "monthly": "Aylık",
+  "yearly": "Yıllık",
+  "kicker": "Planınız",
+  "redirecting": "Açılıyor…",
+  "subscribeMonthly": "Aylık abone olun · {price}",
+  "subscribeYearly": "Yıllık · {price} (%{saving} tasarruf)",
+  "manage": "Ödemeleri yönet",
+  "fine": "Fiyatlara KDV dahildir. İstediğiniz zaman iptal edebilirsiniz; iptal, ödediğiniz dönemin sonunda geçerli olur. İlk ödemenizde 14 gün para iade garantisi.",
+  "subscribedNotice": "Abone oldunuz. Tüm etkinliklerinizde indirmeler açıldı.",
+  "readOnlyBadge": "Salt okunur",
+  "videoLocked": "Videolar, abone olduğunuzda burada oynatılır. Misafirlerinizin yüklemeleri güvende.",
+  "downloadsLocked": "İndirmeler abone olduğunuzda açılır. Ücretsiz denemede canlı ekran dahil her şeyi görüntüleyebilirsiniz.",
+  "downloadsLockedEnded": "Ücretsiz deneme sona erdiği için indirmeler kapalı. Her şeyi indirmek için abone olun.",
+  "status": {
+   "none": "{days} gün ücretsiz",
+   "noneBody": "Ücretsiz denemeniz ilk etkinliğinizi oluşturduğunuzda başlar. Kart bilgisi gerekmez.",
+   "trialing": "Ücretsiz deneme: {days} gün kaldı",
+   "trialingBody": "{date} tarihine kadar her şey çalışır. İndirmeler abone olduğunuzda açılır.",
+   "activeMonthly": "Aylık plan",
+   "activeYearly": "Yıllık plan",
+   "renews": "{date} tarihinde yenilenir.",
+   "cancelling": "İptal edildi. {date} tarihine kadar her şey çalışmaya devam eder.",
+   "pastDue": "Ödeme alınamadı",
+   "pastDueBody": "Lütfen kartınızı güncelleyin. Etkinlikleriniz {days} gün daha çalışmaya devam eder.",
+   "cancelled": "Aboneliğiniz sona erdi",
+   "cancelledBody": "Etkinlikleriniz salt okunur. {date} tarihine kadar her şeyi görüntüleyip indirebilirsiniz; sonra dosyalar silinir.",
+   "expired": "Ücretsiz denemeniz sona erdi",
+   "expiredBody": "Etkinlikleriniz salt okunur ve indirmeler kapalı. Dosyalar {date} tarihine kadar saklanır."
+  },
+  "readOnly": {
+   "trialEnded": "Ücretsiz deneme sona erdiği için bu etkinlik salt okunur ve indirmeler kapalı. Dosyalar {date} tarihine kadar saklanır.",
+   "cancelled": "Abonelik sona erdiği için bu etkinlik salt okunur. {date} tarihine kadar her şey indirilebilir.",
+   "cohost": "Yalnızca etkinlik sahibi abone olabilir."
+  },
+  "prompt": {
+   "trial": {
+    "sticker": "Denemenizin bitmesine {days} gün",
+    "title": "Her kareyi",
+    "accent": "tam kalitede saklayın.",
+    "body": "Denemeniz indirmeler dışında her şeyi içeriyor. Aylık {monthly} ile abone olun ya da yıllık {yearly} ile %{saving} tasarruf edin."
+   },
+   "expired": {
+    "sticker": "Deneme bitti",
+    "title": "Fotoğraflarınız",
+    "accent": "sizi bekliyor.",
+    "body": "Yüklemeler kapalı, indirmeler kilitli. Dosyalarınızı {date} tarihine kadar saklıyoruz. Abone olun, her şey hemen açılsın."
+   },
+   "cancelled": {
+    "sticker": "Salt okunur",
+    "title": "İstediğiniz zaman",
+    "accent": "geri dönün.",
+    "body": "Etkinlikleriniz artık yeni yükleme almıyor. {date} tarihine kadar her şeyi indirebilirsiniz. Yeniden açmak için tekrar abone olun."
+   },
+   "pastDue": {
+    "sticker": "Ödeme alınamadı",
+    "title": "Ödemenizi",
+    "accent": "birlikte çözelim.",
+    "body": "Son ödemenizi alamadık. Etkinliklerinizin açık kalması için kartınızı güncelleyin: {days} gün daha çalışmaya devam ederler."
+   }
+  },
+  "dialog": {
+   "title": "İndirmeler abone olduğunuzda açılır",
+   "body": "Geri kalan her şey denemenize dahil. Orijinalleri ve ZIP dosyalarını indirmek için aylık {monthly} ya da yıllık {yearly} ile abone olun.",
+   "cohost": "İndirmeler, etkinlik sahibi abone olduğunda açılır."
   }
  }
 }

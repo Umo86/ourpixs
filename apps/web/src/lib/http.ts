@@ -13,7 +13,6 @@ export const unauthorized = () => new ApiError(401, "unauthorized", "Sign in req
 export const forbidden = (msg = "Not allowed") => new ApiError(403, "forbidden", msg);
 export const notFound = (msg = "Not found") => new ApiError(404, "not_found", msg);
 export const badRequest = (msg = "Invalid request") => new ApiError(400, "invalid_request", msg);
-export const planFeature = (feature: string) => new ApiError(402, "plan_feature", `Your plan does not include ${feature}`);
 export const planLimit = (msg: string) => new ApiError(402, "plan_limit", msg);
 
 export const CORS_HEADERS: Record<string, string> = {

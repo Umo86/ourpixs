@@ -1,47 +1,40 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ImagePlus, Lock, Trash2 } from "lucide-react";
+import { ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Field } from "@/components/app/Field";
 import { Toggle } from "@/components/app/Toggle";
 import { Notice } from "@/components/app/Notice";
 import { ShareButtons } from "@/components/app/ShareButtons";
 import { useLocale, useT } from "@/i18n/client";
-import { MONEY_BACK_DAYS, PLANS, THEMES, UPGRADE_TEK_TO_BUYUK_PENCE } from "@/lib/config";
+import { SUBSCRIPTION, THEMES } from "@/lib/config";
 import { api, errorMessage } from "@/lib/client/api";
 import { fromLocalInput, toLocalInput } from "@/lib/client/datetime";
 import { formatDate } from "@/lib/client/format";
 import { resizeToWebp } from "@/lib/client/image";
 import type { Occasion, ShareLink, Theme } from "@/lib/api-types";
 
-type Props = { initial: Occasion; isOwner: boolean; payments: boolean; storage: boolean };
+type Props = { initial: Occasion; isOwner: boolean; storage: boolean };
 type DayDraft = { id?: string; name: string; date: string; opens: string; closes: string };
 
 const THEME_KEYS = Object.keys(THEMES) as Theme[];
 
-function Section({ id, title, children, locked, lockedText }: { id: string; title: string; children: ReactNode; locked?: boolean; lockedText?: string }) {
+function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
     <section id={id} aria-labelledby={`${id}-h`} className="scroll-mt-24 rounded-[28px] border border-[#E6E8EF] p-5 sm:p-7">
-      <h2 id={`${id}-h`} className="m-0 mb-5 flex items-center gap-2 text-xl font-black tracking-tight">
-        {locked ? <Lock size={18} aria-hidden className="text-muted" /> : null}{title}
-      </h2>
-      {locked && lockedText ? <p className="m-0 mb-4 text-sm font-semibold text-royal">{lockedText}</p> : null}
+      <h2 id={`${id}-h`} className="m-0 mb-5 flex items-center gap-2 text-xl font-black tracking-tight">{title}</h2>
       {children}
     </section>
   );
 }
 
-function money(pence: number, locale: string) {
-  return (pence / 100).toLocaleString(locale === "tr" ? "tr-TR" : "en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: pence % 100 ? 2 : 0 });
-}
-
-export function SettingsClient({ initial, isOwner, payments, storage }: Props) {
+export function SettingsClient({ initial, isOwner, storage }: Props) {
   const t = useT("host");
   const { locale } = useLocale();
   const router = useRouter();
   const [o, setO] = useState(initial);
-  const plan = PLANS[o.plan];
+  const maxDays = SUBSCRIPTION.features.maxDays;
   const [saving, setSaving] = useState<string | null>(null);
   const [flash, setFlash] = useState<{ section: string; tone: "success" | "error"; text: string } | null>(null);
 
@@ -53,7 +46,6 @@ export function SettingsClient({ initial, isOwner, payments, storage }: Props) {
   const [city, setCity] = useState(o.city || "");
   const [theme, setTheme] = useState<Theme>(o.theme);
   const [vanity, setVanity] = useState(o.vanitySlug || "");
-  const [brandingMode, setBrandingMode] = useState(o.brandingMode);
   // Days
   const [days, setDays] = useState<DayDraft[]>(o.days.map((d) => ({ id: d.id, name: d.name, date: d.date || "", opens: toLocalInput(d.uploadOpensAt), closes: toLocalInput(d.uploadClosesAt) })));
   // Uploads & privacy
@@ -73,9 +65,9 @@ export function SettingsClient({ initial, isOwner, payments, storage }: Props) {
   const coverInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (plan.shareLinks) api<{ links: ShareLink[] }>(`/api/v1/occasions/${o.id}/share-links`).then((r) => setLinks(r.links)).catch(() => setLinks([]));
+    api<{ links: ShareLink[] }>(`/api/v1/occasions/${o.id}/share-links`).then((r) => setLinks(r.links)).catch(() => setLinks([]));
     api<NonNullable<typeof team>>(`/api/v1/occasions/${o.id}/cohosts`).then(setTeam).catch(() => {});
-  }, [o.id, plan.shareLinks]);
+  }, [o.id]);
 
   async function save(section: string, body: Record<string, unknown>) {
     setSaving(section);
@@ -155,16 +147,6 @@ export function SettingsClient({ initial, isOwner, payments, storage }: Props) {
   async function removeMember(q: string) {
     setTeam(await api(`/api/v1/occasions/${o.id}/cohosts?${q}`, { method: "DELETE" }));
   }
-  async function checkout(target: "tek" | "buyuk") {
-    setSaving("plan");
-    try {
-      const r = await api<{ url: string }>(`/api/v1/occasions/${o.id}/checkout`, { body: { plan: target } });
-      window.location.assign(r.url);
-    } catch (e) {
-      setFlash({ section: "plan", tone: "error", text: errorMessage(t, e) });
-      setSaving(null);
-    }
-  }
   async function destroy() {
     const typed = window.prompt(t("danger.confirmPrompt", { title: o.title }));
     if (typed === null) return;
@@ -181,10 +163,6 @@ export function SettingsClient({ initial, isOwner, payments, storage }: Props) {
 
   const select = "min-h-12 w-full rounded-2xl border-[1.5px] border-[#D5D8E2] bg-white px-4 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky";
   const shareLabels = { whatsapp: t("share.whatsapp"), share: t("share.native"), copy: t("common.copyLink"), copied: t("common.copied") };
-  const upgrades: { plan: "tek" | "buyuk"; price: number }[] = o.plan === "free"
-    ? [{ plan: "tek", price: PLANS.tek.pricePence }, { plan: "buyuk", price: PLANS.buyuk.pricePence }]
-    : o.plan === "tek" ? [{ plan: "buyuk", price: UPGRADE_TEK_TO_BUYUK_PENCE }] : [];
-
   return (
     <div className="flex flex-col gap-5">
       <Section id="details" title={t("settings.details")}>
@@ -211,23 +189,6 @@ export function SettingsClient({ initial, isOwner, payments, storage }: Props) {
         }))}
         {msg("details")}
       </Section>
-
-      {o.organisationId ? (
-        <Section id="branding" title={t("branding.title")}>
-          <p className="m-0 mb-4 text-sm text-muted">{t("branding.lead")}</p>
-          <div role="radiogroup" aria-label={t("branding.title")} className="grid gap-2 sm:grid-cols-3">
-            {(["venue", "couple", "both"] as const).map((m) => (
-              <button key={m} type="button" role="radio" aria-checked={brandingMode === m} onClick={() => setBrandingMode(m)}
-                className={`flex flex-col gap-1 rounded-2xl border-2 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky ${brandingMode === m ? "border-royal bg-tint" : "border-[#E2E4EC]"}`}>
-                <span className="font-extrabold">{t(`branding.${m}`)}</span>
-                <span className="text-sm text-muted">{t(`branding.${m}Hint`)}</span>
-              </button>
-            ))}
-          </div>
-          {saveBtn("branding", () => save("branding", { brandingMode }))}
-          {msg("branding")}
-        </Section>
-      ) : null}
 
       <Section id="link" title={t("settings.link")}>
         <p className="m-0 mb-4 text-sm text-muted">{t("settings.linkHint")}</p>
@@ -267,7 +228,7 @@ export function SettingsClient({ initial, isOwner, payments, storage }: Props) {
       </Section>
 
       <Section id="days" title={t("settings.days")}>
-        <p className="m-0 mb-4 text-sm text-muted">{t("settings.daysHint", { max: plan.maxDays })}</p>
+        <p className="m-0 mb-4 text-sm text-muted">{t("settings.daysHint", { max: maxDays })}</p>
         <ul className="m-0 flex list-none flex-col gap-4 p-0">
           {days.map((d, i) => {
             const server = o.days.find((x) => x.id === d.id);
@@ -290,14 +251,14 @@ export function SettingsClient({ initial, isOwner, payments, storage }: Props) {
                 </details>
                 {server?.guestUrl ? (
                   server.active === false
-                    ? <p className="m-0 text-sm font-semibold text-royal">{t("settings.dayLocked")}</p>
+                    ? <p className="m-0 text-sm font-semibold text-royal">{t("settings.dayLocked", { max: maxDays })}</p>
                     : <p className="m-0 break-all text-sm text-muted">{t("settings.dayLink")} <code className="font-semibold text-ink">{server.guestUrl}</code></p>
                 ) : null}
               </li>
             );
           })}
         </ul>
-        {days.length < PLANS.buyuk.maxDays ? (
+        {days.length < maxDays ? (
           <Button variant="ghost" className="mt-4" onClick={() => setDays((a) => [...a, { name: t("wizard.newDay", { n: a.length + 1 }), date: "", opens: "", closes: "" }])}>{t("wizard.addDay")}</Button>
         ) : null}
         {saveBtn("days", () => save("days", { days: days.map((d) => ({ id: d.id, name: d.name.trim() || "—", date: d.date || null, uploadOpensAt: fromLocalInput(d.opens), uploadClosesAt: fromLocalInput(d.closes) })) }).then((r) => {
@@ -325,14 +286,12 @@ export function SettingsClient({ initial, isOwner, payments, storage }: Props) {
           </div>
           <div className="flex flex-col gap-2">
             <span className="text-[15px] font-bold">{t("settings.disposable")}</span>
-            {plan.disposable ? (
-              <Field id="s-shots" type="number" min={1} max={100} inputMode="numeric" label={t("settings.shots")} hint={t("settings.shotsHint")} value={shots} onChange={(e) => setShots(e.target.value)} />
-            ) : <p className="m-0 text-sm font-semibold text-royal">{t("settings.needsPaid")}</p>}
+            <Field id="s-shots" type="number" min={1} max={100} inputMode="numeric" label={t("settings.shots")} hint={t("settings.shotsHint")} value={shots} onChange={(e) => setShots(e.target.value)} />
           </div>
         </div>
         {saveBtn("uploads", () => save("uploads", {
           uploadOpensAt: fromLocalInput(opens), uploadClosesAt: fromLocalInput(closes), approvalMode: approval, revealMode: reveal,
-          revealAt: fromLocalInput(revealAt), ...(plan.disposable ? { disposableShots: shots ? Math.max(1, Math.min(100, Number(shots))) : null } : {}),
+          revealAt: fromLocalInput(revealAt), disposableShots: shots ? Math.max(1, Math.min(100, Number(shots))) : null,
         }))}
         {msg("uploads")}
       </Section>
@@ -347,10 +306,9 @@ export function SettingsClient({ initial, isOwner, payments, storage }: Props) {
         {msg("pin")}
       </Section>
 
-      <Section id="share" title={t("share.title")} locked={!plan.shareLinks} lockedText={t("settings.needsBig")}>
+      <Section id="share" title={t("share.title")}>
         <p className="m-0 mb-4 text-sm text-muted">{t("share.lead")}</p>
-        {plan.shareLinks ? (
-          <>
+        <>
             <div className="flex flex-wrap items-end gap-3">
               <Field id="l-label" className="min-w-48 flex-1" label={t("share.label")} placeholder={t("share.labelPlaceholder")} value={linkLabel} maxLength={80} onChange={(e) => setLinkLabel(e.target.value)} />
               <div className="flex flex-col gap-2">
@@ -375,12 +333,11 @@ export function SettingsClient({ initial, isOwner, payments, storage }: Props) {
               ))}
               {links && !links.length ? <li className="text-sm text-muted">{t("share.none")}</li> : null}
             </ul>
-          </>
-        ) : null}
+        </>
         {msg("share")}
       </Section>
 
-      <Section id="team" title={t("team.title")} locked={!plan.cohosts} lockedText={t("settings.needsBig")}>
+      <Section id="team" title={t("team.title")}>
         <p className="m-0 mb-4 text-sm text-muted">{t("team.lead")}</p>
         <ul className="m-0 mb-4 flex list-none flex-col gap-2 p-0">
           {team?.members.map((mb) => (
@@ -396,40 +353,13 @@ export function SettingsClient({ initial, isOwner, payments, storage }: Props) {
             </li>
           ))}
         </ul>
-        {plan.cohosts && isOwner ? (
+        {isOwner ? (
           <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); void invite(); }}>
             <Field id="t-email" type="email" required className="min-w-56 flex-1" label={t("team.email")} value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
             <Button type="submit">{t("team.invite")}</Button>
           </form>
         ) : null}
         {msg("team")}
-      </Section>
-
-      <Section id="plan" title={t("plan.title")}>
-        <div className="flex flex-col gap-4">
-          <p className="m-0 text-lg">{t("plan.current")} <strong>{plan.name[locale]}</strong>{o.storageExpiresAt ? <span className="text-muted"> · {t("plan.storedUntil", { date: formatDate(o.storageExpiresAt, locale) })}</span> : null}</p>
-          {upgrades.length ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {upgrades.map((u) => (
-                <div key={u.plan} className={`flex flex-col gap-3 rounded-[24px] p-5 ${u.plan === "buyuk" ? "bg-ink text-white" : "bg-tint"}`}>
-                  <span className="text-xl font-black">{PLANS[u.plan].name[locale]}</span>
-                  <span className="text-4xl font-black tracking-tight">{money(u.price, locale)}</span>
-                  <ul className={`m-0 flex list-none flex-col gap-1 p-0 text-sm ${u.plan === "buyuk" ? "text-muted-dark" : "text-text-2"}`}>
-                    {(t(`plan.features.${u.plan}`)).split("|").map((f) => <li key={f} className="flex gap-2"><Check size={16} aria-hidden className="mt-0.5 flex-none text-sky" />{f}</li>)}
-                  </ul>
-                  {payments ? (
-                    <Button variant={u.plan === "buyuk" ? "light" : "primary"} disabled={saving === "plan"} onClick={() => checkout(u.plan)}>
-                      {o.plan === "tek" ? t("plan.upgradeTo", { plan: PLANS[u.plan].name[locale] }) : t("plan.choose", { plan: PLANS[u.plan].name[locale] })}
-                    </Button>
-                  ) : <span className="text-sm font-bold">{t("plan.comingSoon")}</span>}
-                </div>
-              ))}
-            </div>
-          ) : <p className="m-0 text-muted">{t("plan.top")}</p>}
-          {upgrades.length ? <p className="m-0 text-sm font-semibold text-royal">{t("plan.moneyBack", { days: MONEY_BACK_DAYS })}</p> : null}
-          <p className="m-0 text-xs text-muted">{t("plan.oneOff")}</p>
-        </div>
-        {msg("plan")}
       </Section>
 
       {isOwner ? (

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Play } from "lucide-react";
 import { Lightbox } from "@/components/app/Lightbox";
 import { ShareButtons } from "@/components/app/ShareButtons";
@@ -7,9 +7,15 @@ import { useT } from "@/i18n/client";
 import { formatDuration } from "@/lib/client/format";
 import type { MediaItem } from "@/lib/api-types";
 
-export function ShareGallery({ items, shareUrl, shareText, title }: { items: MediaItem[]; shareUrl: string; shareText: string; title: string }) {
+export function ShareGallery({ items, shareUrl, shareText, title, downloadsOpen }: { items: MediaItem[]; shareUrl: string; shareText: string; title: string; downloadsOpen: boolean }) {
   const t = useT("guest");
   const [open, setOpen] = useState<number | null>(null);
+  const [note, setNote] = useState(false);
+  useEffect(() => {
+    if (!note) return;
+    const id = setTimeout(() => setNote(false), 4000);
+    return () => clearTimeout(id);
+  }, [note]);
   return (
     <>
       <ShareButtons url={shareUrl} text={shareText} title={title} tone="dark" labels={{ whatsapp: t("share.whatsapp"), share: t("share.native"), copy: t("share.copy"), copied: t("share.copied") }} />
@@ -26,9 +32,10 @@ export function ShareGallery({ items, shareUrl, shareText, title }: { items: Med
         ))}
       </ul>
       {open !== null ? (
-        <Lightbox items={items} index={open} onIndex={setOpen} onClose={() => setOpen(null)} downloadUrl={(m) => m.displayUrl}
-          labels={{ close: t("common.close"), prev: t("common.previous"), next: t("common.next"), download: t("feed.download"), by: (n) => t("feed.by", { name: n }) }} />
+        <Lightbox items={items} index={open} onIndex={setOpen} onClose={() => setOpen(null)} downloadUrl={(m) => m.displayUrl} onDownloadLocked={downloadsOpen ? undefined : () => setNote(true)}
+          labels={{ close: t("common.close"), prev: t("common.previous"), next: t("common.next"), download: t("feed.download"), by: (n) => t("feed.by", { name: n }), videoLocked: t("feed.videoLocked") }} />
       ) : null}
+      {note ? <div role="status" className="fixed bottom-6 left-1/2 z-[60] w-[min(92vw,420px)] -translate-x-1/2 rounded-2xl bg-white px-5 py-3 text-center text-sm font-bold text-ink shadow-xl">{t("feed.downloadsLocked")}</div> : null}
     </>
   );
 }

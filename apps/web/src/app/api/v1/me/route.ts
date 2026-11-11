@@ -2,12 +2,16 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { route, json, readJson } from "@/lib/http";
-import { requireHost } from "@/lib/auth";
-import { toHost } from "@/lib/serializers";
+import { requireHost, SESSION_COOKIE } from "@/lib/auth";
+import { toHost, toSubscription } from "@/lib/serializers";
+import { computeAccess } from "@/lib/access";
 import { deleteAccount } from "@/lib/account";
-import { SESSION_COOKIE } from "@/lib/auth";
 
-export const GET = route(async () => json({ host: toHost(await requireHost()) }));
+type HostRow = typeof schema.hosts.$inferSelect;
+const payload = (h: HostRow) => ({ host: { ...toHost(h), subscription: toSubscription(computeAccess(h)) } });
+
+/** `host.subscription` = the account's subscription and what it allows right now. */
+export const GET = route(async () => json(payload(await requireHost())));
 
 const body = z.object({ name: z.string().trim().max(80).nullable().optional(), locale: z.enum(["en", "tr"]).optional() });
 
@@ -17,10 +21,10 @@ export const PATCH = route(async (req) => {
   const [updated] = await db.update(schema.hosts)
     .set({ ...(b.name !== undefined ? { name: b.name || null } : {}), ...(b.locale ? { locale: b.locale } : {}) })
     .where(eq(schema.hosts.id, host.id)).returning();
-  return json({ host: toHost(updated ?? host) });
+  return json(payload(updated ?? host));
 });
 
-/** Deletes the host account, events they own (with all files) and memberships. 409 if they still own an active partner account. */
+/** Deletes the host account, events they own (with all files) and memberships, and cancels any Stripe subscription immediately. */
 export const DELETE = route(async () => {
   const host = await requireHost();
   await deleteAccount(host.id);

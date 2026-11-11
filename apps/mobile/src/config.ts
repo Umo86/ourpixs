@@ -27,10 +27,10 @@ export const API_URL = (process.env.EXPO_PUBLIC_API_URL || extra.apiUrl || "http
 export const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO === "1" || extra.demo === true;
 
 /**
- * Show upgrade buttons that open Stripe Checkout in the browser.
- * OFF for App Store / Play builds: selling plans that unlock in-app features via an external link
- * conflicts with Apple 3.1.1 and Google Play Payments policy (outside the US storefront exceptions).
- * Store builds show the current plan only; hosts upgrade on the website.
+ * Show a "Choose a plan" button that opens the website's pricing page in the browser.
+ * OFF for App Store / Play builds: selling an account subscription via an external link, or showing prices,
+ * conflicts with Apple 3.1.1 and Google Play Payments policy. Store builds show plan status only, neutrally.
+ * Only non-store dev builds (EXPO_PUBLIC_EXTERNAL_CHECKOUT=1) may show the button.
  */
 export const EXTERNAL_CHECKOUT = process.env.EXPO_PUBLIC_EXTERNAL_CHECKOUT === "1";
 
@@ -147,40 +147,6 @@ export function buildTitle(type: OccasionType, names: string[], locale: Locale):
   const joined = names.map((n) => n.trim()).filter(Boolean).join(" & ");
   if (!joined) return "";
   return OCCASIONS[type].titlePattern[locale].replace("{names}", joined);
-}
-
-export type Plan = "free" | "tek" | "buyuk";
-export type PlanSpec = {
-  name: L; pricePence: number; maxDays: number; maxMedia: number | null; video: boolean; maxVideoSeconds: number;
-  maxVideoBytes: number; liveWall: boolean; voiceGuestbook: boolean; shareLinks: boolean; cohosts: boolean;
-  missions: boolean; disposable: boolean; storageDays: number;
-};
-export const PLANS: Record<Plan, PlanSpec> = {
-  free: { name: { en: "Free", tr: "Ücretsiz" }, pricePence: 0, maxDays: 1, maxMedia: 100, video: false, maxVideoSeconds: 0, maxVideoBytes: 0,
-    liveWall: false, voiceGuestbook: false, shareLinks: false, cohosts: false, missions: false, disposable: false, storageDays: 30 },
-  tek: { name: { en: "One Day", tr: "Tek Gün" }, pricePence: 1900, maxDays: 1, maxMedia: null, video: true, maxVideoSeconds: 120, maxVideoBytes: 300 * 1024 * 1024,
-    liveWall: true, voiceGuestbook: false, shareLinks: false, cohosts: false, missions: true, disposable: true, storageDays: 365 },
-  buyuk: { name: { en: "Big Day", tr: "Büyük Gün" }, pricePence: 4900, maxDays: 5, maxMedia: null, video: true, maxVideoSeconds: 600, maxVideoBytes: 1024 * 1024 * 1024,
-    liveWall: true, voiceGuestbook: true, shareLinks: true, cohosts: true, missions: true, disposable: true, storageDays: 365 * 3 },
-};
-export const UPGRADE_TEK_TO_BUYUK_PENCE = 3000;
-/** Partner (white-label) plan for venues, planners, DJs and photographers: monthly subscription. */
-export const PARTNER_PENCE = 14900;
-export const PARTNER_FEATURES = { unlimitedEvents: true, planPerEvent: "buyuk" as Plan, removePlatformBranding: true, venueLogo: true, customColours: true, perEventBranding: ["venue", "couple", "both"] as const };
-/** 14-day no-questions money-back guarantee on paid event plans. */
-export const MONEY_BACK_DAYS = 14;
-
-/** Per-event guest-facing branding (Partner plan). */
-export type BrandingMode = "platform" | "venue" | "couple" | "both";
-
-export function planSpec(plan: string | null | undefined): PlanSpec {
-  return PLANS[(plan as Plan) in PLANS ? (plan as Plan) : "free"];
-}
-
-export function formatPrice(pence: number, locale: Locale): string {
-  return new Intl.NumberFormat(locale === "tr" ? "tr-TR" : "en-GB", {
-    style: "currency", currency: "GBP", minimumFractionDigits: pence % 100 === 0 ? 0 : 2,
-  }).format(pence / 100);
 }
 
 export const THEMES = {

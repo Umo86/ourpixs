@@ -7,6 +7,7 @@ import { liveMedia, mediaPage } from "@/lib/queries";
 import { toMediaItems } from "@/lib/serializers";
 import { canonicalMoment } from "@/lib/occasion";
 import { deleteObjects } from "@/lib/storage";
+import { accessForOccasion } from "@/lib/access";
 
 const { media } = schema;
 
@@ -36,8 +37,8 @@ export const GET = route<{ id: string }>(async (req, { id }) => {
   if (q.guestId) where.push(eq(media.guestId, q.guestId));
   if (q.kind) where.push(eq(media.kind, q.kind));
   if (q.moment) where.push(eq(media.momentTag, canonicalMoment(occasion, q.moment) ?? q.moment));
-  const { rows, nextCursor } = await mediaPage({ where, cursor: q.cursor, limit: q.limit });
-  return json({ items: await toMediaItems(rows, "host"), nextCursor });
+  const [{ rows, nextCursor }, access] = await Promise.all([mediaPage({ where, cursor: q.cursor, limit: q.limit }), accessForOccasion(occasion)]);
+  return json({ items: await toMediaItems(rows, "host", { canDownload: access.canDownload }), nextCursor });
 });
 
 const patch = z.object({

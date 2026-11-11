@@ -13,6 +13,7 @@ export const POST = route(async (req) => {
   const host = await requireHost();
   await limit(`occ:create:${host.id}`, 20, 86400);
   const body = await readJson(req, createSchema);
-  const o = await createOccasion(host.id, requestBrand(req), body);
-  return json({ occasion: await occasionPayload(o, "owner") }, { status: 201 });
+  const { occasion: o, trialStarted } = await createOccasion(host.id, requestBrand(req), body);
+  // `trialStarted` is true when this (first) event started the host's free trial.
+  return json({ occasion: await occasionPayload(o, "owner"), trialStarted }, { status: 201 });
 });

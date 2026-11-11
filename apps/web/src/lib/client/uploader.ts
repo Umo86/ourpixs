@@ -15,7 +15,7 @@ type Entry = { item: QueueItem; file: File; ticket?: { t: UploadTicket; at: numb
 type Persisted = { file: File; meta: UploadMeta; ticket?: Entry["ticket"] };
 
 /** Errors the user (or host) has to fix; retrying won't help. */
-const FATAL = new Set(["plan_limit", "plan_feature", "upload_closed", "shots_exhausted", "invalid_request", "not_joined", "storage_not_configured", "not_found", "unauthorized", "pin_required"]);
+const FATAL = new Set(["plan_limit", "plan_required", "upload_closed", "shots_exhausted", "invalid_request", "not_joined", "storage_not_configured", "not_found", "unauthorized", "pin_required"]);
 const MAX_ATTEMPTS = 6;
 const TICKET_TTL = 50 * 60 * 1000;
 

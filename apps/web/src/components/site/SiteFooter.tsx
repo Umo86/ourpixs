@@ -58,7 +58,6 @@ export async function SiteFooter({ compact = false, className = "" }: { compact?
               { href: "/features", label: c("nav.features") },
               { href: "/pricing", label: c("nav.pricing") },
               { href: "/demo", label: m("site.demo") },
-              { href: "/partners", label: c("nav.partners") },
             ])}
             {col(m("site.occasions"), OCCASION_PAGES.map((o) => ({ href: `/for/${o.slug}`, label: o[locale].nav })))}
             {col(m("site.resources"), [

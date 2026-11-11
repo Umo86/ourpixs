@@ -1,6 +1,6 @@
 /**
- * Shared product config: brands, occasion types, plans, themes.
- * Single source of truth — never hard-code a brand name, plan limit or occasion wording in components.
+ * Shared product config: brands, occasion types, subscription, themes.
+ * Single source of truth — never hard-code a brand name, price, limit or occasion wording in components.
  */
 
 export type Locale = "en" | "tr";
@@ -99,24 +99,45 @@ export const OCCASIONS: Record<OccasionType, { label: L; titlePattern: L; days: 
   },
 };
 
-export type Plan = "free" | "tek" | "buyuk";
-export const PLANS: Record<Plan, {
-  name: L; pricePence: number; maxDays: number; maxMedia: number | null; video: boolean; maxVideoSeconds: number;
-  maxVideoBytes: number; liveWall: boolean; voiceGuestbook: boolean; shareLinks: boolean; cohosts: boolean;
-  missions: boolean; disposable: boolean; storageDays: number;
-}> = {
-  free: { name: { en: "Free", tr: "Ücretsiz" }, pricePence: 0, maxDays: 1, maxMedia: 100, video: false, maxVideoSeconds: 0, maxVideoBytes: 0,
-    liveWall: false, voiceGuestbook: false, shareLinks: false, cohosts: false, missions: false, disposable: false, storageDays: 30 },
-  tek: { name: { en: "One Day", tr: "Tek Gün" }, pricePence: 1900, maxDays: 1, maxMedia: null, video: true, maxVideoSeconds: 120, maxVideoBytes: 300 * 1024 * 1024,
-    liveWall: true, voiceGuestbook: false, shareLinks: false, cohosts: false, missions: true, disposable: true, storageDays: 365 },
-  buyuk: { name: { en: "Big Day", tr: "Büyük Gün" }, pricePence: 4900, maxDays: 5, maxMedia: null, video: true, maxVideoSeconds: 600, maxVideoBytes: 1024 * 1024 * 1024,
-    liveWall: true, voiceGuestbook: true, shareLinks: true, cohosts: true, missions: true, disposable: true, storageDays: 365 * 3 },
-};
-export const UPGRADE_TEK_TO_BUYUK_PENCE = 3000;
-/** Partner (white-label) plan for venues, planners, DJs and photographers: monthly subscription. */
-export const PARTNER_PENCE = 14900;
-export const PARTNER_FEATURES = { unlimitedEvents: true, planPerEvent: "buyuk" as Plan, removePlatformBranding: true, venueLogo: true, customColours: true, perEventBranding: ["venue", "couple", "both"] as const };
-/** 14-day no-questions money-back guarantee on paid event plans. */
+/**
+ * Account subscription: one price list, every feature, unlimited events. Amounts in pence, GBP, VAT included.
+ * Access rules (trial, read-only, retention) are computed in src/lib/access.ts from these numbers.
+ */
+export const SUBSCRIPTION = {
+  monthlyPence: 999,
+  yearlyPence: 6999,
+  /** Free trial length. It starts when the host creates their first event, and needs no card. */
+  trialDays: 3,
+  /** After this long into the trial, the dashboard and one email prompt the host to subscribe. */
+  trialPromptAfterHours: 24,
+  /** Unpaid trial: files are kept this long after the trial ends, then deleted. */
+  trialGraceDeleteDays: 30,
+  /** After a cancelled subscription's paid period ends: read-only (downloads allowed) this long, then deleted. */
+  cancelledReadOnlyDays: 90,
+  /** A failed renewal keeps working this long from the first failed payment, then behaves as cancelled. */
+  pastDueGraceDays: 7,
+  /** Deletion warning emails, days before files are deleted. */
+  trialDeletionWarningDays: 7,
+  cancelledDeletionWarningDays: 14,
+  /** What every event gets on the trial and on both plans (fair use applies; see the terms). */
+  features: {
+    maxDays: 5,
+    maxVideoSeconds: 600,
+    maxVideoBytes: 1024 * 1024 * 1024,
+    liveWall: true,
+    missions: true,
+    disposable: true,
+    voiceGuestbook: true,
+    shareLinks: true,
+    cohosts: true,
+    autoModeration: true,
+  },
+} as const;
+export type PlanInterval = "month" | "year";
+export const intervalPence = (i: PlanInterval): number => (i === "year" ? SUBSCRIPTION.yearlyPence : SUBSCRIPTION.monthlyPence);
+/** Yearly saving vs 12 × monthly, as a whole percentage (42). */
+export const YEARLY_SAVING_PERCENT = Math.round((1 - SUBSCRIPTION.yearlyPence / (SUBSCRIPTION.monthlyPence * 12)) * 100);
+/** 14-day money-back guarantee on a host's first subscription payment (refunded by support). */
 export const MONEY_BACK_DAYS = 14;
 export const SUPPORT_EMAIL = { ourpixs: process.env.NEXT_PUBLIC_SUPPORT_EMAIL_EN || "hello@ourpixs.com", bizimresimler: process.env.NEXT_PUBLIC_SUPPORT_EMAIL_TR || "merhaba@bizimresimler.com" } as const;
 

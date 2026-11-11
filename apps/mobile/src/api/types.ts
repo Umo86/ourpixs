@@ -1,7 +1,33 @@
 /** Types for the /api/v1 contract (docs/API.md). Keep in sync with the backend. */
-import type { Brand, BrandingMode, Locale, OccasionType, Plan } from "@/config";
+import type { Brand, Locale, OccasionType } from "@/config";
 
 export type Host = { id: string; email: string; name: string | null; locale: Locale; brand: Brand };
+
+export type SubscriptionStatus = "none" | "trialing" | "active" | "past_due" | "cancelled" | "expired";
+
+/** Account subscription, returned by GET /api/v1/me. */
+export type Subscription = {
+  status: SubscriptionStatus;
+  interval: "month" | "year" | null;
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  /** When read-only events are deleted (trial ended unpaid: 30 days; cancelled: 90 days). */
+  deleteAfter: string | null;
+  canCreateEvents: boolean;
+  canDownload: boolean;
+  readOnly: boolean;
+  showUpgradePrompt: boolean;
+  daysLeft: number | null;
+};
+
+/** What the host can do with one event right now. */
+export type OccasionAccess = {
+  canUpload: boolean;
+  canDownload: boolean;
+  readOnly: boolean;
+  reason: "trial" | "trial_ended" | "cancelled" | "past_due" | null;
+};
 
 export type OccasionSummary = {
   id: string;
@@ -9,7 +35,7 @@ export type OccasionSummary = {
   type: OccasionType | string;
   title: string;
   startsOn: string | null;
-  plan: Plan;
+  access?: OccasionAccess;
   coverUrl: string | null;
   mediaCount: number;
   guestCount: number;
@@ -36,9 +62,7 @@ export type Occasion = OccasionSummary & {
   days: OccasionDay[];
   guestUrl: string;
   wallUrl: string;
-  /** PROVISIONAL (Partner plan) — not yet in docs/API.md. */
-  organisationId?: string | null;
-  brandingMode?: BrandingMode;
+  access: OccasionAccess;
 };
 
 export type Stats = { guests: number; photos: number; videos: number; messages: number; bytes: number; pendingApproval: number };
@@ -53,42 +77,20 @@ export type PublicOccasion = {
   city: string | null;
   theme: string | null;
   brand: Brand;
-  plan: Plan;
   days: OccasionDay[];
   moments: string[];
   liveWall: boolean;
   missionsEnabled: boolean;
   disposableShots: number | null;
   voiceGuestbook: boolean;
+  /** Upload window (host schedule). */
   uploadOpen: boolean;
+  /** False while the host's account can't accept uploads (read-only events). */
+  uploadsOpen: boolean;
+  /** False while the host's account has downloads locked (free trial / unpaid). */
+  downloadsOpen?: boolean;
   revealMode: RevealMode;
   revealAt: string | null;
-  /** PROVISIONAL (Partner plan) — guest-facing branding; absent = "platform". */
-  brandingMode?: BrandingMode;
-  branding?: EventBranding | null;
-};
-
-/**
- * PROVISIONAL — /api/v1/organisations is announced but not yet documented in docs/API.md.
- * Every field the UI relies on is optional or nullable so the app degrades gracefully.
- */
-export type EventBranding = {
-  venueName?: string | null;
-  venueLogoUrl?: string | null;
-  primaryColor?: string | null;
-  accentColor?: string | null;
-  /** Couple monogram text, e.g. "E & C". */
-  monogram?: string | null;
-  coupleLogoUrl?: string | null;
-};
-
-export type Organisation = {
-  id: string;
-  name: string;
-  logoUrl: string | null;
-  primaryColor: string | null;
-  accentColor: string | null;
-  role: "owner" | "admin" | "member";
 };
 
 export type MediaKind = "photo" | "video" | "voice";
@@ -99,6 +101,8 @@ export type MediaItem = {
   thumbUrl: string | null;
   displayUrl: string | null;
   originalUrl?: string;
+  /** Videos only: playable URL, present even while downloads are locked. */
+  playbackUrl?: string | null;
   width: number | null;
   height: number | null;
   durationS: number | null;

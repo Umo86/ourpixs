@@ -1,5 +1,5 @@
 import "server-only";
-import { BRANDS, brandBaseUrl, type Brand, type Locale } from "./config";
+import { BRANDS, SUBSCRIPTION, YEARLY_SAVING_PERCENT, brandBaseUrl, type Brand, type Locale } from "./config";
 import { makeT } from "@/i18n/shared";
 import { ApiError } from "./http";
 
@@ -63,25 +63,44 @@ export async function sendLoginCode(to: string, code: string, locale: Locale, br
   await send(brand, to, subject, html, `${t("email.code.heading")}\n\n${code}\n\n${body.join("\n")}\n\n${t("email.code.ignore")}`);
 }
 
-/** `venue` set = partner event: the email is sent in the venue's name (white-label). */
-export async function sendCohostInvite(to: string, opts: { inviter: string; title: string; locale: Locale; brand: Brand; venue?: string }) {
+export async function sendCohostInvite(to: string, opts: { inviter: string; title: string; locale: Locale; brand: Brand }) {
   const t = makeT(opts.locale, "host");
   const url = `${brandBaseUrl(opts.brand)}/login`;
-  const vars = { inviter: opts.inviter, title: opts.title, brand: opts.venue || BRANDS[opts.brand].name };
+  const vars = { inviter: opts.inviter, title: opts.title, brand: BRANDS[opts.brand].name };
   const subject = t("email.invite.subject", vars);
   const body = [t("email.invite.body", vars)];
   const html = layout(opts.brand, { heading: t("email.invite.heading", vars), body, cta: { href: url, label: t("email.invite.cta") }, footer: t("email.invite.footer") });
   await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n")}\n\n${url}`);
 }
 
-export async function sendExpiryWarning(to: string, opts: { title: string; date: string; occasionId: string; locale: Locale; brand: Brand }) {
+export function formatEmailDate(d: Date, locale: Locale) {
+  return d.toLocaleDateString(locale === "tr" ? "tr-TR" : "en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/London" });
+}
+
+/**
+ * Account billing emails (sent once each by the daily cron). `kind`:
+ *  trialPrompt   — a day into the trial: subscribe (monthly first) to unlock downloads
+ *  trialEnded    — trial over unpaid: events read-only, files kept until `date`
+ *  cancelled     — paid period over: events read-only, downloads open until `date`
+ *  deletionSoon  — files are deleted on `date`
+ */
+export async function sendBillingEmail(to: string, kind: "trialPrompt" | "trialEnded" | "cancelled" | "deletionSoon",
+  opts: { locale: Locale; brand: Brand; date?: Date | null; days?: number | null }) {
   const t = makeT(opts.locale, "host");
-  const url = `${brandBaseUrl(opts.brand)}/dashboard/${opts.occasionId}/download`;
-  const vars = { title: opts.title, date: opts.date };
-  const subject = t("email.expiry.subject", vars);
-  const body = [t("email.expiry.body", vars)];
-  const html = layout(opts.brand, { heading: t("email.expiry.heading", vars), body, cta: { href: url, label: t("email.expiry.cta") }, footer: t("email.expiry.footer") });
-  await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n")}\n\n${url}`);
+  const url = `${brandBaseUrl(opts.brand)}/dashboard`;
+  const vars = {
+    brand: BRANDS[opts.brand].name, date: opts.date ? formatEmailDate(opts.date, opts.locale) : "", days: opts.days ?? 0,
+    monthly: money(SUBSCRIPTION.monthlyPence, opts.locale), yearly: money(SUBSCRIPTION.yearlyPence, opts.locale), saving: YEARLY_SAVING_PERCENT,
+  };
+  const k = `email.billing.${kind}`;
+  const subject = t(`${k}.subject`, vars);
+  const body = [t(`${k}.body`, vars), t(`${k}.body2`, vars)].filter((x) => x && !x.startsWith(k));
+  const html = layout(opts.brand, { heading: t(`${k}.heading`, vars), body, cta: { href: url, label: t(`${k}.cta`, vars) }, footer: t("email.billing.footer", vars) });
+  await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${url}`);
+}
+
+function money(pence: number, locale: Locale) {
+  return (pence / 100).toLocaleString(locale === "tr" ? "tr-TR" : "en-GB", { style: "currency", currency: "GBP" });
 }
 
 export async function sendReportEmail(to: string, opts: { title: string; occasionId: string; reason: string; locale: Locale; brand: Brand }) {

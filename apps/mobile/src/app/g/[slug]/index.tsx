@@ -16,7 +16,7 @@ import { EmptyState, ErrorView, Loading, Notice } from "@/components/States";
 import { occasionLabel } from "@/config";
 import { useGuest } from "@/guest/GuestContext";
 import { useI18n } from "@/i18n";
-import { PermissionDeniedError, saveToCameraRoll } from "@/lib/saveMedia";
+import { DownloadLockedError, PermissionDeniedError, saveToCameraRoll } from "@/lib/saveMedia";
 import { onUploadCompleted } from "@/upload/queue";
 import { colors } from "@/theme";
 
@@ -105,6 +105,7 @@ export default function GuestFeed() {
   };
 
   const save = async (it: MediaItem) => {
+    if (occasion?.downloadsOpen === false) return Alert.alert(t("guest.downloadsClosed"));
     try {
       await saveToCameraRoll([it]);
       Alert.alert(t("album.saved"));
@@ -114,7 +115,8 @@ export default function GuestFeed() {
           { text: t("common.cancel"), style: "cancel" },
           { text: t("errors.openSettings"), onPress: () => void Linking.openSettings() },
         ]);
-      } else Alert.alert(t("errors.generic"));
+      } else if (e instanceof DownloadLockedError) Alert.alert(t("guest.downloadsClosed"));
+      else Alert.alert(t("errors.generic"));
     }
   };
 

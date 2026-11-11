@@ -7,7 +7,7 @@ import { Button, Sticker } from "@/components/ui";
 import { Field } from "@/components/app/Field";
 import { Notice } from "@/components/app/Notice";
 import { useLocale, useT } from "@/i18n/client";
-import { OCCASIONS, PLANS, THEMES, type OccasionType } from "@/lib/config";
+import { OCCASIONS, SUBSCRIPTION, THEMES, type OccasionType } from "@/lib/config";
 import { COUPLE_TYPES, suggestTitle } from "@/lib/title";
 import { api, errorMessage } from "@/lib/client/api";
 import type { Occasion, Theme } from "@/lib/api-types";
@@ -47,6 +47,8 @@ export function NewOccasionWizard({ templateId, initialTheme }: { templateId?: s
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<Occasion | null>(null);
+  const [trialStarted, setTrialStarted] = useState(false);
+  const MAX_DAYS = SUBSCRIPTION.features.maxDays;
 
   const autoTitle = useMemo(() => (type ? suggestTitle(type, names, locale) : ""), [type, names, locale]);
   const shownTitle = titleEdited ? title : autoTitle;
@@ -66,7 +68,7 @@ export function NewOccasionWizard({ templateId, initialTheme }: { templateId?: s
     setError(null);
     try {
       const chosen = days.filter((d) => d.on && d.name.trim());
-      const r = await api<{ occasion: Occasion }>("/api/v1/occasions", {
+      const r = await api<{ occasion: Occasion; trialStarted?: boolean }>("/api/v1/occasions", {
         body: {
           type, title: shownTitle.trim() || OCCASIONS[type].label[locale], honorees: names.map((n) => n.trim()).filter(Boolean),
           startsOn: startsOn || null, venueName: venueName || null, city: city || null, theme,
@@ -74,6 +76,7 @@ export function NewOccasionWizard({ templateId, initialTheme }: { templateId?: s
         },
       });
       setCreated(r.occasion);
+      setTrialStarted(!!r.trialStarted);
       setStep(4);
     } catch (e) {
       setError(errorMessage(t, e));
@@ -91,9 +94,10 @@ export function NewOccasionWizard({ templateId, initialTheme }: { templateId?: s
   if (step === 4 && created) {
     return (
       <div className="flex flex-col gap-8">
-        <Sticker rotate={-4} className="self-start">{t("wizard.doneSticker")}</Sticker>
+        <Sticker rotate={-4} className="self-start">{trialStarted ? t("wizard.trialSticker", { days: SUBSCRIPTION.trialDays }) : t("wizard.doneSticker")}</Sticker>
         {heading(t("wizard.doneTitle"), t("wizard.doneAccent"))}
         <p className="m-0 max-w-xl text-lg text-text-2">{t("wizard.doneBody")}</p>
+        {trialStarted ? <Notice tone="blue">{t("wizard.trialBody")}</Notice> : null}
         <div className="flex flex-col gap-3 rounded-[28px] bg-tint p-5 sm:flex-row sm:items-center sm:justify-between">
           <code className="break-all text-[15px] font-semibold">{created.guestUrl}</code>
           <ShareButtons url={created.guestUrl} text={t("share.guestMessage", { title: created.title })} title={created.title}
@@ -186,7 +190,7 @@ export function NewOccasionWizard({ templateId, initialTheme }: { templateId?: s
           </div>
           <fieldset className="m-0 flex flex-col gap-3 rounded-[24px] border-0 bg-tint p-5">
             <legend className="float-left mb-1 p-0 text-[15px] font-extrabold">{t("wizard.daysTitle")}</legend>
-            <p className="clear-both m-0 text-sm text-muted">{t("wizard.daysHint", { max: PLANS.buyuk.maxDays })}</p>
+            <p className="clear-both m-0 text-sm text-muted">{t("wizard.daysHint", { max: MAX_DAYS })}</p>
             {days.map((d, i) => (
               <div key={i} className="flex items-center gap-3">
                 <input type="checkbox" id={`day-${i}`} checked={d.on} onChange={(e) => setDays((arr) => arr.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))}
@@ -196,13 +200,12 @@ export function NewOccasionWizard({ templateId, initialTheme }: { templateId?: s
                 <span className="w-28 text-right text-sm text-muted">{startsOn ? shift(startsOn, d.offset) : ""}</span>
               </div>
             ))}
-            {days.length < PLANS.buyuk.maxDays ? (
+            {days.length < MAX_DAYS ? (
               <button type="button" onClick={() => setDays((a) => [...a, { name: t("wizard.newDay", { n: a.length + 1 }), offset: a.length ? a[a.length - 1]!.offset + 1 : 0, on: true }])}
                 className="inline-flex min-h-11 items-center gap-2 self-start font-bold text-royal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky">
                 <Plus size={18} aria-hidden />{t("wizard.addDay")}
               </button>
             ) : null}
-            {days.filter((d) => d.on).length > PLANS.free.maxDays ? <p className="m-0 text-sm font-semibold text-royal">{t("wizard.multiDayNote")}</p> : null}
           </fieldset>
           <Button type="submit" size="lg" className="self-start">{t("common.continue")}</Button>
         </form>

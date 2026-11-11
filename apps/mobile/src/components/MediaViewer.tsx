@@ -12,7 +12,8 @@ import { mediaSource } from "./MediaGrid";
 import { Txt } from "./Text";
 
 function VideoPage({ item, active, width, height }: { item: MediaItem; active: boolean; width: number; height: number }) {
-  const uri = item.displayUrl ?? item.originalUrl ?? null;
+  // displayUrl is the poster frame for videos; play the video file itself.
+  const uri = item.playbackUrl ?? item.originalUrl ?? null;
   const player = useVideoPlayer(uri ? { uri } : null, (p) => {
     p.loop = false;
   });

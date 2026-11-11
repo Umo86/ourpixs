@@ -18,7 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   const entries: Entry[] = [
-    same("", 1), same("/features", 0.8), same("/pricing", 0.8), same("/demo", 0.7), same("/partners", 0.6),
+    same("", 1), same("/features", 0.8), same("/pricing", 0.8), same("/demo", 0.7),
     same("/compare", 0.6), same("/templates", 0.6), same("/help", 0.6), same("/guides", 0.6),
     ...OCCASION_PAGES.map((o) => same(`/for/${o.slug}`, 0.7)),
     // Guides: each brand lists its own language's slugs; hreflang points at the counterpart on the other brand.

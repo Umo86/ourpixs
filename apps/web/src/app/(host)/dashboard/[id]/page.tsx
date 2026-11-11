@@ -5,13 +5,17 @@ import { db, schema } from "@/db";
 import { Container } from "@/components/ui";
 import { getT } from "@/i18n";
 import { requireMemberPage } from "@/lib/auth";
-import { OCCASIONS, PLANS } from "@/lib/config";
+import { OCCASIONS } from "@/lib/config";
 import { brandLocale } from "@/lib/occasion";
 import { loadDays, occasionStats } from "@/lib/queries";
 import { formatBytes, formatNumber } from "@/lib/client/format";
 import { storageDriver } from "@/lib/storage";
 import { AlbumClient } from "@/components/host/AlbumClient";
 import { Notice } from "@/components/app/Notice";
+import { UpgradePrompt } from "@/components/host/Billing";
+import { accessForOccasion, computeAccess } from "@/lib/access";
+import { toSubscription } from "@/lib/serializers";
+import { paymentsEnabled } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 
@@ -26,15 +30,17 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
   if (!m) notFound();
   const o = m.occasion;
   const { t, locale } = await getT("host");
-  const [stats, days, guests] = await Promise.all([
+  const [stats, days, guests, access] = await Promise.all([
     occasionStats(o),
     loadDays(o.id),
     db.select({ id: schema.guests.id, name: schema.guests.displayName }).from(schema.guests)
       .where(eq(schema.guests.occasionId, o.id)).orderBy(asc(schema.guests.displayName)).limit(1000),
+    accessForOccasion(o),
   ]);
+  const isOwner = m.role === "owner";
+  const payments = paymentsEnabled();
   const occLocale = brandLocale(o);
   const moments = OCCASIONS[o.type].moments.map((mo) => ({ value: mo[occLocale], label: mo[locale] }));
-  const plan = PLANS[o.plan];
   const tiles = [
     { label: t("stats.guests"), value: formatNumber(stats.guests, locale) },
     { label: t("stats.photos"), value: formatNumber(stats.photos, locale) },
@@ -46,6 +52,7 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
   return (
     <Container className="flex flex-col gap-6 py-6 sm:py-8">
       {!storageDriver() ? <Notice tone="error">{t("errors.storage_not_configured")}</Notice> : null}
+      {isOwner ? <UpgradePrompt sub={toSubscription(computeAccess(m.host))} payments={payments} /> : null}
       <dl className="m-0 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {tiles.map((s) => (
           <div key={s.label} className="flex flex-col-reverse gap-1 rounded-[24px] bg-tint px-5 py-4">
@@ -54,9 +61,6 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
           </div>
         ))}
       </dl>
-      {plan.maxMedia !== null ? (
-        <p className="m-0 text-sm text-muted">{t("album.freeLimit", { used: formatNumber(stats.photos + stats.videos, locale), max: formatNumber(plan.maxMedia, locale) })}</p>
-      ) : null}
       <AlbumClient
         occasionId={o.id}
         days={days.map((d) => ({ id: d.id, name: d.name }))}
@@ -64,6 +68,10 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
         guests={guests}
         pendingCount={stats.pendingApproval}
         approvalMode={o.approvalMode}
+        canDownload={access.canDownload}
+        canUpload={access.canUpload}
+        isOwner={isOwner}
+        payments={payments}
       />
     </Container>
   );

@@ -15,7 +15,7 @@ Sign-in is passwordless (email → 6-digit code). Reviewers can't read our email
 **Web side (to do, apps/web — `/api/v1/auth/*`):**
 1. `POST /api/v1/auth/request-code`: if `email === REVIEW_EMAIL`, return `{ ok: true }` without emailing (or email as normal).
 2. `POST /api/v1/auth/verify`: if both `REVIEW_EMAIL` and `REVIEW_CODE` are set, `email === REVIEW_EMAIL` and `code === REVIEW_CODE` (constant-time compare), issue the normal JWT for that host. Any other email must follow the normal path. Keep the normal rate limiting.
-3. Seed the review host with one sample event (photos, a few challenges, guestbook messages) so the reviewer sees a populated album. Paid features need the event on the `buyuk` plan.
+3. Seed the review host with one sample event (photos, a few challenges, guestbook messages) so the reviewer sees a populated album. The review host must have an **active account subscription** (so uploads and downloads work and events are not read-only).
 4. Rotate `REVIEW_CODE` after each review if you want; update App Store Connect / Play Console at the same time.
 
 ## Paste into App Store Connect → App Review Information → Notes
@@ -37,7 +37,7 @@ User-generated content: albums are private to each event (only people with the e
 Guests must accept terms before uploading, can delete their own uploads (Feed → My uploads) and can report any photo (viewer → Report, which emails our moderation team).
 Hosts can hide or delete any upload, require approval before uploads are shown, and set a guest PIN.
 
-The app contains no purchases and no links to external purchasing.
+The app contains no purchases, no prices and no links to external purchasing. It only shows the status of the account plan. The review account has an active plan.
 Permissions: camera (scan QR, take photos), photo library (pick photos to upload; add-only to save downloads), notifications (new uploads, optional).
 ```
 
@@ -45,6 +45,6 @@ Google Play Console → App content → App access: choose "All or some function
 
 ## Common rejection risks we've already handled
 - **4.2 minimum functionality**: native camera, QR scanning, upload queue, camera-roll saving, push notifications.
-- **3.1.1 payments**: store builds hide the Stripe upgrade buttons (`EXPO_PUBLIC_EXTERNAL_CHECKOUT=0` in the `production` EAS profile). Don't turn it on for store builds.
+- **3.1.1 payments**: store builds show the account plan status neutrally (no prices, no subscribe button, no link to a purchase page) and hide the "Choose a plan" button (`EXPO_PUBLIC_EXTERNAL_CHECKOUT=0` in the `production` EAS profile). Locked downloads show "Downloads aren't available on this account yet." Don't turn the flag on for store builds.
 - **5.1.1(v) account deletion**: Settings → "Delete my account" opens a pre-filled deletion request email. Apple prefers an in-app flow; see checklist item "Account deletion endpoint".
 - **1.2 UGC**: report, hide, delete, approval mode, PIN. Blocking a specific guest needs a backend endpoint (see checklist).

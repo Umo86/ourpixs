@@ -13,6 +13,7 @@ import { formatDuration } from "@/lib/client/format";
 import { Uploader } from "@/lib/client/uploader";
 import { EXT, openSaveTarget, safeName, saveZip } from "@/lib/client/zip";
 import type { MediaItem } from "@/lib/api-types";
+import { UpgradeDialog } from "./Billing";
 
 type Filters = { dayId?: string; moment?: string; guestId?: string; kind?: "photo" | "video"; filter?: "favourites" | "hidden" | "pending" | "flagged" | "duplicates" | "blurry" };
 type Action = "hide" | "show" | "delete" | "favourite" | "unfavourite" | "approve";
@@ -24,6 +25,11 @@ type Props = {
   guests: { id: string; name: string }[];
   pendingCount: number;
   approvalMode: boolean;
+  /** The owner's access: downloads locked on the trial / unpaid; uploads closed while read-only. */
+  canDownload: boolean;
+  canUpload: boolean;
+  isOwner: boolean;
+  payments: boolean;
 };
 
 const uploaders = new Map<string, Uploader>();
@@ -36,7 +42,7 @@ function hostUploader(id: string) {
   return u;
 }
 
-export function AlbumClient({ occasionId, days, moments, guests, pendingCount, approvalMode }: Props) {
+export function AlbumClient({ occasionId, days, moments, guests, pendingCount, approvalMode, canDownload, canUpload, isOwner, payments }: Props) {
   const t = useT("host");
   const router = useRouter();
   const [filters, setFilters] = useState<Filters>({});
@@ -50,6 +56,7 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
   const [busy, setBusy] = useState(false);
   const [zipping, setZipping] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [locked, setLocked] = useState(false);
   const sentinel = useRef<HTMLDivElement>(null);
   const reqId = useRef(0);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -190,6 +197,7 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
   }
 
   async function downloadSelected() {
+    if (!canDownload) { setLocked(true); return; }
     const chosen = items.filter((i) => selected.has(i.id) && i.originalUrl);
     if (!chosen.length) return;
     const filename = `${safeName(t("album.zipName"))}-${chosen.length}.zip`;
@@ -208,7 +216,7 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
     }
   }
 
-  const lbLabels = { close: t("common.close"), prev: t("common.previous"), next: t("common.next"), download: t("common.download"), by: (n: string) => t("album.by", { name: n }) };
+  const lbLabels = { close: t("common.close"), prev: t("common.previous"), next: t("common.next"), download: t("common.download"), by: (n: string) => t("album.by", { name: n }), videoLocked: t("billing.videoLocked") };
   const iconBtn = "inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky";
   const select = "min-h-10 rounded-full border-[1.5px] border-[#D5D8E2] bg-white px-4 text-[13px] font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky";
   const allSelected = items.length > 0 && items.every((i) => selected.has(i.id));
@@ -264,7 +272,7 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
         {selecting ? (
           <Button variant="secondary" onClick={() => setSelected(allSelected ? new Set() : new Set(items.map((i) => i.id)))}>{allSelected ? t("album.selectNone") : t("album.selectAll")}</Button>
         ) : null}
-        <Button variant="secondary" onClick={() => fileInput.current?.click()}><ImagePlus size={18} aria-hidden />{t("album.addPhotos")}</Button>
+        <Button variant="secondary" disabled={!canUpload} onClick={() => fileInput.current?.click()}><ImagePlus size={18} aria-hidden />{t("album.addPhotos")}</Button>
         <input ref={fileInput} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => {
           const files = Array.from(e.target.files || []);
           if (files.length) uploader.add(files, { dayId: filters.dayId });
@@ -355,6 +363,7 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
 
       {open !== null && items[open] ? (
         <Lightbox items={items} index={open} onIndex={setOpen} onClose={() => setOpen(null)} labels={lbLabels}
+          downloadUrl={(m) => m.originalUrl ?? null} onDownloadLocked={canDownload ? undefined : () => setLocked(true)}
           actions={(m) => (
             <>
               {m.approved === false ? <button type="button" className={iconBtn} aria-label={t("album.approve")} onClick={() => act([m.id], "approve")}><BadgeCheck size={20} aria-hidden /></button> : null}
@@ -371,6 +380,7 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
         />
       ) : null}
 
+      <UpgradeDialog open={locked} onClose={() => setLocked(false)} isOwner={isOwner} payments={payments} />
       {zipping || toast ? (
         <div role="status" className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full bg-ink px-5 py-3 text-sm font-bold text-white shadow-xl">{zipping || toast}</div>
       ) : null}

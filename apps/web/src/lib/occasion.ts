@@ -1,13 +1,11 @@
 import "server-only";
 import { sql, type SQL } from "drizzle-orm";
 import { schema } from "@/db";
-import { BRANDS, OCCASIONS, PLANS, brandBaseUrl, type Locale, type OccasionType, type Plan } from "./config";
+import { BRANDS, OCCASIONS, SUBSCRIPTION, brandBaseUrl, type Locale, type OccasionType } from "./config";
 import { hmac, requireEnv } from "./crypto";
 
 type OccasionRow = typeof schema.occasions.$inferSelect;
 type DayRow = typeof schema.days.$inferSelect;
-
-export const planOf = (o: Pick<OccasionRow, "plan">) => PLANS[o.plan as Plan];
 
 export function brandLocale(o: Pick<OccasionRow, "brand">): Locale {
   return BRANDS[o.brand].defaultLocale;
@@ -42,11 +40,12 @@ export function shareUrl(o: Pick<OccasionRow, "brand">, token: string) {
   return `${brandBaseUrl(o.brand)}/s/${token}`;
 }
 
-export function uploadOpen(o: OccasionRow, now = new Date()): boolean {
+/** Event-level upload window. `accountCanUpload` = the owner's access (false while the account is read-only). */
+export function uploadOpen(o: OccasionRow, accountCanUpload: boolean, now = new Date()): boolean {
+  if (!accountCanUpload) return false;
   if (o.status !== "active") return false;
   if (o.uploadOpensAt && now < o.uploadOpensAt) return false;
   if (o.uploadClosesAt && now >= o.uploadClosesAt) return false;
-  if (o.storageExpiresAt && now >= o.storageExpiresAt) return false;
   return true;
 }
 
@@ -84,9 +83,9 @@ export function isFeedRevealed(o: OccasionRow): boolean {
   return at ? Date.now() >= at.getTime() : false;
 }
 
-/** Days guests can use: the plan's maxDays, in order. Extra days stay stored and unlock on upgrade. */
-export function activeDays(o: OccasionRow, days: DayRow[]) {
-  return [...days].sort((a, b) => a.sortOrder - b.sortOrder).slice(0, planOf(o).maxDays);
+/** Days guests can use, in order (every account gets up to SUBSCRIPTION.features.maxDays). */
+export function activeDays(_o: OccasionRow, days: DayRow[]) {
+  return [...days].sort((a, b) => a.sortOrder - b.sortOrder).slice(0, SUBSCRIPTION.features.maxDays);
 }
 
 export function momentLabels(type: OccasionType, locale: Locale): string[] {
@@ -113,10 +112,4 @@ export function addDays(d: Date, n: number) {
   const x = new Date(d);
   x.setUTCDate(x.getUTCDate() + n);
   return x;
-}
-
-/** Storage end = later of (now) and (event date) + plan's storageDays. */
-export function storageExpiryFor(plan: Plan, startsOn: string | null, from = new Date()): Date {
-  const base = startsOn && new Date(`${startsOn}T00:00:00Z`) > from ? new Date(`${startsOn}T00:00:00Z`) : from;
-  return addDays(base, PLANS[plan].storageDays);
 }

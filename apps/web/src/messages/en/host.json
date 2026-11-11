@@ -31,20 +31,19 @@
   "pin_invalid": "That PIN isn't right.",
   "not_joined": "Join the event first.",
   "upload_closed": "Uploads are closed for this event.",
-  "plan_limit": "You've reached your plan's limit. Upgrade to add more.",
-  "plan_feature": "That feature isn't included in this event's plan.",
+  "plan_limit": "That file is too big (photos up to 60 MB, videos up to 10 minutes or 1 GB).",
   "storage_not_configured": "Photo storage isn't set up yet, so uploads are paused. Please try again later.",
   "storage_error": "The upload didn't finish. We'll try again.",
   "payments_unavailable": "Payments are coming soon.",
-  "already_on_plan": "This event already has that plan.",
   "shots_exhausted": "No shots left on the disposable camera.",
   "slug_taken": "That link name is taken. Try another one.",
   "slug_invalid": "Use 3–40 lowercase letters, numbers or hyphens.",
   "slug_reserved": "That link name is reserved. Try another one.",
-  "partner_inactive": "The partner subscription isn't active, so this is read-only.",
-  "no_subscription": "Subscribe first to manage billing.",
-  "org_owner": "You own an active partner account. Cancel its subscription or transfer ownership first.",
-  "guest_blocked": "This guest is blocked."
+  "no_subscription": "There's no subscription on this account yet.",
+  "guest_blocked": "This guest is blocked.",
+  "plan_required": "This needs an active plan. Subscribe to download, create more events or edit a read-only event.",
+  "already_subscribed": "You already have a subscription. Use Manage billing to change it.",
+  "billing_error": "We couldn't cancel your subscription, so nothing was deleted. Please try again or contact us."
  },
  "login": {
   "metaTitle": "Sign in",
@@ -82,14 +81,11 @@
   "new": "New event",
   "cohost": "Co-host",
   "counts": "{media} shots · {guests} guests",
-  "emptySticker": "Free to start",
+  "emptySticker": "3 days free",
   "emptyTitle": "Your first",
   "emptyAccent": "album.",
   "emptyBody": "Create an event, print the QR cards and every guest's photos land in one private album.",
   "emptyCta": "Create your first event",
-  "partnerTitle": "Venues, planners and photographers",
-  "partnerBody": "Run events for clients under your own name with the Partner plan.",
-  "partnerCta": "Partner dashboard",
   "accountTitle": "Your account",
   "accountBody": "Signed in as {email}. Deleting your account removes the events you own and every photo in them."
  },
@@ -125,7 +121,6 @@
   "dayName": "Day name",
   "newDay": "Day {n}",
   "addDay": "Add a day",
-  "multiDayNote": "The free plan includes one day. The other days unlock when you upgrade to Big Day.",
   "themeTitle": "Pick a",
   "themeAccent": "look.",
   "create": "Create event",
@@ -135,7 +130,12 @@
   "doneAccent": "is live.",
   "doneBody": "Share the link or print the QR cards. Guests scan, type their first name and start sharing.",
   "printQr": "Print QR cards",
-  "openAlbum": "Open the album"
+  "openAlbum": "Open the album",
+  "trialSticker": "Your {days}-day free trial starts now",
+  "trialBody": "Everything is switched on, including video, the live wall and the guestbook. Downloads unlock when you subscribe.",
+  "blockedTitle": "Subscribe to create",
+  "blockedAccent": "more events.",
+  "blockedBody": "Your free trial has been used. One plan covers unlimited events: {monthly} a month or {yearly} a year."
  },
  "themes": {
   "noir": "Noir",
@@ -153,11 +153,10 @@
   "guestbook": "Guestbook",
   "download": "Download",
   "settings": "Settings",
-  "wall": "Live wall",
-  "locked": "upgrade to unlock"
+  "wall": "Live wall"
  },
  "occasion": {
-  "archived": "This album has expired and its files were removed."
+  "archived": "This event's files were deleted when the account's plan ended."
  },
  "stats": {
   "guests": "Guests",
@@ -168,7 +167,6 @@
  },
  "album": {
   "title": "Album",
-  "freeLimit": "{used} of {max} shots used on the free plan.",
   "pendingCount": "{n} shots",
   "pendingBody": "are waiting for approval. Once approved they appear in the live feed and on the wall.",
   "review": "Review",
@@ -254,8 +252,7 @@
   "headline": "Share your",
   "accent": "shots.",
   "body": "Scan the QR code to add your photos and videos to our album. No app needed.",
-  "atVenue": "at {venue}",
-  "poweredBy": "Powered by {brand}"
+  "atVenue": "at {venue}"
  },
  "share": {
   "title": "Share links for family abroad",
@@ -306,11 +303,11 @@
   "coverSaved": "Cover photo updated.",
   "coverFailed": "We couldn't use that photo. Try a JPEG or PNG.",
   "days": "Days",
-  "daysHint": "Your plan includes {max} day(s) for guests. Each day can have its own QR code and upload times.",
+  "daysHint": "Add up to {max} days. Each day can have its own QR code and upload times.",
   "removeDay": "Remove {name}",
   "dayWindow": "Upload times for this day",
   "dayLink": "Day link:",
-  "dayLocked": "This day unlocks with Big Day.",
+  "dayLocked": "Guests can't see this day (only the first {max} days are shown).",
   "uploads": "Uploads and privacy",
   "opens": "Uploads open",
   "opensHint": "Leave empty to open now.",
@@ -326,8 +323,6 @@
   "disposable": "Disposable camera",
   "shots": "Shots per guest",
   "shotsHint": "Leave empty to turn the camera off. Disposable shots develop the next morning.",
-  "needsPaid": "Included with One Day and Big Day.",
-  "needsBig": "Included with Big Day.",
   "pin": "Event PIN",
   "pinOn": "Guests need the PIN to join.",
   "pinOff": "No PIN. Anyone with the link or QR can join.",
@@ -335,32 +330,9 @@
   "pinSet": "Set PIN",
   "pinRemove": "Remove PIN"
  },
- "branding": {
-  "title": "Branding",
-  "lead": "Choose how guests see this event.",
-  "venue": "Venue branding",
-  "venueHint": "Your logo, colours and name.",
-  "couple": "Couple branding",
-  "coupleHint": "Their names, cover photo and theme.",
-  "both": "Both",
-  "bothHint": "Their names, \"at\" your venue, with your logo."
- },
  "plan": {
-  "title": "Plan",
-  "current": "Current plan:",
-  "storedUntil": "photos kept until {date}",
-  "choose": "Choose {plan}",
-  "upgradeTo": "Upgrade to {plan}",
   "comingSoon": "Payments coming soon",
-  "top": "You're on our top plan. Enjoy!",
-  "moneyBack": "{days}-day money-back guarantee.",
-  "oneOff": "One-off payment per event in GBP, VAT included. No subscription.",
-  "paidNotice": "Payment received. Your event has been upgraded.",
-  "cancelledNotice": "Checkout cancelled. Nothing was charged.",
-  "features": {
-   "tek": "Unlimited photos and videos|Live wall|Photo challenges|Disposable camera|Kept for 1 year",
-   "buyuk": "Everything in One Day|Up to 5 days|Voice and video guestbook|Share links for family abroad|Co-hosts|Kept for 3 years"
-  }
+  "cancelledNotice": "Checkout cancelled. Nothing was charged."
  },
  "danger": {
   "title": "Delete event",
@@ -369,17 +341,11 @@
   "confirmPrompt": "Type the event title to confirm: {title}",
   "mismatch": "The title didn't match, so nothing was deleted."
  },
- "upsell": {
-  "title": "{feature} is part of One Day and Big Day",
-  "body": "Upgrade this event to unlock it. One-off payment, no subscription.",
-  "cta": "See plans"
- },
  "missions": {
   "metaTitle": "Photo challenges",
   "title": "Photo",
   "titleAccent": "challenges.",
   "lead": "Give guests little missions to snap. They see the list in the guest app and race up the leaderboard.",
-  "feature": "Photo challenges",
   "new": "New challenge",
   "placeholder": "e.g. Selfie with the bride",
   "add": "Add",
@@ -397,7 +363,6 @@
   "title": "Guest",
   "titleAccent": "book.",
   "leadVoice": "Written, voice and video messages from your guests. Only hosts can see them.",
-  "leadText": "Written messages from your guests. Voice and video messages come with Big Day.",
   "empty": "No messages yet.",
   "emptyHint": "Guests can leave a message from the Book tab in the guest app.",
   "count": "{n} messages",
@@ -428,50 +393,6 @@
   "nothing": "There's nothing to download yet.",
   "browserNote": "Big albums download best in Chrome or Edge on a computer, which save straight to disk."
  },
- "partner": {
-  "metaTitle": "Partner dashboard",
-  "eyebrow": "Partner plan",
-  "title": "Your venue,",
-  "titleAccent": "your brand.",
-  "perMonth": "{price} / month",
-  "pitchTitle": "White-label guest photos for every event you run.",
-  "pitchPoints": "Unlimited events on Big Day|Your logo, colours and name for guests|Venue, couple or both branding per event|Staff accounts|Invite couples to their own album",
-  "vatNote": "Prices include VAT. Cancel any time from the billing portal.",
-  "createTitle": "Set up your partner account",
-  "venueName": "Business name",
-  "venuePlaceholder": "e.g. The Grand Hall",
-  "create": "Create partner account",
-  "switch": "Partner accounts",
-  "subscription": "Subscription",
-  "renews": "renews {date}",
-  "inactiveHint": "Subscribe for {price} a month to create branded events.",
-  "subscribe": "Subscribe · {price}/month",
-  "manageBilling": "Manage billing",
-  "subscribedNotice": "You're subscribed. Welcome aboard!",
-  "events": "Events",
-  "noEvents": "No events yet.",
-  "newEvent": "Create an event for a client",
-  "eventType": "Event type",
-  "coupleEmail": "Client's email (optional)",
-  "coupleEmailHint": "We'll invite them as co-host so they can see their album.",
-  "createEvent": "Create event",
-  "needsSub": "Subscribe to create events.",
-  "brand": "Brand",
-  "supportEmail": "Support email",
-  "primary": "Primary colour",
-  "accent": "Accent colour",
-  "logo": "Upload logo",
-  "hidePowered": "Hide \"Powered by\"",
-  "hidePoweredHint": "Removes the small link at the bottom of guest pages.",
-  "staff": "Staff",
-  "staffRole": "Staff",
-  "status": {
-   "trialing": "Trial",
-   "active": "Active",
-   "past_due": "Payment failed. Events stay usable for 7 days.",
-   "cancelled": "Not subscribed"
-  }
- },
  "support": {
   "metaTitle": "Support",
   "title": "How can we",
@@ -483,7 +404,7 @@
   "moreHelp": "Help centre",
   "deleteLink": "Delete your account",
   "privacy": "Privacy policy",
-  "faq": "Do guests need an app?::No. Guests scan the QR code and upload from their phone's browser. The app is optional, mainly for hosts.|How long are photos kept?::Free events keep photos for 30 days, One Day for 1 year and Big Day for 3 years. You can download everything at any time.|Can I get a refund?::Yes. Paid plans come with a 14-day money-back guarantee. Email us from the address you signed up with.|Who can see the photos?::Only the hosts and co-hosts see the full album. Guests see the shared feed, and you can approve shots first."
+  "faq": "Do guests need an app?::No. Guests scan the QR code and upload from their phone's browser. The app is optional, mainly for hosts.|How much does it cost?::One plan with everything, for unlimited events: {monthly} a month or {yearly} a year. Your first event starts a {trialDays}-day free trial, no card needed.|How long are photos kept?::For as long as you're subscribed. If you cancel, you can still view and download everything for {readOnlyDays} days. An unpaid trial is kept for {trialKeepDays} days after it ends.|Can I get a refund?::Yes. There's a {days}-day money-back guarantee on your first payment. Email us from the address you signed up with.|Who can see the photos?::Only the hosts and co-hosts see the full album. Guests see the shared feed, and you can approve shots first."
  },
  "accountDelete": {
   "metaTitle": "Delete your account",
@@ -515,13 +436,6 @@
    "cta": "Open the album",
    "footer": "You got this email because someone added your address as a co-host."
   },
-  "expiry": {
-   "subject": "{title}: your album is kept until {date}",
-   "heading": "Download your album soon",
-   "body": "The photos and videos from {title} are kept until {date}. Download them before then, or upgrade to keep them longer.",
-   "cta": "Download now",
-   "footer": "You got this email because you host this event."
-  },
   "report": {
    "subject": "A guest reported a photo in {title}",
    "heading": "A photo was reported",
@@ -529,6 +443,104 @@
    "reason": "Their note: {reason}",
    "cta": "Review in the album",
    "footer": "You got this email because you host this event."
+  },
+  "billing": {
+   "footer": "You got this email because you have an account with {brand}.",
+   "trialPrompt": {
+    "subject": "Keep your photos in full quality with {brand}",
+    "heading": "Your trial is going well",
+    "body": "Your free trial includes everything except downloads. Subscribe to download every original and ZIP whenever you like.",
+    "body2": "Monthly is {monthly} a month, or choose yearly for {yearly} and save {saving}%. Cancel any time.",
+    "cta": "Subscribe monthly"
+   },
+   "trialEnded": {
+    "subject": "Your {brand} free trial has ended",
+    "heading": "Your trial has ended",
+    "body": "Your events are now read-only: guests can't add new photos and downloads are locked. Nothing has been deleted.",
+    "body2": "We keep your files until {date}. Subscribe before then and everything unlocks straight away, including downloads.",
+    "cta": "Subscribe now"
+   },
+   "cancelled": {
+    "subject": "Your {brand} subscription has ended",
+    "heading": "Your subscription has ended",
+    "body": "Your events no longer take new uploads. You can still view and download everything until {date}.",
+    "body2": "After that the files are deleted. Subscribe again before then and your events reopen straight away.",
+    "cta": "Download your photos"
+   },
+   "deletionSoon": {
+    "subject": "Your {brand} photos will be deleted on {date}",
+    "heading": "Your files will be deleted soon",
+    "body": "The photos, videos and messages from your events will be deleted on {date}, in {days} days.",
+    "body2": "Subscribe before then to keep everything. If you have an active download window, download your albums now.",
+    "cta": "Open your dashboard"
+   }
+  }
+ },
+ "billing": {
+  "monthly": "Monthly",
+  "yearly": "Yearly",
+  "kicker": "Your plan",
+  "redirecting": "Opening…",
+  "subscribeMonthly": "Subscribe monthly · {price}",
+  "subscribeYearly": "Yearly · {price} (save {saving}%)",
+  "manage": "Manage billing",
+  "fine": "Prices include VAT. Cancel any time; it takes effect at the end of the period you've paid for. 14-day money-back guarantee on your first payment.",
+  "subscribedNotice": "You're subscribed. Downloads are unlocked on all your events.",
+  "readOnlyBadge": "Read-only",
+  "videoLocked": "Videos play here once you subscribe. Your guests' uploads are safe.",
+  "downloadsLocked": "Downloads unlock when you subscribe. On the free trial you can view everything, including the live wall.",
+  "downloadsLockedEnded": "Downloads are locked because the free trial has ended. Subscribe to download everything.",
+  "status": {
+   "none": "Free for {days} days",
+   "noneBody": "Your free trial starts when you create your first event. No card needed.",
+   "trialing": "Free trial: {days} days left",
+   "trialingBody": "Everything works until {date}. Downloads unlock when you subscribe.",
+   "activeMonthly": "Monthly plan",
+   "activeYearly": "Yearly plan",
+   "renews": "Renews on {date}.",
+   "cancelling": "Cancelled. Everything keeps working until {date}.",
+   "pastDue": "Payment failed",
+   "pastDueBody": "Please update your card. Your events keep working for {days} more days.",
+   "cancelled": "Your subscription has ended",
+   "cancelledBody": "Your events are read-only. You can view and download everything until {date}, then the files are deleted.",
+   "expired": "Your free trial has ended",
+   "expiredBody": "Your events are read-only and downloads are locked. Files are kept until {date}."
+  },
+  "readOnly": {
+   "trialEnded": "The free trial has ended, so this event is read-only and downloads are locked. Files are kept until {date}.",
+   "cancelled": "The subscription has ended, so this event is read-only. Everything can still be downloaded until {date}.",
+   "cohost": "Only the event owner can subscribe."
+  },
+  "prompt": {
+   "trial": {
+    "sticker": "{days} days left on your trial",
+    "title": "Keep every photo,",
+    "accent": "in full quality.",
+    "body": "Your trial includes everything except downloads. Subscribe monthly for {monthly}, or yearly for {yearly} and save {saving}%."
+   },
+   "expired": {
+    "sticker": "Trial ended",
+    "title": "Your photos are",
+    "accent": "waiting for you.",
+    "body": "Uploads are closed and downloads are locked. We keep your files until {date}. Subscribe to unlock everything straight away."
+   },
+   "cancelled": {
+    "sticker": "Read-only",
+    "title": "Come back",
+    "accent": "any time.",
+    "body": "Your events no longer take new uploads. You can download everything until {date}. Subscribe again to reopen them."
+   },
+   "pastDue": {
+    "sticker": "Payment failed",
+    "title": "Let's sort out",
+    "accent": "your payment.",
+    "body": "We couldn't take your last payment. Update your card to keep your events open: they keep working for {days} more days."
+   }
+  },
+  "dialog": {
+   "title": "Downloads unlock when you subscribe",
+   "body": "Everything else is included in your trial. Subscribe for {monthly} a month or {yearly} a year to download originals and ZIPs.",
+   "cohost": "Downloads unlock when the event owner subscribes."
   }
  }
 }

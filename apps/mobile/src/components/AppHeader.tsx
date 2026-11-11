@@ -29,15 +29,13 @@ export type AppHeaderProps = {
   right?: ReactNode;
   /** Transparent background (when overlaying a hero photo). */
   overlay?: boolean;
-  /** Replaces the platform wordmark (venue / couple branding on guest screens). */
-  mark?: ReactNode;
 };
 
 /**
  * The one header used on every screen. Light variant on host screens, dark on guest screens.
  * Layout: [back?] wordmark (+ title)  ……  [right slot]
  */
-export function AppHeader({ tone = "light", title, back, right, overlay, mark }: AppHeaderProps) {
+export function AppHeader({ tone = "light", title, back, right, overlay }: AppHeaderProps) {
   const { t } = useI18n();
   const p = palette(tone);
   const onBack = typeof back === "function" ? back : () => (router.canGoBack() ? router.back() : router.replace("/"));
@@ -46,7 +44,7 @@ export function AppHeader({ tone = "light", title, back, right, overlay, mark }:
       <View style={styles.left}>
         {back ? <IconButton icon="chevronLeft" label={t("nav.backTo")} onPress={onBack} tone={tone} variant={overlay ? "glass" : "secondary"} size={40} /> : null}
         <View style={{ flexShrink: 1 }}>
-          {mark ?? <Wordmark tone={tone} />}
+          <Wordmark tone={tone} />
           {title ? (
             <Txt tone={tone} variant="caption" weight="semibold" muted numberOfLines={1}>
               {title}

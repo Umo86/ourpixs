@@ -12,6 +12,14 @@ export class PermissionDeniedError extends Error {
   }
 }
 
+/** The server refused the download (HTTP 402 `plan_required`): downloads are locked for this account. */
+export class DownloadLockedError extends Error {
+  constructor() {
+    super("download_locked");
+    this.name = "DownloadLockedError";
+  }
+}
+
 function extFor(item: MediaItem, url: string): string {
   const fromUrl = url.split("?")[0].split(".").pop()?.toLowerCase();
   if (fromUrl && /^(jpe?g|png|heic|heif|webp|mp4|mov|m4v)$/.test(fromUrl)) return fromUrl;
@@ -37,7 +45,8 @@ export async function saveToCameraRoll(list: MediaItem[]): Promise<number> {
       } catch {
         // ignore
       }
-    } catch {
+    } catch (e) {
+      if (/\b402\b|plan_required/i.test(String((e as Error)?.message ?? e))) throw new DownloadLockedError();
       // keep going with the rest
     }
   }

@@ -10,12 +10,13 @@ import { Chip } from "@/components/Form";
 import { MediaGrid } from "@/components/MediaGrid";
 import { MediaViewer } from "@/components/MediaViewer";
 import { Screen } from "@/components/Screen";
-import { EmptyState, ErrorView, Loading } from "@/components/States";
+import { EmptyState, ErrorView, Loading, Notice } from "@/components/States";
 import { Heading, Txt } from "@/components/Text";
 import { useOccasion } from "@/host/OccasionContext";
 import { useI18n } from "@/i18n";
 import { formatNumber } from "@/lib/format";
-import { PermissionDeniedError, saveToCameraRoll } from "@/lib/saveMedia";
+import { DownloadLockedError, PermissionDeniedError, saveToCameraRoll } from "@/lib/saveMedia";
+import { accessNoticeKey } from "@/components/PlanStatus";
 import { onUploadCompleted } from "@/upload/queue";
 import { colors, radius } from "@/theme";
 
@@ -166,6 +167,8 @@ export default function Album() {
   };
 
   const save = async (list: MediaItem[]) => {
+    // Downloads follow the account: locked during the trial and on past-due events. Neutral message, no purchase prompt.
+    if (occasion?.access && !occasion.access.canDownload) return Alert.alert(t("account.downloadsLockedEvent"));
     setBusy(true);
     try {
       const n = await saveToCameraRoll(list);
@@ -177,7 +180,8 @@ export default function Album() {
           { text: t("common.cancel"), style: "cancel" },
           { text: t("errors.openSettings"), onPress: () => void Linking.openSettings() },
         ]);
-      } else Alert.alert(t("errors.generic"));
+      } else if (e instanceof DownloadLockedError) Alert.alert(t("account.downloadsLockedEvent"));
+      else Alert.alert(t("errors.generic"));
     } finally {
       setBusy(false);
     }
@@ -187,6 +191,7 @@ export default function Album() {
   const allFav = selItems.length > 0 && selItems.every((i) => i.favourite);
   const allHidden = selItems.length > 0 && selItems.every((i) => i.visibility === "hidden");
   const anyPending = selItems.some((i) => i.approved === false);
+  const accessKey = accessNoticeKey(occasion?.access);
   const showPending = !!occasion?.approvalMode || (stats?.pendingApproval ?? 0) > 0;
 
   const filters: { key: FilterKey; label: string }[] = [
@@ -214,6 +219,7 @@ export default function Album() {
       <Heading size="md" accent={t("album.headingAccent")}>
         {formatNumber((stats?.photos ?? 0) + (stats?.videos ?? 0), locale)}
       </Heading>
+      {accessKey ? <Notice icon={occasion?.access.readOnly ? "lock" : "sparkles"} text={t(accessKey)} /> : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
         {filters.map((f) => (
           <Chip key={f.key} label={f.label} selected={filter === f.key} onPress={() => setFilter(f.key)} />

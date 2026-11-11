@@ -8,14 +8,16 @@ type Props = {
   index: number;
   onIndex: (i: number) => void;
   onClose: () => void;
-  labels: { close: string; prev: string; next: string; download: string; by: (name: string) => string };
+  labels: { close: string; prev: string; next: string; download: string; by: (name: string) => string; videoLocked?: string };
   /** Extra actions (host: favourite, hide, delete, set as cover). */
   actions?: (item: MediaItem) => ReactNode;
   downloadUrl?: (item: MediaItem) => string | null;
+  /** Downloads locked (trial / unpaid): the button stays visible and calls this instead (e.g. an upgrade prompt). */
+  onDownloadLocked?: () => void;
 };
 
 /** Full-screen viewer with keyboard (←/→/Esc) and swipe navigation. */
-export function Lightbox({ items, index, onIndex, onClose, labels, actions, downloadUrl }: Props) {
+export function Lightbox({ items, index, onIndex, onClose, labels, actions, downloadUrl, onDownloadLocked }: Props) {
   const item = items[index];
   const closeRef = useRef<HTMLButtonElement>(null);
   const touchX = useRef<number | null>(null);
@@ -42,7 +44,7 @@ export function Lightbox({ items, index, onIndex, onClose, labels, actions, down
   }, [go, onClose]);
 
   if (!item) return null;
-  const dl = downloadUrl ? downloadUrl(item) : item.originalUrl || item.displayUrl;
+  const dl = onDownloadLocked ? null : downloadUrl ? downloadUrl(item) : item.originalUrl || item.displayUrl;
   const btn = "inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky disabled:opacity-30";
 
   return (
@@ -63,7 +65,11 @@ export function Lightbox({ items, index, onIndex, onClose, labels, actions, down
         <span className="truncate text-sm font-bold">{item.guestName ? labels.by(item.guestName) : ""}</span>
         <div className="flex items-center gap-2">
           {actions?.(item)}
-          {dl ? (
+          {onDownloadLocked ? (
+            <button type="button" className={btn} aria-label={labels.download} onClick={onDownloadLocked}>
+              <Download size={20} aria-hidden />
+            </button>
+          ) : dl ? (
             <a href={dl} download className={btn} aria-label={labels.download} target="_blank" rel="noopener">
               <Download size={20} aria-hidden />
             </a>
@@ -74,8 +80,14 @@ export function Lightbox({ items, index, onIndex, onClose, labels, actions, down
         </div>
       </div>
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-4 sm:px-16">
-        {item.kind === "video" ? (
-          <video key={item.id} src={item.originalUrl} poster={item.displayUrl ?? undefined} controls playsInline className="max-h-full max-w-full rounded-2xl" />
+        {item.kind === "video" && (item.playbackUrl ?? item.originalUrl) ? (
+          <video key={item.id} src={(item.playbackUrl ?? item.originalUrl)!} poster={item.displayUrl ?? undefined} controls playsInline className="max-h-full max-w-full rounded-2xl" />
+        ) : item.kind === "video" ? (
+          <div className="flex max-h-full max-w-full flex-col items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {item.displayUrl ? <img key={item.id} src={item.displayUrl} alt="" className="max-h-[70vh] max-w-full rounded-2xl object-contain" /> : null}
+            {labels.videoLocked ? <p className="m-0 max-w-md text-center text-sm text-muted-dark">{labels.videoLocked}</p> : null}
+          </div>
         ) : item.displayUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img key={item.id} src={item.displayUrl} alt={item.guestName ? labels.by(item.guestName) : ""} className="max-h-full max-w-full rounded-2xl object-contain" />

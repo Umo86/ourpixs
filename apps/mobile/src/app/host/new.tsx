@@ -2,15 +2,16 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
-import { errorMessage, hostApi } from "@/api/client";
+import { ApiError, errorMessage, hostApi } from "@/api/client";
 import type { Occasion } from "@/api/types";
+import { useAuth } from "@/auth/AuthProvider";
 import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/Button";
 import { Chip, Field } from "@/components/Form";
 import { Icon, type IconName } from "@/components/Icon";
 import { QrCard } from "@/components/QrCard";
 import { Screen } from "@/components/Screen";
-import { Notice } from "@/components/States";
+import { EmptyState, Notice } from "@/components/States";
 import { Heading, Txt } from "@/components/Text";
 import { buildTitle, DEMO_MODE, HONOREE_COUNT, OCCASION_TYPES, OCCASIONS, THEME_NAMES, THEMES, type OccasionType, type ThemeName } from "@/config";
 import { demoOccasion, DEMO_ID } from "@/demo/data";
@@ -29,6 +30,7 @@ const STEPS: Step[] = ["type", "names", "details", "theme"];
 export default function NewOccasion() {
   const { t, locale } = useI18n();
   const params = useLocalSearchParams<{ step?: string }>();
+  const { subscription, refreshMe } = useAuth();
   const [step, setStep] = useState<Step>("type");
   const [type, setType] = useState<OccasionType>("dugun");
   const [names, setNames] = useState<string[]>(["", ""]);
@@ -42,6 +44,7 @@ export default function NewOccasion() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<Occasion | null>(null);
+  const [trialStarted, setTrialStarted] = useState(false);
 
   // Demo deep links can open a specific step for screenshots.
   useEffect(() => {
@@ -65,7 +68,7 @@ export default function NewOccasion() {
   const chooseType = (tp: OccasionType) => {
     setType(tp);
     const d = OCCASIONS[tp].days;
-    // Default to the main day (e.g. "Wedding" rather than "Henna night") — one day fits every plan.
+    // Default to the main day (e.g. "Wedding" rather than "Henna night") — a sensible default; more days can be picked below.
     const main = d.findIndex((x) => x.en === OCCASIONS[tp].label.en);
     setDayIdx([main >= 0 ? main : 0]);
     setTitleEdited(false);
@@ -87,6 +90,8 @@ export default function NewOccasion() {
   const create = async () => {
     setBusy(true);
     setError(null);
+    // The 3-day free trial starts with the first event; tell the host once it has.
+    const firstEvent = subscription?.status === "none";
     try {
       const startsOn = date ? parseDayMonthYear(date) ?? undefined : undefined;
       const { occasion } = await hostApi.create({
@@ -100,9 +105,12 @@ export default function NewOccasion() {
         days: [...dayIdx].sort().map((i) => ({ name: presetDays[i], date: startsOn })),
       });
       setCreated(occasion);
+      setTrialStarted(firstEvent);
       setStep("created");
+      void refreshMe();
     } catch (e) {
-      setError(errorMessage(e, t));
+      // 402/403: the account can't create events right now. Neutral message, no purchase prompt.
+      setError(e instanceof ApiError && (e.status === 402 || e.status === 403) ? t("account.cannotCreateBody") : errorMessage(e, t));
     } finally {
       setBusy(false);
     }
@@ -113,6 +121,14 @@ export default function NewOccasion() {
     if (step === "created" || i <= 0) router.back();
     else setStep(STEPS[i - 1]);
   };
+
+  if (subscription && !subscription.canCreateEvents && step !== "created") {
+    return (
+      <Screen tone="light" header={<AppHeader tone="light" back={() => router.back()} />}>
+        <EmptyState icon="lock" title={t("account.cannotCreateTitle")} body={t("account.cannotCreateBody")} />
+      </Screen>
+    );
+  }
 
   return (
     <Screen
@@ -251,6 +267,7 @@ export default function NewOccasion() {
             {t("wizard.createdTitle")}
           </Heading>
           <Txt muted>{t("wizard.createdBody")}</Txt>
+          {trialStarted ? <Notice icon="sparkles" text={`${t("account.trialStarted")} ${t("account.trialBody")}`} /> : null}
           <QrCard url={created.guestUrl} slug={created.slug} title={created.title} compact />
           <Button label={t("wizard.openEvent")} variant="inverse" iconRight="arrowRight" onPress={() => router.replace({ pathname: "/host/[id]", params: { id: created.id } })} />
         </>

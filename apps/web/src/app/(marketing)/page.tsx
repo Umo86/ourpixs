@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getT } from "@/i18n";
 import { getMessage } from "@/i18n/shared";
-import { MONEY_BACK_DAYS, PLANS } from "@/lib/config";
+import { MONEY_BACK_DAYS, SUBSCRIPTION } from "@/lib/config";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Sticker } from "@/components/ui/Sticker";
@@ -93,7 +93,7 @@ export default async function HomePage() {
                     <span aria-hidden className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-b from-ink/0 to-ink/80" />
                     <span className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-3">
                       <span className="text-[28px] font-black leading-none tracking-[-0.035em] sm:text-4xl">{o.label}</span>
-                      <span className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink">{fill(o.tag, { days: PLANS.buyuk.maxDays })}</span>
+                      <span className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink">{fill(o.tag, { days: SUBSCRIPTION.features.maxDays })}</span>
                     </span>
                   </Link>
                 </li>

@@ -4,7 +4,7 @@
  */
 import { Asset } from "expo-asset";
 
-import type { GuestMission, Host, Organisation, MediaItem, Message, Occasion, OccasionSummary, PublicOccasion, ShareLink, Stats } from "@/api/types";
+import type { GuestMission, Host, MediaItem, Message, Occasion, OccasionAccess, OccasionSummary, PublicOccasion, ShareLink, Stats, Subscription } from "@/api/types";
 
 const IMAGES = {
   wedding: require("../../assets/demo/wedding.jpg"),
@@ -37,11 +37,19 @@ const days = [
   { id: "d2", name: "Wedding", date: "2027-06-14", sortOrder: 1 },
 ];
 
+export const demoAccess: OccasionAccess = { canUpload: true, canDownload: true, readOnly: false, reason: null };
+
+/** Demo account: an active yearly plan, so every feature works in screenshots. */
+export const demoSubscription: Subscription = {
+  status: "active", interval: "year", trialEndsAt: null, currentPeriodEnd: "2027-11-11T00:00:00.000Z", cancelAtPeriodEnd: false,
+  deleteAfter: null, canCreateEvents: true, canDownload: true, readOnly: false, showUpgradePrompt: false, daysLeft: null,
+};
+
 export function demoOccasions(): OccasionSummary[] {
   return [
-    { id: DEMO_ID, slug: DEMO_SLUG, type: "dugun", title: "Elif & Can's Wedding", startsOn: "2027-06-14", plan: "buyuk", coverUrl: demoImage("wedding"), mediaCount: 1284, guestCount: 212, role: "owner" },
-    { id: "demo-henna", slug: "elif-kina", type: "kina", title: "Elif's Henna Night", startsOn: "2027-06-12", plan: "tek", coverUrl: demoImage("henna"), mediaCount: 342, guestCount: 64, role: "owner" },
-    { id: "demo-bday", slug: "deniz-30", type: "dogum_gunu", title: "Deniz's Birthday", startsOn: "2026-12-05", plan: "free", coverUrl: demoImage("birthday"), mediaCount: 58, guestCount: 23, role: "cohost" },
+    { id: DEMO_ID, slug: DEMO_SLUG, type: "dugun", title: "Elif & Can's Wedding", startsOn: "2027-06-14", access: demoAccess, coverUrl: demoImage("wedding"), mediaCount: 1284, guestCount: 212, role: "owner" },
+    { id: "demo-henna", slug: "elif-kina", type: "kina", title: "Elif's Henna Night", startsOn: "2027-06-12", access: demoAccess, coverUrl: demoImage("henna"), mediaCount: 342, guestCount: 64, role: "owner" },
+    { id: "demo-bday", slug: "deniz-30", type: "dogum_gunu", title: "Deniz's Birthday", startsOn: "2026-12-05", access: demoAccess, coverUrl: demoImage("birthday"), mediaCount: 58, guestCount: 23, role: "cohost" },
   ];
 }
 
@@ -65,6 +73,7 @@ export function demoOccasion(id: string): Occasion {
     days,
     guestUrl: `https://ourpixs.com/g/${s.slug}`,
     wallUrl: `https://ourpixs.com/wall/${s.slug}`,
+    access: demoAccess,
   };
 }
 
@@ -122,17 +131,7 @@ export function demoPublic(): PublicOccasion {
   const o = demoOccasion(DEMO_ID);
   return {
     slug: o.slug, type: o.type, title: "Elif & Can", honorees: o.honorees, startsOn: o.startsOn, venueName: o.venueName, city: o.city,
-    theme: o.theme, brand: o.brand, plan: o.plan, days, moments: ["Halay", "First dance", "Gold ceremony", "Cake", "Family"],
-    liveWall: true, missionsEnabled: true, disposableShots: null, voiceGuestbook: true, uploadOpen: true, revealMode: "live", revealAt: null,
-    brandingMode: "platform",
+    theme: o.theme, brand: o.brand, days, moments: ["Halay", "First dance", "Gold ceremony", "Cake", "Family"],
+    liveWall: true, missionsEnabled: true, disposableShots: null, voiceGuestbook: true, uploadOpen: true, uploadsOpen: true, revealMode: "live", revealAt: null,
   };
-}
-
-export const demoOrg: Organisation = { id: "demo-org", name: "The Grand Hall", logoUrl: null, primaryColor: "#1B2440", accentColor: "#C9A96E", role: "owner" };
-
-export function demoVenueOccasions(): OccasionSummary[] {
-  return [
-    { id: "demo-v1", slug: "ayse-mert", type: "dugun", title: "Ayşe & Mert's Wedding", startsOn: "2027-05-22", plan: "buyuk", coverUrl: demoImage("family"), mediaCount: 940, guestCount: 180, role: "owner" },
-    { id: "demo-v2", slug: "acme-awards", type: "kurumsal", title: "Acme Awards Night", startsOn: "2027-03-10", plan: "buyuk", coverUrl: demoImage("poster"), mediaCount: 410, guestCount: 120, role: "owner" },
-  ];
 }

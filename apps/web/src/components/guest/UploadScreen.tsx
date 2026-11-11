@@ -86,11 +86,11 @@ export function UploadScreen() {
         <button type="button" onClick={() => input.current?.click()}
           className="flex flex-col items-center gap-2 rounded-[28px] bg-royal px-5 py-7 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-ink">
           <span aria-hidden className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-royal"><Plus size={32} /></span>
-          <span className="text-[22px] font-extrabold tracking-tight">{o.plan === "free" ? t("upload.choosePhotos") : t("upload.choose")}</span>
+          <span className="text-[22px] font-extrabold tracking-tight">{t("upload.choose")}</span>
           <span className="text-[13px] text-[#E3E8FF]">{t("upload.chooseHint")}</span>
         </button>
       )}
-      <input ref={input} type="file" multiple hidden accept={o.plan === "free" ? "image/*" : "image/*,video/*"} onChange={(e) => {
+      <input ref={input} type="file" multiple hidden accept="image/*,video/*" onChange={(e) => {
         const files = Array.from(e.target.files || []);
         if (files.length) uploader.add(files, { dayId, momentTag: moment, missionId });
         e.target.value = "";

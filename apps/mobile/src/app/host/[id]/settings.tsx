@@ -1,20 +1,20 @@
 import * as Clipboard from "expo-clipboard";
 import { router } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
 
-import { ApiError, errorMessage, hostApi } from "@/api/client";
+import { errorMessage, hostApi } from "@/api/client";
 import type { OccasionPatch, ShareLink } from "@/api/types";
 import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/Button";
-import { Card, Pill } from "@/components/Card";
+import { Card } from "@/components/Card";
 import { Field, Segmented, ToggleRow } from "@/components/Form";
 import { Icon } from "@/components/Icon";
 import { Screen } from "@/components/Screen";
 import { Loading, Notice } from "@/components/States";
+import { accessNoticeKey, ChoosePlanButton } from "@/components/PlanStatus";
 import { Heading, Txt } from "@/components/Text";
-import { EXTERNAL_CHECKOUT, formatPrice, MONEY_BACK_DAYS, planSpec, PLANS, UPGRADE_TEK_TO_BUYUK_PENCE } from "@/config";
+import { useAuth } from "@/auth/AuthProvider";
 import { useOccasion } from "@/host/OccasionContext";
 import { useI18n } from "@/i18n";
 import { formatDate } from "@/lib/format";
@@ -33,13 +33,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function isPaymentsUnavailable(e: unknown) {
-  return e instanceof ApiError && (e.status === 501 || e.status === 503 || /payment|stripe|checkout/i.test(e.code));
-}
-
 export default function HostSettings() {
   const { t, locale } = useI18n();
-  const { id, occasion, stats, patch, refresh } = useOccasion();
+  const { id, occasion, stats, patch } = useOccasion();
+  const { subscription } = useAuth();
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
@@ -48,16 +45,14 @@ export default function HostSettings() {
   const [linkScope, setLinkScope] = useState<"all" | "favourites">("all");
   const [confirm, setConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
-  const plan = planSpec(occasion?.plan);
 
   const loadLinks = useCallback(async () => {
-    if (!plan.shareLinks) return setLinks([]);
     try {
       setLinks((await hostApi.shareLinks(id)).links);
     } catch {
       setLinks([]);
     }
-  }, [id, plan.shareLinks]);
+  }, [id]);
   useEffect(() => void loadLinks(), [loadLinks]);
 
   const save = async (key: string, p: OccasionPatch) => {
@@ -76,20 +71,6 @@ export default function HostSettings() {
     setPinError(null);
     await save("pin", { pin });
     setPin("");
-  };
-
-  const checkout = async (target: "tek" | "buyuk") => {
-    setSaving(`plan-${target}`);
-    try {
-      const { url } = await hostApi.checkout(id, target);
-      await WebBrowser.openBrowserAsync(url, { presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET });
-      // Back from the browser: the webhook may already have upgraded the plan.
-      await refresh();
-    } catch (e) {
-      Alert.alert(isPaymentsUnavailable(e) ? t("errors.paymentsSoon") : errorMessage(e, t));
-    } finally {
-      setSaving(null);
-    }
   };
 
   const createLink = async () => {
@@ -133,15 +114,9 @@ export default function HostSettings() {
     );
   }
 
-  const upgrades: { plan: "tek" | "buyuk"; price: number }[] = !EXTERNAL_CHECKOUT
-    ? []
-    : occasion.plan === "free"
-      ? [{ plan: "tek", price: PLANS.tek.pricePence }, { plan: "buyuk", price: PLANS.buyuk.pricePence }]
-      : occasion.plan === "tek"
-        ? [{ plan: "buyuk", price: UPGRADE_TEK_TO_BUYUK_PENCE }]
-        : [];
   const shotsValue = occasion.disposableShots ? (String(occasion.disposableShots) as (typeof SHOTS)[number]) : "off";
   const isOwner = occasion.role === "owner";
+  const accessKey = accessNoticeKey(occasion.access);
 
   return (
     <Screen header={<AppHeader tone="light" back={() => router.replace("/host")} title={occasion.title} />} scroll bottomInset={false} keyboard>
@@ -155,38 +130,12 @@ export default function HostSettings() {
         </Txt>
       ) : null}
 
-      <Section title={t("settings.plan")}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <Txt weight="extrabold" style={{ flex: 1 }}>
-            {t("settings.currentPlan", { plan: PLANS[occasion.plan].name[locale] })}
-          </Txt>
-          <Pill text={PLANS[occasion.plan].name[locale]} variant="blue" rotate={-4} />
-        </View>
-        {upgrades.map((u) => (
-          <Button
-            key={u.plan}
-            label={t("settings.upgradeTo", { plan: PLANS[u.plan].name[locale], price: formatPrice(u.price, locale) })}
-            icon="sparkles"
-            variant={u.plan === "buyuk" ? "primary" : "inverse"}
-            loading={saving === `plan-${u.plan}`}
-            disabled={!isOwner}
-            onPress={() => void checkout(u.plan)}
-          />
-        ))}
-        {upgrades.length ? (
-          <View style={{ gap: 8 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Icon name="checkCircle" size={18} color={colors.blue} />
-              <Txt variant="small" weight="bold" style={{ flex: 1 }}>
-                {t("settings.guarantee", { days: MONEY_BACK_DAYS })}
-              </Txt>
-            </View>
-            <Txt variant="small" muted>
-              {t("settings.upgradeBody")}
-            </Txt>
-          </View>
-        ) : null}
-      </Section>
+      {accessKey ? (
+        <Section title={t("account.title")}>
+          <Notice text={t(accessKey)} icon={occasion.access.readOnly ? "lock" : "sparkles"} />
+          <ChoosePlanButton sub={subscription} />
+        </Section>
+      ) : null}
 
       <Section title={t("settings.albumSection")}>
         <ToggleRow label={t("settings.approval")} help={t("settings.approvalHelp")} value={occasion.approvalMode} disabled={saving === "approval"} onChange={(v) => void save("approval", { approvalMode: v })} />
@@ -231,25 +180,19 @@ export default function HostSettings() {
         <Txt variant="small" muted>
           {t("settings.disposableHelp")}
         </Txt>
-        {plan.disposable ? (
-          <Segmented
-            label={t("settings.disposable")}
-            value={shotsValue}
-            onChange={(v) => void save("shots", { disposableShots: v === "off" ? null : Number(v) })}
-            options={SHOTS.map((s) => ({ value: s, label: s === "off" ? t("common.off") : s }))}
-          />
-        ) : (
-          <Notice text={t("errors.planRequired", { plan: PLANS.tek.name[locale] })} icon="lock" />
-        )}
+        <Segmented
+          label={t("settings.disposable")}
+          value={shotsValue}
+          onChange={(v) => void save("shots", { disposableShots: v === "off" ? null : Number(v) })}
+          options={SHOTS.map((s) => ({ value: s, label: s === "off" ? t("common.off") : s }))}
+        />
       </Section>
 
       <Section title={t("settings.shareLinks")}>
         <Txt variant="small" muted>
           {t("settings.shareLinksHelp")}
         </Txt>
-        {!plan.shareLinks ? (
-          <Notice text={t("errors.planRequired", { plan: PLANS.buyuk.name[locale] })} icon="lock" />
-        ) : links === null ? (
+        {links === null ? (
           <Loading />
         ) : (
           <>

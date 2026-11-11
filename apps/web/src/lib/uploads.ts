@@ -2,14 +2,14 @@ import "server-only";
 import { z } from "zod";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { ALLOWED_MIME } from "./config";
-import { ApiError, badRequest, planFeature, planLimit } from "./http";
-import { activeDays, canonicalMoment, dayUploadOpen, planOf, uploadOpen } from "./occasion";
+import { ALLOWED_MIME, SUBSCRIPTION } from "./config";
+import { ApiError, badRequest, planLimit } from "./http";
+import { activeDays, canonicalMoment, dayUploadOpen, uploadOpen } from "./occasion";
 import { nsfwCheck, signalFlags } from "./moderation";
-import { assertOrgWritable } from "./org";
+import { accessForOccasion, assertCanUpload } from "./access";
 import { notifyHosts } from "./push";
 import { after } from "next/server";
-import { loadDays, mediaCountForLimit } from "./queries";
+import { loadDays } from "./queries";
 import { limit } from "./rate-limit";
 import { deleteObjects, finalizeUpload, headObject, mediaKeys, presignPut, storageDriver, StorageNotConfigured, type PresignedPut } from "./storage";
 
@@ -51,12 +51,12 @@ function todayIso() {
 
 export async function createUploads(o: OccasionRow, files: UploadFile[], actor: Actor) {
   if (!storageDriver()) throw new StorageNotConfigured();
-  const plan = planOf(o);
+  const features = SUBSCRIPTION.features;
   const guest = "guest" in actor ? actor.guest : null;
+  const access = await accessForOccasion(o);
   if (o.status !== "active") throw new ApiError(403, "upload_closed", "This event is no longer accepting uploads");
-  if (guest && !uploadOpen(o)) throw new ApiError(403, "upload_closed", "Uploads are closed for this event");
-  if (o.storageExpiresAt && Date.now() >= o.storageExpiresAt.getTime()) throw new ApiError(403, "upload_closed", "This album has expired");
-  await assertOrgWritable(o);
+  assertCanUpload(access);
+  if (guest && !uploadOpen(o, access.canUpload)) throw new ApiError(403, "upload_closed", "Uploads are closed for this event");
 
   await limit(guest ? `up:g:${guest.id}` : `up:h:${(actor as { hostId: string }).hostId}`, 400, 3600, files.length);
 
@@ -68,16 +68,9 @@ export async function createUploads(o: OccasionRow, files: UploadFile[], actor: 
     }
     if (f.kind === "photo" && f.bytes > MAX_PHOTO_BYTES) throw planLimit("Photo is too large");
     if (f.kind === "video") {
-      if (!plan.video) throw planFeature("video uploads");
-      if (f.bytes > plan.maxVideoBytes) throw planLimit("Video is too large for this plan");
-      if (f.durationS && f.durationS > plan.maxVideoSeconds + 1) throw planLimit("Video is too long for this plan");
+      if (f.bytes > features.maxVideoBytes) throw planLimit("Video is too large (up to 1 GB)");
+      if (f.durationS && f.durationS > features.maxVideoSeconds + 1) throw planLimit("Video is too long (up to 10 minutes)");
     }
-    if (f.kind === "voice" && !plan.voiceGuestbook) throw planFeature("voice messages");
-  }
-
-  if (plan.maxMedia !== null) {
-    const used = await mediaCountForLimit(o.id);
-    if (used + files.length > plan.maxMedia) throw planLimit(`This album is full (${plan.maxMedia} files on this plan)`);
   }
 
   const dayRows = activeDays(o, await loadDays(o.id));
@@ -93,7 +86,6 @@ export async function createUploads(o: OccasionRow, files: UploadFile[], actor: 
 
   const missionIds = [...new Set(files.map((f) => f.missionId).filter((x): x is string => !!x))];
   if (missionIds.length) {
-    if (!plan.missions) throw planFeature("photo missions");
     const found = await db.select({ id: schema.missions.id }).from(schema.missions)
       .where(and(eq(schema.missions.occasionId, o.id), inArray(schema.missions.id, missionIds)));
     if (found.length !== missionIds.length) throw badRequest("Unknown mission");
@@ -101,7 +93,7 @@ export async function createUploads(o: OccasionRow, files: UploadFile[], actor: 
 
   const disposableCount = guest ? files.filter((f) => f.fromDisposable).length : 0;
   if (disposableCount) {
-    if (!plan.disposable || !o.disposableShots) throw planFeature("the disposable camera");
+    if (!o.disposableShots) throw new ApiError(409, "shots_exhausted", "The disposable camera is off for this event");
     const shots = o.disposableShots;
     const updated = await db.update(schema.guests)
       .set({ shotsTaken: sql`${schema.guests.shotsTaken} + ${disposableCount}` })
@@ -155,7 +147,8 @@ export async function completeUploads(o: OccasionRow, mediaIds: string[], actor:
   const owner = "guest" in actor ? eq(schema.media.guestId, actor.guest.id) : eq(schema.media.uploadedByHostId, actor.hostId);
   const rows = await db.select().from(schema.media)
     .where(and(eq(schema.media.occasionId, o.id), inArray(schema.media.id, mediaIds), owner, eq(schema.media.status, "pending")));
-  const plan = planOf(o);
+  assertCanUpload(await accessForOccasion(o));
+  const maxVideoBytes = SUBSCRIPTION.features.maxVideoBytes;
   const missing: string[] = [];
   let pending = false;
   await Promise.all(rows.map(async (m) => {
@@ -164,7 +157,7 @@ export async function completeUploads(o: OccasionRow, mediaIds: string[], actor:
       missing.push(m.id);
       return;
     }
-    const tooBig = m.kind === "video" ? orig.bytes > plan.maxVideoBytes : orig.bytes > MAX_PHOTO_BYTES;
+    const tooBig = m.kind === "video" ? orig.bytes > maxVideoBytes : orig.bytes > MAX_PHOTO_BYTES;
     if (tooBig) {
       await deleteObjects([m.keyOriginal, m.keyDisplay, m.keyThumb]).catch(() => {});
       await db.update(schema.media).set({ status: "failed" }).where(eq(schema.media.id, m.id));

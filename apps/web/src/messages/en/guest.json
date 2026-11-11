@@ -1,6 +1,5 @@
 {
  "lang": "Language",
- "poweredBy": "Powered by {brand}",
  "common": {
   "close": "Close",
   "loading": "Loading…",
@@ -21,13 +20,12 @@
   "pin_invalid": "That PIN isn't right. Ask the hosts.",
   "not_joined": "Type your name to join first.",
   "upload_closed": "Uploads are closed right now.",
-  "plan_limit": "This album is full or the file is too big.",
-  "plan_feature": "This event doesn't include that.",
+  "plan_limit": "That file is too big.",
   "shots_exhausted": "No shots left on your camera.",
   "storage_not_configured": "Uploads are paused for a moment. Please try again later.",
   "storage_error": "The upload didn't finish. Trying again.",
   "guest_blocked": "The hosts have turned off uploads from this phone.",
-  "partner_inactive": "This event is read-only right now."
+  "plan_required": "Downloads aren't available for this event yet."
  },
  "demo": {
   "banner": "Demo event: try everything, nothing is saved."
@@ -81,7 +79,9 @@
   "download": "Download",
   "report": "Report",
   "reportPrompt": "What's wrong with this photo? (optional)",
-  "reported": "Thanks. The hosts will take a look."
+  "reported": "Thanks. The hosts will take a look.",
+  "downloadsLocked": "Downloads aren't open for this album yet. The hosts can turn them on.",
+  "videoLocked": "This video can be watched once the hosts turn on downloads. It's safe in the album."
  },
  "upload": {
   "title": "Add your",
@@ -196,8 +196,6 @@
   "justNow": "Just now",
   "by": "{name}'s shot",
   "empty": "Scan the QR code and be the first on the big screen.",
-  "fullscreen": "Full screen",
-  "lockedTitle": "The live wall is part of One Day and Big Day",
-  "lockedBody": "The hosts can upgrade the event to show guest photos on a big screen."
+  "fullscreen": "Full screen"
  }
 }

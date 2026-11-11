@@ -94,7 +94,7 @@ export async function requireHostPage(next?: string): Promise<HostRow> {
   return host;
 }
 
-/** Direct membership, or staff of the partner organisation that owns the event (treated as co-host). */
+/** Membership (owner or co-host) of an occasion. */
 const loadMembership = cache(async (occasionId: string, hostId: string) => {
   const [row] = await db
     .select({ occasion: schema.occasions, role: schema.occasionMembers.role })
@@ -102,14 +102,7 @@ const loadMembership = cache(async (occasionId: string, hostId: string) => {
     .innerJoin(schema.occasions, eq(schema.occasions.id, schema.occasionMembers.occasionId))
     .where(and(eq(schema.occasionMembers.occasionId, occasionId), eq(schema.occasionMembers.hostId, hostId)))
     .limit(1);
-  if (row) return row;
-  const [viaOrg] = await db
-    .select({ occasion: schema.occasions })
-    .from(schema.occasions)
-    .innerJoin(schema.organisationMembers, eq(schema.organisationMembers.organisationId, schema.occasions.organisationId))
-    .where(and(eq(schema.occasions.id, occasionId), eq(schema.organisationMembers.hostId, hostId)))
-    .limit(1);
-  return viaOrg ? { occasion: viaOrg.occasion, role: "cohost" as const } : null;
+  return row ?? null;
 });
 
 /** Host must be a member (owner or co-host) of the occasion. 404 (not 403) so ids can't be probed. */
@@ -192,14 +185,6 @@ export async function verifyLoginCode(input: { email: string; code: string; loca
       .values(invites.map((i) => ({ occasionId: i.occasionId, hostId: host!.id, role: "cohost" as const })))
       .onConflictDoNothing();
     await db.delete(schema.cohostInvites).where(eq(schema.cohostInvites.email, email));
-  }
-
-  const orgInvites = await db.select().from(schema.organisationInvites).where(eq(schema.organisationInvites.email, email));
-  if (orgInvites.length) {
-    await db.insert(schema.organisationMembers)
-      .values(orgInvites.map((i) => ({ organisationId: i.organisationId, hostId: host!.id, role: "staff" as const })))
-      .onConflictDoNothing();
-    await db.delete(schema.organisationInvites).where(eq(schema.organisationInvites.email, email));
   }
 
   return { token: await signSession(host.id), host };

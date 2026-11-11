@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { route, json, readJson, readQuery, planFeature, planLimit } from "@/lib/http";
+import { route, json, readJson, readQuery, planLimit } from "@/lib/http";
 import { requireMember } from "@/lib/auth";
-import { planOf } from "@/lib/occasion";
+import { accessForOccasion, assertWritable } from "@/lib/access";
 import { missionLeaderboard } from "@/lib/queries";
 import { toMission } from "@/lib/serializers";
 
@@ -30,7 +30,7 @@ export const GET = route<{ id: string }>(async (_req, { id }) => {
 
 export const POST = route<{ id: string }>(async (req, { id }) => {
   const { occasion } = await requireMember(id);
-  if (!planOf(occasion).missions) throw planFeature("photo missions");
+  assertWritable(await accessForOccasion(occasion));
   const { title } = await readJson(req, z.object({ title: z.string().trim().min(2).max(120) }));
   const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(schema.missions).where(eq(schema.missions.occasionId, occasion.id));
   if (Number(n) >= MAX_MISSIONS) throw planLimit(`Up to ${MAX_MISSIONS} missions`);

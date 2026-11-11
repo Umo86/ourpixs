@@ -8,9 +8,11 @@ import { Card } from "@/components/Card";
 import { Field } from "@/components/Form";
 import { Icon } from "@/components/Icon";
 import { Screen } from "@/components/Screen";
+import { Notice } from "@/components/States";
 import { Heading, Txt } from "@/components/Text";
 import { useGuest } from "@/guest/GuestContext";
 import { useI18n } from "@/i18n";
+import { guestUploadsClosed } from "@/lib/uploadsOpen";
 import { colors } from "@/theme";
 
 /**
@@ -25,10 +27,11 @@ export default function GuestGuestbook() {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const closed = guestUploadsClosed(occasion);
 
   const send = async () => {
     const v = body.trim();
-    if (!v) return;
+    if (!v || closed) return;
     setBusy(true);
     setError(null);
     try {
@@ -50,6 +53,7 @@ export default function GuestGuestbook() {
       <Txt tone="dark" muted>
         {t("guestbook.empty_body_guest")}
       </Txt>
+      {closed ? <Notice tone="dark" icon="lock" text={t("guestbook.closed")} /> : null}
       {sent ? (
         <Card tone="dark" style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
           <Icon name="checkCircle" size={22} color={colors.blueOnDarkSoft} />
@@ -71,9 +75,10 @@ export default function GuestGuestbook() {
         maxLength={1000}
         style={{ minHeight: 160, textAlignVertical: "top" }}
         error={error}
+        editable={!closed}
       />
       <View>
-        <Button tone="dark" label={t("guestbook.send")} icon="message" loading={busy} disabled={!body.trim()} onPress={() => void send()} />
+        <Button tone="dark" label={t("guestbook.send")} icon="message" loading={busy} disabled={!body.trim() || closed} onPress={() => void send()} />
       </View>
     </Screen>
   );

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { authApi, onUnauthorized, setHostToken } from "@/api/client";
-import type { Host } from "@/api/types";
+import type { Host, Subscription } from "@/api/types";
 import { storage } from "@/lib/storage";
 
 const TOKEN_KEY = "op_host_token";
@@ -11,6 +11,10 @@ type AuthCtx = {
   ready: boolean;
   token: string | null;
   host: Host | null;
+  /** Account subscription from GET /me (null until loaded). */
+  subscription: Subscription | null;
+  /** Re-reads /me (profile + subscription). Call after creating an event: the trial starts then. */
+  refreshMe: () => Promise<void>;
   signIn: (token: string, host: Host) => Promise<void>;
   signOut: () => Promise<void>;
   setHost: (h: Host) => void;
@@ -22,11 +26,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [host, setHostState] = useState<Host | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
 
   const signOut = useCallback(async () => {
     setHostToken(null);
     setToken(null);
     setHostState(null);
+    setSubscription(null);
     await Promise.all([storage.remove(TOKEN_KEY), storage.remove(HOST_KEY)]);
   }, []);
 
@@ -42,9 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Refresh the profile in the background; a 401 triggers sign-out via onUnauthorized.
         authApi
           .me()
-          .then(({ host: fresh }) => {
+          .then(({ host: fresh, subscription: sub }) => {
             if (!alive) return;
             setHostState(fresh);
+            setSubscription(sub ?? null);
             void storage.setJSON(HOST_KEY, fresh);
           })
           .catch(() => undefined);
@@ -66,6 +73,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(t);
     setHostState(h);
     await Promise.all([storage.set(TOKEN_KEY, t), storage.setJSON(HOST_KEY, h)]);
+    void authApi
+      .me()
+      .then(({ subscription: sub }) => setSubscription(sub ?? null))
+      .catch(() => undefined);
+  }, []);
+
+  const refreshMe = useCallback(async () => {
+    try {
+      const { host: fresh, subscription: sub } = await authApi.me();
+      setHostState(fresh);
+      setSubscription(sub ?? null);
+      void storage.setJSON(HOST_KEY, fresh);
+    } catch {
+      // keep what we have; a 401 signs out via onUnauthorized
+    }
   }, []);
 
   const setHost = useCallback((h: Host) => {
@@ -73,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void storage.setJSON(HOST_KEY, h);
   }, []);
 
-  const value = useMemo(() => ({ ready, token, host, signIn, signOut, setHost }), [ready, token, host, signIn, signOut, setHost]);
+  const value = useMemo(() => ({ ready, token, host, subscription, refreshMe, signIn, signOut, setHost }), [ready, token, host, subscription, refreshMe, signIn, signOut, setHost]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

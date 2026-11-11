@@ -5,7 +5,8 @@ import { route, json, readQuery, clientIp } from "@/lib/http";
 import { getGuest, occasionBySlug, requirePinAccess } from "@/lib/guest";
 import { liveMedia, mediaPage } from "@/lib/queries";
 import { toMediaItems } from "@/lib/serializers";
-import { canonicalMoment, revealedForGuests } from "@/lib/occasion";
+import { canonicalMoment, revealedForGuests, uploadOpen } from "@/lib/occasion";
+import { accessForOccasion } from "@/lib/access";
 
 const { media } = schema;
 
@@ -29,8 +30,13 @@ export const GET = route<{ slug: string }>(async (req, { slug }) => {
   if (q.kind) where.push(eq(media.kind, q.kind));
   if (q.dayId) where.push(eq(media.dayId, q.dayId));
   if (q.moment) where.push(eq(media.momentTag, canonicalMoment(o, q.moment) ?? q.moment));
-  const { rows, nextCursor } = await mediaPage({
-    where, cursor: q.after ? undefined : q.cursor, sort: q.sort, guestIdForReaction: guest?.id, limit: q.after ? 100 : 30,
+  const [{ rows, nextCursor }, access] = await Promise.all([
+    mediaPage({ where, cursor: q.after ? undefined : q.cursor, sort: q.sort, guestIdForReaction: guest?.id, limit: q.after ? 100 : 30 }),
+    accessForOccasion(o),
+  ]);
+  // `uploadsOpen` is false when the owner's account is read-only (or the upload window is closed).
+  return json({
+    items: await toMediaItems(rows, "guest", { canDownload: access.canDownload }), nextCursor: q.after ? null : nextCursor,
+    uploadsOpen: uploadOpen(o, access.canUpload),
   });
-  return json({ items: await toMediaItems(rows, "guest"), nextCursor: q.after ? null : nextCursor });
 });

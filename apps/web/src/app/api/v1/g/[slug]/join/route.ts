@@ -4,6 +4,8 @@ import { db, schema } from "@/db";
 import { route, json, readJson, clientIp, ApiError } from "@/lib/http";
 import { checkPin, currentGuestToken, getGuest, guestCookie, mintGuestToken, occasionBySlug, pinCookie } from "@/lib/guest";
 import { limit } from "@/lib/rate-limit";
+import { accessForOccasion } from "@/lib/access";
+import { uploadOpen } from "@/lib/occasion";
 
 const body = z.object({
   name: z.string().trim().min(1).max(40),
@@ -49,7 +51,9 @@ export const POST = route<{ slug: string }>(async (req, { slug }) => {
     }).returning();
     token = minted.token;
   }
-  const res = json({ guestToken: token!, guest: { id: guest!.id, displayName: guest!.displayName } });
+  // Joining stays possible while the event is read-only (guests can still look); `uploadsOpen` tells the app.
+  const access = await accessForOccasion(o);
+  const res = json({ guestToken: token!, guest: { id: guest!.id, displayName: guest!.displayName }, uploadsOpen: uploadOpen(o, access.canUpload) });
   res.cookies.set(guestCookie(o.slug, token!));
   if (o.pinHash) res.cookies.set(pinCookie(o));
   return res;

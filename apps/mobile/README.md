@@ -50,7 +50,7 @@ node store/check-metadata.mjs       # store text length limits
 | `EXPO_PUBLIC_API_URL` | app | `https://ourpixs.com` | API base URL |
 | `EXPO_PUBLIC_DEMO` | app | off | `1` = built-in demo data, `/demo/<screen>` deep links |
 | `EXPO_PUBLIC_SHOW_PREVIEW_CODE` | app | on in `__DEV__` | Show the `previewCode` the API returns when email isn't configured |
-| `EXPO_PUBLIC_EXTERNAL_CHECKOUT` | app | off | `1` = show Stripe upgrade buttons. **Keep off in store builds** (Apple 3.1.1 / Play payments policy) |
+| `EXPO_PUBLIC_EXTERNAL_CHECKOUT` | app | off | `1` = show a "Choose a plan" button that opens the website pricing page. **Keep off in store builds** (Apple 3.1.1 / Play payments policy); store builds show plan status only, with no prices |
 | `EXPO_PUBLIC_REVIEW_EMAIL` | app | none | App Review account email (see `store/review-notes.md`) |
 | `EXPO_PUBLIC_SUPPORT_EMAIL_EN` / `_TR` | app | hello@ourpixs.com / merhaba@bizimresimler.com | Contact links |
 | `APP_VARIANT` | build | `production` | `development` / `preview` change the bundle ID and name so they install side by side |
@@ -115,7 +115,7 @@ src/
     login.tsx             email → 6-digit code
     settings.tsx          language, notifications, sign out, joined events, legal, delete-account request, footer
     host/                 signed-in host area (guarded)
-      index.tsx           my events (+ Venue section for organisations)
+      index.tsx           my events (+ plan status banner)
       new.tsx             create wizard: type → names/title → date/venue/days → theme → QR
       [id]/               event tabs (one HostTabBar): album, upload, qr, guestbook, missions (Challenges), wall, settings
     join/                 scan QR / enter code → name + consent (+ PIN)
@@ -125,14 +125,14 @@ src/
   upload/                 queue (concurrency 3, retries, progress), renditions (1600px display + 400px thumb JPEG), picker
   components/             AppHeader (every screen), Screen, Footer + LanguageSwitch, TabBars, Button, Card/Sticker/Pill,
                           Form (Field, Checkbox, Toggle, Chip, Segmented), MediaGrid, MediaViewer, UploadPanel,
-                          CameraCapture, QrCard, EventBrand (venue/couple branding), States
+                          CameraCapture, QrCard, PlanStatus (neutral plan status), EventBrand (guest header + theme colours), States
   i18n/                   en.ts, tr.ts (typed: tr must match en's keys), useI18n/useT
   auth/, host/, guest/    session + per-event contexts
   lib/                    secure storage, guest sessions, push, save-to-Photos, QR print/share, formatting
   demo/                   sample data + in-memory API for demo mode
 ```
 
-**Design:** light host surfaces, dark guest surfaces; Inter Tight 400–900 + Bodoni Moda italic accents; royal blue `#2347E0`; pill buttons; 28px cards; ≥44pt touch targets; accessibility labels on every icon button. No screen draws its own header: all use `AppHeader` (guest screens via `GuestHeader`, which swaps in venue/couple branding by `brandingMode`).
+**Design:** light host surfaces, dark guest surfaces; Inter Tight 400–900 + Bodoni Moda italic accents; royal blue `#2347E0`; pill buttons; 28px cards; ≥44pt touch targets; accessibility labels on every icon button. No screen draws its own header: all use `AppHeader` (guest screens via `GuestHeader`).
 
 **Uploads:** each file gets a 1600px display and a 400px thumbnail (JPEG, generated on device). The app asks the API for presigned PUT URLs, uploads thumbnail → display → original straight to storage (3 files at a time, 3 attempts each with backoff), then calls `uploads/complete`. Progress is byte-weighted; the queue survives switching tabs.
 
@@ -140,8 +140,8 @@ src/
 - Host uploads complete at `POST /api/v1/occasions/:id/uploads/complete` (contract only names the guest route).
 - Display/thumbnail renditions are JPEG; the app sends `Content-Type` unless the presigned `headers` already include one.
 - A PIN-protected event answers 401/403 with an error code or message containing "pin".
-- Checkout: 501/503 or an error code containing `payment`/`stripe`/`checkout` shows "Payments are coming soon".
-- `/api/v1/organisations` and `PublicOccasion.brandingMode`/`branding` are **provisional** (types in `src/api/types.ts`). A 404 on organisations is treated as "no venues".
+- Account subscription: `GET /api/v1/me` returns `subscription` (status, daysLeft, `canCreateEvents`, `canDownload`, `readOnly`…); host occasions return `access` (`canUpload`, `canDownload`, `readOnly`, `reason`); guest payloads return `uploadsOpen`. The app shows this neutrally (no prices, no purchase buttons or links).
+- Locked downloads answer HTTP 402 `{ error: "plan_required" }`; the app shows "Downloads aren't available on this account yet."
 - Push notification payload: `data.occasionId` (host) or `data.slug` (guest) opens that screen.
 - Guest voice/video guestbook notes need a presign route for `mediaKey`; the app posts text notes only.
 

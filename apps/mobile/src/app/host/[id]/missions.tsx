@@ -8,9 +8,8 @@ import { AppHeader } from "@/components/AppHeader";
 import { Button, IconButton } from "@/components/Button";
 import { Chip, Field } from "@/components/Form";
 import { Screen } from "@/components/Screen";
-import { EmptyState, Loading, Notice } from "@/components/States";
+import { EmptyState, Loading } from "@/components/States";
 import { Heading, Txt } from "@/components/Text";
-import { planSpec } from "@/config";
 import { useOccasion } from "@/host/OccasionContext";
 import { useI18n } from "@/i18n";
 import { colors, radius } from "@/theme";
@@ -21,7 +20,6 @@ export default function HostMissions() {
   const [missions, setMissions] = useState<Mission[] | null>(null);
   const [title, setTitle] = useState("");
   const [busy, setBusy] = useState(false);
-  const allowed = planSpec(occasion?.plan).missions;
 
   const load = useCallback(async () => {
     try {
@@ -72,16 +70,12 @@ export default function HostMissions() {
         {t("missions.title")}
       </Heading>
       <Txt muted>{t("missions.body")}</Txt>
-      {occasion && !allowed ? (
-        <Notice text={t("missions.needsPlan")} icon="lock" action={{ label: t("settings.plan"), onPress: () => router.navigate({ pathname: "/host/[id]/settings", params: { id } }) }} />
-      ) : null}
-
       <View style={{ gap: 10 }}>
-        <Field label={t("missions.add")} placeholder={t("missions.placeholder")} value={title} onChangeText={setTitle} onSubmitEditing={() => void add()} returnKeyType="done" editable={allowed} />
-        <Button label={t("missions.add")} icon="plus" loading={busy} disabled={!allowed || !title.trim()} onPress={() => void add()} />
+        <Field label={t("missions.add")} placeholder={t("missions.placeholder")} value={title} onChangeText={setTitle} onSubmitEditing={() => void add()} returnKeyType="done" />
+        <Button label={t("missions.add")} icon="plus" loading={busy} disabled={!title.trim()} onPress={() => void add()} />
       </View>
 
-      {allowed && suggestions.length ? (
+      {suggestions.length ? (
         <View style={styles.chips}>
           {suggestions.map((s) => (
             <Chip key={s} label={`+ ${s}`} onPress={() => void add(s)} />

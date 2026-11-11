@@ -1,7 +1,16 @@
 /** JSON API types — mirror docs/API.md exactly. Safe to import from client components. */
-import type { Brand, Locale, OccasionType, Plan } from "./config";
+import type { Brand, Locale, OccasionType } from "./config";
 
 export type Host = { id: string; email: string; name: string | null; locale: Locale; brand: Brand };
+/** Account subscription as returned by GET /api/v1/me (`subscription`). */
+export type Subscription = {
+  status: "none" | "trialing" | "active" | "past_due" | "cancelled" | "expired";
+  interval: "month" | "year" | null;
+  trialEndsAt: string | null; currentPeriodEnd: string | null; cancelAtPeriodEnd: boolean; deleteAfter: string | null;
+  canCreateEvents: boolean; canDownload: boolean; readOnly: boolean; showUpgradePrompt: boolean; daysLeft: number | null;
+};
+/** Per-event access (follows the event owner's subscription). */
+export type OccasionAccess = { canUpload: boolean; canDownload: boolean; readOnly: boolean; reason: "trial" | "trial_ended" | "cancelled" | "past_due" | null };
 export type Theme = "noir" | "royal" | "ivory" | "dusk" | "mono" | "blush";
 export type Day = {
   id: string; name: string; date: string | null; sortOrder: number;
@@ -11,53 +20,45 @@ export type Day = {
   guestUrl?: string;
   /** Additive (PublicOccasion only): whether this day currently accepts uploads. */
   uploadOpen?: boolean;
-  /** Additive (host Occasion only): false when the plan's maxDays hides this day from guests. */
+  /** Additive (host Occasion only): false when the day is beyond the 5-day limit and hidden from guests. */
   active?: boolean;
 };
 
 export type OccasionSummary = {
-  id: string; slug: string; type: OccasionType; title: string; startsOn: string | null; plan: Plan;
+  id: string; slug: string; type: OccasionType; title: string; startsOn: string | null;
   coverUrl: string | null; mediaCount: number; guestCount: number; role: "owner" | "cohost";
+  /** What the event can do right now (follows the owner's subscription). */
+  access: OccasionAccess;
 };
 export type Occasion = OccasionSummary & {
   honorees: string[]; venueName: string | null; city: string | null; theme: Theme; brand: Brand;
   approvalMode: boolean; revealMode: "live" | "next_morning"; revealAt: string | null;
   uploadOpensAt: string | null; uploadClosesAt: string | null; hasPin: boolean; disposableShots: number | null;
+  /** When the event's files will be deleted (the owner's account deleteAfter); null while the account is active or trialing. */
   storageExpiresAt: string | null; days: Day[]; guestUrl: string; wallUrl: string;
   /** Additive: custom link name (null = random slug only). */
   vanitySlug: string | null;
-  /** Additive: partner organisation that owns the event, and how guests see it branded. */
-  organisationId: string | null;
-  brandingMode: "platform" | "venue" | "couple" | "both";
 };
 export type Stats = { guests: number; photos: number; videos: number; messages: number; bytes: number; pendingApproval: number };
 export type PublicOccasion = {
   slug: string; type: OccasionType; title: string; honorees: string[]; startsOn: string | null; venueName: string | null;
-  city: string | null; theme: Theme; brand: Brand; plan: Plan; days: Day[]; moments: string[]; liveWall: boolean;
+  city: string | null; theme: Theme; brand: Brand; days: Day[]; moments: string[]; liveWall: boolean;
   missionsEnabled: boolean; disposableShots: number | null; voiceGuestbook: boolean; uploadOpen: boolean;
   revealMode: "live" | "next_morning"; revealAt: string | null;
   /** Additive: host-chosen cover photo. */
   coverUrl: string | null;
   /** Additive: whether a PIN is required. */
   hasPin: boolean;
-  /** Additive: how guests see the event branded (partner events). */
-  brandingMode: "platform" | "venue" | "couple" | "both";
-  /** Additive: white-label branding. `venueLogoUrl`/`primaryColor`/`accentColor`/`monogram` mirror the mobile app's field names. */
-  branding: {
-    mode: "platform" | "venue" | "couple" | "both"; venueName: string | null; logoUrl: string | null; poweredBy: boolean;
-    colours: { bg: string; fg: string; accent: string };
-    venueLogoUrl: string | null; primaryColor: string | null; accentColor: string | null; monogram: string | null; coupleLogoUrl: string | null;
-  };
-};
-export type Organisation = {
-  id: string; name: string; slug: string; logoUrl: string | null; primaryColour: string | null; accentColour: string | null;
-  supportEmail: string | null; status: "trialing" | "active" | "past_due" | "cancelled"; active: boolean;
-  currentPeriodEnd: string | null; hidePoweredBy: boolean; role: "owner" | "staff";
-  /** Aliases matching the mobile app's spelling. */
-  primaryColor: string | null; accentColor: string | null;
+  /** False when the event is read-only (owner's account) or outside its upload window. Same value as `uploadOpen`. */
+  uploadsOpen: boolean;
+  /** False while the owner's account has downloads locked (trial / unpaid). Media `originalUrl` is null then. */
+  downloadsOpen: boolean;
 };
 export type MediaItem = {
-  id: string; kind: "photo" | "video" | "voice"; thumbUrl: string | null; displayUrl: string | null; originalUrl?: string;
+  /** `originalUrl` is null when downloads are locked for the event (trial / unpaid account). */
+  id: string; kind: "photo" | "video" | "voice"; thumbUrl: string | null; displayUrl: string | null; originalUrl?: string | null;
+  /** Videos only: URL to play the video. Present even while downloads are locked (viewing is always allowed). */
+  playbackUrl?: string | null;
   width: number | null; height: number | null; durationS: number | null; momentTag: string | null; dayId: string | null;
   guestName: string | null; reactionCount: number; reactedByMe?: boolean; favourite?: boolean; visibility?: string;
   approved?: boolean; createdAt: string;

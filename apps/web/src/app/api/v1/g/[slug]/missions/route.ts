@@ -4,13 +4,11 @@ import { route, json, clientIp } from "@/lib/http";
 import { getGuest, occasionBySlug, requirePinAccess } from "@/lib/guest";
 import { missionLeaderboard } from "@/lib/queries";
 import { toMission } from "@/lib/serializers";
-import { planOf } from "@/lib/occasion";
 
 export const GET = route<{ slug: string }>(async (req, { slug }) => {
   const o = await occasionBySlug(slug);
   const guest = await getGuest(o);
   await requirePinAccess(o, clientIp(req), guest);
-  if (!planOf(o).missions) return json({ missions: [], leaderboard: [], me: null });
   const live = and(eq(schema.media.occasionId, o.id), eq(schema.media.status, "uploaded"), sql`${schema.media.visibility} <> 'deleted'`, sql`${schema.media.missionId} is not null`);
   const [missions, counts, mine, leaderboard] = await Promise.all([
     db.select().from(schema.missions).where(eq(schema.missions.occasionId, o.id)).orderBy(asc(schema.missions.sortOrder)),

@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { Field } from "@/components/app/Field";
 import { Notice } from "@/components/app/Notice";
 import { useLocale, useT } from "@/i18n/client";
-import { OCCASIONS } from "@/lib/config";
+import { OCCASIONS, THEMES } from "@/lib/config";
 import { api, errorMessage } from "@/lib/client/api";
 import { formatDate } from "@/lib/client/format";
 import { useGuest } from "./GuestContext";
@@ -23,7 +23,7 @@ export function Welcome({ shareToken }: { shareToken?: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const needPin = o.hasPin && !pinOk && !shareToken;
-  const c = o.branding.colours;
+  const c = THEMES[o.theme];
   const eyebrow = [OCCASIONS[o.type].label[locale], o.startsOn ? formatDate(o.startsOn, locale, { day: "numeric", month: "long" }) : null, o.city].filter(Boolean).join(" · ");
 
   async function join(e: React.FormEvent) {
@@ -52,7 +52,7 @@ export function Welcome({ shareToken }: { shareToken?: string }) {
         ) : null}
         <div className="relative flex flex-col gap-2">
           {eyebrow ? <span className="self-start rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink">{eyebrow}</span> : null}
-          {o.branding.mode === "both" && o.branding.venueName ? <span className="text-sm font-semibold opacity-90">{t("welcome.atVenue", { venue: o.branding.venueName })}</span> : null}
+          {o.venueName ? <span className="text-sm font-semibold opacity-90">{t("welcome.atVenue", { venue: o.venueName })}</span> : null}
           <h1 className="m-0 text-[clamp(2.8rem,14vw,4rem)] font-black leading-[0.9] tracking-[-0.045em]"><Title text={o.title} accent={o.coverUrl ? "#8097FF" : c.accent} /></h1>
         </div>
       </div>

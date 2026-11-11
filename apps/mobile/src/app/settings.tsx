@@ -3,7 +3,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Alert, Linking, Pressable, StyleSheet, View } from "react-native";
 
-import { ApiError, authApi, errorMessage } from "@/api/client";
+import { authApi, errorMessage } from "@/api/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/Button";
@@ -11,6 +11,7 @@ import { Card } from "@/components/Card";
 import { Footer, openSite } from "@/components/Footer";
 import { Segmented } from "@/components/Form";
 import { Icon, type IconName } from "@/components/Icon";
+import { PlanCard } from "@/components/PlanStatus";
 import { Screen } from "@/components/Screen";
 import { Heading, Txt } from "@/components/Text";
 import { siteUrl, supportEmail } from "@/config";
@@ -33,7 +34,7 @@ function Row({ icon, label, onPress, danger }: { icon: IconName; label: string; 
 
 export default function AppSettings() {
   const { t, locale, setLocale, brand } = useI18n();
-  const { token, host, signOut } = useAuth();
+  const { token, host, subscription, refreshMe, signOut } = useAuth();
   const [joined, setJoined] = useState<GuestSession[]>([]);
   const [push, setPush] = useState(false);
 
@@ -41,7 +42,8 @@ export default function AppSettings() {
     useCallback(() => {
       void listGuestSessions().then(setJoined);
       void notificationsGranted().then(setPush);
-    }, []),
+      if (token) void refreshMe();
+    }, [token, refreshMe]),
   );
 
   const doSignOut = () =>
@@ -70,7 +72,7 @@ export default function AppSettings() {
             router.replace("/");
             Alert.alert(t("appSettings.deleteAccountDone"));
           } catch (e) {
-            Alert.alert(e instanceof ApiError && e.code === "org_owner" ? t("appSettings.deleteAccountOrgOwner") : errorMessage(e, t));
+            Alert.alert(errorMessage(e, t));
           }
         },
       },
@@ -81,6 +83,8 @@ export default function AppSettings() {
       <Heading size="lg" accent={t("appSettings.accent")}>
         {t("appSettings.title")}
       </Heading>
+
+      {token ? <PlanCard sub={subscription} /> : null}
 
       <Card style={{ gap: 12 }}>
         <Txt weight="extrabold">{t("appSettings.language")}</Txt>

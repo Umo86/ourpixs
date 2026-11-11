@@ -10,11 +10,7 @@
     },
     "pricing": {
       "title": "Pricing",
-      "description": "Pay once per event, invite everyone. No subscription and no per-guest fees. Start free."
-    },
-    "partners": {
-      "title": "Partner plan: your venue's own photo app",
-      "description": "White-label guest photo albums for venues, planners, DJs and photographers. Your logo and colours, unlimited events, one dashboard. Monthly, cancel at any time."
+      "description": "One plan with everything, for unlimited events: {monthly} a month or {yearly} a year. {trialDays}-day free trial, no card needed."
     },
     "privacy": {
       "title": "Privacy policy",
@@ -99,7 +95,7 @@
         {
           "key": "birthday",
           "label": "Birthdays",
-          "tag": "From free",
+          "tag": "3 days free",
           "alt": "Friends with a birthday cake and sparklers"
         },
         {
@@ -222,7 +218,7 @@
       "title": "You enjoy the party,",
       "accent": "we collect the shots.",
       "cta": "Create your event →",
-      "note": "Free to try · No card needed · {days}-day money-back guarantee"
+      "note": "3 days free · No card needed · {days}-day money-back guarantee"
     }
   },
   "features": {
@@ -347,227 +343,74 @@
     }
   },
   "pricing": {
-    "title": "Pay once.",
-    "accent": "Invite everyone.",
-    "lead": "No subscription and no per-guest fees. 50 guests or 500, the price is the same.",
-    "perEvent": "one-off, per event",
-    "badge": "Most popular",
-    "plans": {
-      "free": {
-        "note": "Try it at a small get-together",
-        "cta": "Start free",
-        "items": [
-          "{days} day, up to {media} photos",
-          "QR cards to print",
-          "Live feed and reactions",
-          "{storage} of storage"
-        ]
-      },
-      "tek": {
-        "note": "Birthdays, engagements, parties",
-        "cta": "Choose {name}",
-        "items": [
-          "Unlimited guests and photos",
-          "Videos up to {minutes} minutes",
-          "Live wall and photo challenges",
-          "Disposable camera mode",
-          "{storage} of storage"
-        ]
-      },
-      "buyuk": {
-        "note": "Weddings and multi-day events",
-        "cta": "Choose {name}",
-        "items": [
-          "Everything in {tekName}",
-          "Up to {days} days in one album",
-          "Videos up to {minutes} minutes",
-          "Voice guestbook",
-          "Co-hosts and family-abroad links",
-          "{storage} of storage",
-          "Highlight reel (coming soon)"
-        ]
-      }
+    "title": "One plan.",
+    "accent": "Every event.",
+    "lead": "Everything included, for as many events as you like. No per-guest fees: 50 guests or 500, the price is the same.",
+    "priceLine": "{monthly} a month or {yearly} a year",
+    "perMonth": "/ month",
+    "perYear": "/ year",
+    "trial": {
+      "sticker": "Start free — {trialDays} days, no card",
+      "short": "{trialDays}-day free trial",
+      "body": "Your trial starts when you create your first event, so it covers the event itself. Everything works, including video and the live wall. Downloads unlock when you subscribe.",
+      "cta": "Start free"
     },
-    "partner": {
-      "kicker": "For venues & planners · {price} / month",
-      "title": "Your venue's own",
-      "accent": "photo app.",
-      "body": "White-label albums for every event you host: your logo and colours, unlimited events, one dashboard. Monthly, cancel at any time.",
-      "cta": "See the Partner plan →"
+    "monthly": {
+      "name": "Monthly",
+      "note": "Pay as you go. Cancel any time.",
+      "cta": "Start free, then {monthly}/month"
     },
+    "yearly": {
+      "name": "Yearly",
+      "note": "Works out at {yearlyPerMonth} a month. Ideal if you host more than one event a year.",
+      "cta": "Start free, then {yearly}/year",
+      "save": "Save {saving}%"
+    },
+    "items": [
+      "Unlimited events, guests, photos and videos",
+      "Up to {maxDays} days per event, each with its own QR code",
+      "Videos up to {minutes} minutes",
+      "Live wall and photo challenges",
+      "Disposable camera mode",
+      "Voice and video guestbook",
+      "Co-hosts and private links for family abroad",
+      "Download every original as a ZIP",
+      "Automatic duplicate, blur and safety checks"
+    ],
+    "guarantee": "{days}-day money-back guarantee on your first payment",
+    "vat": "Prices in GBP, VAT included. Yearly saves {saving}% compared with 12 monthly payments. Fair use applies.",
     "faqTitle": "Good to",
     "faqAccent": "know",
     "faq": [
       {
-        "q": "Is it really one payment?",
-        "a": "Yes, for event plans: you pay once per event, with nothing to cancel afterwards. (The Partner plan for venues is the exception: it is a monthly subscription.)"
+        "q": "How does the free trial work?",
+        "a": "Sign up and create your first event: that starts a {trialDays}-day free trial, with no card needed. Everything works, including video, the live wall and share links. The one thing that needs a plan is downloading originals and ZIPs."
+      },
+      {
+        "q": "Monthly or yearly?",
+        "a": "Both include everything and cover unlimited events. Monthly is {monthly} a month. Yearly is {yearly}, which saves {saving}% compared with paying monthly for a year. You can switch at any time from Manage billing."
+      },
+      {
+        "q": "Can I cancel any time?",
+        "a": "Yes. Cancel from Manage billing in your dashboard. It takes effect at the end of the period you've already paid for, and everything keeps working until then."
+      },
+      {
+        "q": "What happens to my photos if I cancel?",
+        "a": "When your paid period ends, your events stop taking new uploads. You can still view and download everything for {readOnlyDays} days, then the files are deleted. We email you before that happens. Subscribe again within those {readOnlyDays} days and everything comes straight back."
+      },
+      {
+        "q": "What if I don't subscribe after the trial?",
+        "a": "Your events become read-only and downloads stay locked. We keep the files for {trialKeepDays} days after the trial ends, and email you a week before they're deleted. Subscribe at any point in those {trialKeepDays} days and everything unlocks immediately."
       },
       {
         "q": "Can I get a refund?",
-        "a": "Yes. Every paid event plan comes with a {days}-day money-back guarantee. Email {email} within {days} days of purchase and we'll refund you in full, no questions asked."
-      },
-      {
-        "q": "Can I upgrade later?",
-        "a": "Yes. Move from {tekName} to {bigName} at any time and pay only the {upgrade} difference."
-      },
-      {
-        "q": "What happens when the storage period ends?",
-        "a": "We email you 30 days and 7 days before it ends, so you can download everything. Need longer? Contact us to extend storage."
+        "a": "Yes. Your first payment comes with a {days}-day money-back guarantee. Email {email} within {days} days of it and we'll refund you in full, no questions asked."
       },
       {
         "q": "Do guests pay anything?",
         "a": "Never. Guests scan and upload for free, with no app and no account."
-      },
-      {
-        "q": "How does the Partner plan work?",
-        "a": "It is a monthly subscription for venues, planners, DJs and photographers: unlimited events, each with a Big Day album, branded as yours. You can cancel at any time. There is no refund for the current month, and access continues until the end of it."
       }
-    ],
-    "guarantee": "{days}-day money-back guarantee"
-  },
-  "partners": {
-    "sticker": "Partner plan · White label",
-    "title": "Your venue's own",
-    "accent": "photo app.",
-    "lead": "Every event you host gets its own guest album, branded as yours. Guests scan, upload and relive the night, and never see our name.",
-    "cta": "Talk to us →",
-    "ctaSecondary": "See pricing",
-    "priceKicker": "Partner plan",
-    "perMonth": "a month",
-    "priceNote": "Monthly. Cancel at any time.",
-    "priceFine": "For venues, planners, DJs and photographers.",
-    "benefitsTitle": "What you",
-    "benefitsAccent": "get.",
-    "benefits": [
-      {
-        "title": "A Big Day album for every event",
-        "body": "Each event gets the full Big Day experience: multi-day albums, live wall, voice guestbook, co-hosts and family links."
-      },
-      {
-        "title": "Your brand, not ours",
-        "body": "No {platform} branding is shown to guests. Your logo, your colours, your venue name."
-      },
-      {
-        "title": "Unlimited events",
-        "body": "Create as many events as you host. No per-event fees."
-      },
-      {
-        "title": "Your own QR card designs",
-        "body": "Print table cards and signs in your own designs, with your logo."
-      },
-      {
-        "title": "One partner dashboard",
-        "body": "Manage every event in one place, then hand each album over when the night is done."
-      },
-      {
-        "title": "Monthly, cancel at any time",
-        "body": "No contract and no long-term commitment. There is no refund for a month that has already started."
-      }
-    ],
-    "brandingTitle": "Branded",
-    "brandingAccent": "your way.",
-    "brandingLead": "Choose how each event looks, and mix and match from one event to the next.",
-    "branding": [
-      {
-        "title": "The venue's brand",
-        "body": "Your logo, your colours and your venue name on the cover, the QR cards and the live wall.",
-        "example": "The Grand Hall"
-      },
-      {
-        "title": "The couple's brand",
-        "body": "Their names, their cover photo and their colours, with nothing of ours in sight.",
-        "example": "Elif & Can"
-      },
-      {
-        "title": "Both together",
-        "body": "The couple's names with \"at [Venue]\" and your venue logo on the cover.",
-        "example": "Elif & Can at The Grand Hall"
-      }
-    ],
-    "roiTitle": "It can",
-    "roiAccent": "pay for itself.",
-    "roiBody": "For example, add it to your wedding packages for {price} per couple, and the Partner plan pays for itself after {events} events. Every event after that is extra margin.",
-    "roiNote": "An illustration, not a forecast. Set whatever price suits your packages.",
-    "whoTitle": "Who it's",
-    "whoAccent": "for.",
-    "who": [
-      {
-        "title": "Venues",
-        "body": "Give every couple a ready-made way to collect guest photos, with your name on it."
-      },
-      {
-        "title": "Planners",
-        "body": "Add a guest album to every event you coordinate, branded to the client or to you."
-      },
-      {
-        "title": "DJs and entertainers",
-        "body": "Put the QR code on the dance floor and let the crowd create your best content."
-      },
-      {
-        "title": "Photographers and videographers",
-        "body": "Capture the moments you can't be there for, and deliver one complete album."
-      }
-    ],
-    "stepsTitle": "How it",
-    "stepsAccent": "works.",
-    "steps": [
-      {
-        "title": "Tell us about you",
-        "body": "Fill in the form below with a few details about your business."
-      },
-      {
-        "title": "We set up your branding",
-        "body": "We'll be in touch to add your logo and colours and show you the partner dashboard."
-      },
-      {
-        "title": "Create events for clients",
-        "body": "Start sharing QR codes at your next booking."
-      }
-    ],
-    "sample": {
-      "eyebrow": "Sample",
-      "title": "See it",
-      "accent": "with your brand.",
-      "body": "This is what a couple's guests see: the couple's names with your venue logo on the cover and their photos underneath. A mock-up with sample content.",
-      "label": "Sample co-branded album",
-      "logo": "Your logo",
-      "venue": "The Grand Hall",
-      "album": "Elif & Can",
-      "at": "at",
-      "by": "Photos by their guests",
-      "alt": "Mock-up of a co-branded guest album"
-    },
-    "referral": {
-      "title": "Referral code",
-      "body": "Ask us for your referral code and we'll set one up for your business."
-    },
-    "formTitle": "Talk to",
-    "formAccent": "us.",
-    "formLead": "Tell us a little about your business and we'll reply by email.",
-    "form": {
-      "name": "Your name",
-      "email": "Email",
-      "company": "Business name (optional)",
-      "type": "Type of business",
-      "message": "Anything we should know? (optional)",
-      "types": {
-        "venue": "Venue",
-        "dj": "DJ or entertainer",
-        "photographer": "Photographer or videographer",
-        "planner": "Planner",
-        "other": "Something else"
-      },
-      "submit": "Send enquiry",
-      "sending": "Sending…",
-      "errName": "Please enter your name.",
-      "errEmail": "Please enter a valid email address.",
-      "errServer": "We couldn't send that just now. Please try again in a moment.",
-      "okTitle": "Thank you!",
-      "okBody": "We've got your message and will be in touch by email soon.",
-      "privacy": "We only use your details to reply to you.",
-      "privacyLink": "Privacy policy",
-      "emailLine": "Prefer email? Write to {email}."
-    }
+    ]
   },
   "credits": {
     "title": "Photos and video,",
@@ -605,9 +448,9 @@
       {
         "h": "What we collect",
         "list": [
-          "Hosts: your email address, name, the details of the events you create, and payment records. Card details are handled by Stripe and never reach us.",
+          "Hosts: your email address, name, the details of the events you create, and your subscription and payment records (plan, status, renewal dates). Card details are handled by Stripe and never reach us.",
           "Guests: the first name you type, and the photos, videos, voice messages and reactions you upload.",
-          "Enquiries: what you tell us when you contact us or use the partner form.",
+          "Enquiries: what you tell us when you contact us.",
           "Technical data: IP address, device type and basic usage logs, used to keep the service secure and running."
         ]
       },
@@ -658,9 +501,9 @@
       {
         "h": "How long we keep it",
         "list": [
-          "Event photos, videos and messages: for the storage period of the host's plan ({freeStorage} on Free, {tekStorage} on One Day, {bigStorage} on Big Day), then deleted unless the host extends it. Hosts can delete an event or individual uploads at any time.",
-          "Account details: while your account is active, then deleted or anonymised on request.",
-          "Payment and invoice records: six years, for tax and accounting.",
+          "Event photos, videos and messages: while the host's subscription is active. If the host's free trial ends without a subscription, they are kept for {trialKeepDays} days and then deleted. If a subscription ends, they stay viewable and downloadable for {readOnlyDays} days after the paid period ends and are then deleted. Hosts can delete an event or individual uploads at any time.",
+          "Account details: while your account is open, then deleted when you delete your account (which also cancels any subscription) or on request.",
+          "Payment, subscription and invoice records: kept by us and by Stripe for six years, as UK tax and accounting rules require. Stripe also keeps its own records as an independent controller under its privacy policy.",
           "Enquiries: for as long as needed to deal with them."
         ]
       },
@@ -719,7 +562,7 @@
       {
         "h": "The service",
         "p": [
-          "{brand} lets a host create an event page and QR code so guests can upload and view photos, videos and messages. Features depend on the host's plan."
+          "{brand} lets a host create an event page and QR code so guests can upload and view photos, videos and messages. Hosts use it on a free trial or on a paid subscription. Every feature is included on both, except that downloading originals needs a paid subscription."
         ]
       },
       {
@@ -743,36 +586,52 @@
         ]
       },
       {
-        "h": "Plans and payment",
-        "p": [
-          "Paid event plans are a one-off payment per event in pounds sterling, processed by Stripe. Plan limits and storage periods are shown on the pricing page. The Partner plan is a monthly subscription that renews each month until you cancel."
+        "h": "Subscription and payment",
+        "list": [
+          "There is one subscription, billed monthly ({monthly} a month) or yearly ({yearly} a year), in pounds sterling with VAT included, and processed by Stripe. It covers unlimited events for the account, subject to fair use.",
+          "Your subscription renews automatically at the end of each month or year, and the card you used is charged until you cancel. We will remind you before a yearly renewal.",
+          "You can cancel at any time from Manage billing in your dashboard. Cancellation takes effect at the end of the period you have already paid for; you keep full access until then and you will not be charged again.",
+          "You can switch between monthly and yearly from Manage billing. The change is handled by Stripe, which may credit any unused time.",
+          "If we change the price, we will email you at least 30 days before the change applies to your next renewal, and you can cancel before then.",
+          "If a renewal payment fails, everything keeps working for {graceDays} days while you update your card. After that the subscription ends and your events become read-only, as described under \"Storage and deletion\"."
         ]
       },
       {
         "h": "Cancellations and refunds",
         "list": [
-          "Money-back guarantee: you can ask for a full refund of any paid event plan within {days} days of purchase, no questions asked. Email {email} from the address on your account. Refunds are paid back to the original payment method through Stripe.",
-          "Your statutory cancellation right: under the Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013 you normally have 14 days to cancel a digital service. By creating an event you ask us to start the service straight away. If the event has started or uploads have begun, that statutory right may be lost or reduced to a proportionate refund, but our money-back guarantee still applies within {days} days of purchase.",
-          "Partner plan: see \"Partner plan\" below."
+          "Money-back guarantee: you can ask for a full refund of your first subscription payment within {days} days of it, no questions asked. Email {email} from the address on your account. Refunds are made by our support team, back to the original payment method through Stripe, and the subscription is cancelled when the refund is made. The guarantee applies once per customer and does not cover later renewals.",
+          "Your statutory cancellation right: under the Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013 you normally have 14 days from the start of a contract for a digital service to cancel it. By subscribing you ask us to start the service straight away. If you cancel within those 14 days you may be asked to pay for the service already provided, in proportion; our money-back guarantee above gives you a full refund of your first payment in any case.",
+          "Renewals are not refundable, but you can cancel at any time so that you are not charged again."
         ]
       },
       {
-        "h": "Storage",
-        "p": [
-          "We store event content for the period included in the host's plan. Download your album before that period ends. We cannot guarantee uninterrupted service, so keep your own copies of anything important."
+        "h": "Free trial",
+        "list": [
+          "The free trial lasts {trialDays} days and starts when you create your first event. No card is needed and nothing is charged automatically when it ends.",
+          "During the trial everything works except downloads: you and your guests can view everything, including the live wall and share links, but originals and ZIP files can only be downloaded on a paid subscription.",
+          "There is one free trial per person. We may end trials that are used to get around this."
         ]
       },
       {
-        "h": "Partner plan",
+        "h": "Storage and deletion",
+        "list": [
+          "While your subscription is active, we keep your events' photos, videos and messages.",
+          "If your trial ends without a subscription, your events become read-only (no new uploads) and downloads stay locked. We keep the files for {trialKeepDays} days after the trial ends, then delete them.",
+          "If your subscription ends, your events become read-only, and you can still view and download everything for {readOnlyDays} days after the paid period ends. Then the files are deleted.",
+          "We email you before files are deleted. Subscribing again before the deletion date restores everything straight away.",
+          "We cannot guarantee uninterrupted service, so keep your own copies of anything important."
+        ]
+      },
+      {
+        "h": "Fair use",
         "p": [
-          "The Partner plan is for businesses such as venues, planners, DJs and photographers, so the consumer cancellation rights above do not apply to it. It is billed monthly in advance and you can cancel at any time. Cancellation takes effect at the end of the current month, there is no refund for the current month, and access continues until then.",
-          "You must have the rights to any logos and content you upload, and you are responsible for telling your clients and their guests how photos will be collected and used."
+          "Unlimited means unlimited for normal personal use: your own weddings, parties and family occasions. We may contact you, and if needed limit or suspend an account, if its use is far beyond that (for example running events commercially for other people, or storage or traffic that affects the service for others). We will always tell you first and give you a chance to download your content."
         ]
       },
       {
         "h": "Liability",
         "p": [
-          "We provide the service with reasonable care but on an as-is basis. To the extent the law allows, we are not liable for indirect losses, and our total liability is limited to the amount paid for the event concerned. Nothing in these terms limits liability that cannot be limited by law, including for death or personal injury caused by negligence or for fraud."
+          "We provide the service with reasonable care but on an as-is basis. To the extent the law allows, we are not liable for indirect losses, and our total liability is limited to the amount you paid us in the 12 months before the claim. Nothing in these terms limits liability that cannot be limited by law, including for death or personal injury caused by negligence or for fraud."
         ]
       },
       {
@@ -784,7 +643,7 @@
       {
         "h": "Changes",
         "p": [
-          "We may update these terms and will show the date above. If a change is significant, we will tell hosts with an active event by email."
+          "We may update these terms and will show the date above. If a change is significant, we will tell hosts with a subscription or an active trial by email before it applies."
         ]
       },
       {

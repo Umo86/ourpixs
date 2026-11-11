@@ -7,7 +7,7 @@ import { formatDateTime, formatDuration, initial } from "@/lib/client/format";
 import type { Message } from "@/lib/api-types";
 import { Notice } from "@/components/app/Notice";
 
-export function GuestbookClient({ occasionId, initial: init }: { occasionId: string; initial: Message[] }) {
+export function GuestbookClient({ occasionId, initial: init, canDownload }: { occasionId: string; initial: Message[]; canDownload: boolean }) {
   const t = useT("host");
   const { locale } = useLocale();
   const [messages, setMessages] = useState(init);
@@ -52,7 +52,7 @@ export function GuestbookClient({ occasionId, initial: init }: { occasionId: str
             {m.body ? <p className="m-0 whitespace-pre-wrap text-[17px] leading-relaxed">{m.body}</p> : null}
             {m.kind === "voice" && m.mediaUrl ? <audio controls preload="none" src={m.mediaUrl} className="w-full" /> : null}
             {m.kind === "video" && m.mediaUrl ? <video controls preload="metadata" playsInline src={m.mediaUrl} className="max-h-[480px] w-full rounded-2xl bg-black" /> : null}
-            {m.mediaUrl ? <a href={m.mediaUrl} download className="self-start text-sm font-bold text-royal">{t("common.download")}</a> : null}
+            {m.mediaUrl && canDownload ? <a href={m.mediaUrl} download className="self-start text-sm font-bold text-royal">{t("common.download")}</a> : null}
           </li>
         ))}
       </ul>

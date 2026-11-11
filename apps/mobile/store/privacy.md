@@ -50,6 +50,6 @@ Tracking: **No.** We don't link data with third-party data for advertising or sh
 **Families / children:** target audience 18+ for hosts; the app is not directed at children. Answer "No" to "Is your app designed for children".
 
 ## Data retention (state it in the policy)
-- Event media: kept for the plan's storage period (Free 30 days, One Day 1 year, Big Day 3 years), then deleted.
+- Event media: kept while the account has a free trial or an active plan. If the trial ends unpaid, events are read-only for 30 days, then deleted. After a cancelled plan ends, events are read-only (downloads allowed) for 90 days, then deleted.
 - Account: until the host deletes it (or asks us to; we act within 30 days).
 - Guest identity: random per-event token stored on the device; server keeps only its hash.

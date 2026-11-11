@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getT } from "@/i18n";
-import { MONEY_BACK_DAYS, OCCASIONS, PLANS } from "@/lib/config";
+import { MONEY_BACK_DAYS, OCCASIONS, SUBSCRIPTION } from "@/lib/config";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Display } from "@/components/ui/SectionHeading";
@@ -36,7 +36,6 @@ export default async function OccasionPage({ params }: { params: Promise<{ occas
   const c = page[locale];
   const ui = OCCASION_UI[locale];
   const moments = OCCASIONS[page.type].moments.map((m) => m[locale]);
-  const plan = PLANS[page.plan];
 
   return (
     <>
@@ -51,8 +50,8 @@ export default async function OccasionPage({ params }: { params: Promise<{ occas
               <Button href="/demo" variant="secondary" size="lg">{ui.demo}</Button>
             </div>
             <p className="m-0 text-sm text-muted">
-              {ui.planLabel}: <strong className="text-ink">{plan.name[locale]}</strong> · {formatGBP(plan.pricePence)}
-              {plan.pricePence > 0 ? ` · ${t("pricing.guarantee", { days: MONEY_BACK_DAYS })}` : ""}
+              {ui.priceLabel}: <strong className="text-ink">{t("pricing.priceLine", { monthly: formatGBP(SUBSCRIPTION.monthlyPence), yearly: formatGBP(SUBSCRIPTION.yearlyPence) })}</strong>
+              {` · ${t("pricing.trial.short", { trialDays: SUBSCRIPTION.trialDays })}`}
             </p>
           </div>
           <div className="relative aspect-[4/3] min-w-0 flex-[1_1_420px] overflow-hidden rounded-[32px]">

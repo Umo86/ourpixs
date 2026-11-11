@@ -10,9 +10,8 @@ import { Card } from "@/components/Card";
 import { openSite } from "@/components/Footer";
 import { Icon } from "@/components/Icon";
 import { Screen } from "@/components/Screen";
-import { Loading, Notice } from "@/components/States";
+import { Loading } from "@/components/States";
 import { Heading, Txt } from "@/components/Text";
-import { planSpec } from "@/config";
 import { useOccasion } from "@/host/OccasionContext";
 import { useI18n } from "@/i18n";
 import { colors } from "@/theme";
@@ -21,7 +20,6 @@ export default function HostWall() {
   const { t } = useI18n();
   const { id, occasion } = useOccasion();
   const [copied, setCopied] = useState(false);
-  const allowed = planSpec(occasion?.plan).liveWall;
 
   return (
     <Screen header={<AppHeader tone="light" back={() => router.replace("/host")} title={occasion?.title} />} scroll={!!occasion} bottomInset={false}>
@@ -33,9 +31,6 @@ export default function HostWall() {
             {t("wall.title")}
           </Heading>
           <Txt muted>{t("wall.body")}</Txt>
-          {!allowed ? (
-            <Notice text={t("wall.needsPlan")} icon="lock" action={{ label: t("settings.plan"), onPress: () => router.navigate({ pathname: "/host/[id]/settings", params: { id } }) }} />
-          ) : null}
 
           <Card tone="dark" style={{ backgroundColor: colors.black, height: 190, justifyContent: "flex-end", gap: 8 }}>
             <Icon name="tv" size={30} color={colors.blueOnDarkSoft} />
@@ -47,12 +42,11 @@ export default function HostWall() {
             </Txt>
           </Card>
 
-          <Button label={t("wall.open")} icon="external" disabled={!allowed} onPress={() => openSite(occasion.wallUrl)} />
+          <Button label={t("wall.open")} icon="external" onPress={() => openSite(occasion.wallUrl)} />
           <Button
             label={copied ? t("common.copied") : t("wall.copy")}
             icon={copied ? "check" : "copy"}
             variant="secondary"
-            disabled={!allowed}
             onPress={async () => {
               await Clipboard.setStringAsync(occasion.wallUrl);
               setCopied(true);

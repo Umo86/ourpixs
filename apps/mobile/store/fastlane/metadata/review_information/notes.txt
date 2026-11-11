@@ -3,4 +3,4 @@ For review, enter the demo email above; the 6-digit code is the demo password ab
 The demo account already has a sample event ("Elif & Can's Wedding") with photos, challenges and guestbook messages.
 To try the guest side, open the event > QR tab and enter the event code shown under the QR on the Join screen (Welcome > Join an event by QR > Event code).
 Guests can delete their own uploads; hosts can hide or delete any upload (long-press in the album).
-The app contains no purchases and no links to external purchasing. Event plans are bought on our website only.
+The app contains no purchases, no prices and no links to external purchasing. It only shows the status of the account plan (for example "Free trial: 2 days left"). The demo account has an active plan, so every feature is available.

@@ -11,7 +11,7 @@ Guests never install anything: they scan a QR code and use the web guest app at 
 ## Repo layout
 ```
 apps/web/                Next.js 15 App Router, TypeScript, Tailwind v4
-  src/app/(marketing)/   public website: /, /features, /pricing, /partners, /privacy, /terms, /credits
+  src/app/(marketing)/   public website: /, /features, /pricing, /privacy, /terms, /credits, /help, /guides, /templates (/partners redirects to /pricing)
   src/app/(host)/        host app: /login, /dashboard, /dashboard/new, /dashboard/[id]/...
   src/app/g/[slug]/      guest web app (welcome, feed, upload, missions, camera, guestbook)
   src/app/wall/[slug]/   live wall slideshow
@@ -45,9 +45,9 @@ apps/mobile/             Expo SDK (latest), Expo Router, TypeScript
 - Guest identity: per-occasion httpOnly cookie `op_g_<slug>` holding an HMAC-signed random device token (`GUEST_TOKEN_SECRET`); DB stores only its hash.
 - Every host route/API checks membership in `occasion_members`.
 - Media storage is behind `src/lib/storage.ts` (presigned PUT/GET). Driver chosen by env: `R2_*` vars → Cloudflare R2 (S3 API); else `BLOB_READ_WRITE_TOKEN` → Vercel Blob; else a clear "storage not configured" error. Browser uploads go directly to storage, never through a Vercel function body.
-- Plan limits from `PLANS` in `src/lib/config.ts`, enforced server-side.
+- Business model: account subscription (`SUBSCRIPTION` in `src/lib/config.ts`): 3-day free trial from the first event (downloads locked), then £9.99/month or £69.99/year, everything unlimited. Read-only 90 days after a cancelled plan ends, 30 days after an unpaid trial, then deleted. All checks go through `src/lib/access.ts`, enforced server-side; an event follows its owner's subscription. No venue/partner plan.
 - Email via Resend (`RESEND_API_KEY`, `EMAIL_FROM_EN`, `EMAIL_FROM_TR`). If not configured and `PREVIEW_SHOW_CODE=1`, the login code is returned to the UI for testing (never in production).
-- Stripe Checkout one-off GBP (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`). If not configured, upgrade buttons show "Payments coming soon".
+- Stripe Checkout in subscription mode, GBP, inline prices, plus the Customer Portal (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`; `src/lib/billing.ts`). If not configured, plan buttons show "Payments coming soon". The mobile store builds never sell or link to the subscription (App Store 3.1.1 / Play billing).
 - `noindex` on `/g`, `/s`, `/wall`, `/dashboard`.
 
 ## Code style

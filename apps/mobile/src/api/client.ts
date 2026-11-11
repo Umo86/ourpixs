@@ -8,8 +8,8 @@
 import { API_URL, DEMO_MODE, type Brand, type Locale } from "@/config";
 import { demoRequest } from "@/demo/demoApi";
 import type {
-  GuestMission, Host, MediaAction, Organisation, MediaItem, MediaQuery, Message, MessageKind, Mission, Occasion, OccasionCreate,
-  OccasionPatch, OccasionSummary, Page, PublicOccasion, ShareLink, Stats, UploadFileSpec, UploadGrant,
+  GuestMission, Host, MediaAction, MediaItem, MediaQuery, Message, MessageKind, Mission, Occasion, OccasionCreate,
+  OccasionPatch, OccasionSummary, Page, PublicOccasion, ShareLink, Stats, Subscription, UploadFileSpec, UploadGrant,
 } from "./types";
 
 export class ApiError extends Error {
@@ -122,9 +122,9 @@ export const authApi = {
     request<{ ok: true; previewCode?: string }>("/api/v1/auth/request-code", { method: "POST", body: { email, locale, brand }, auth: "none" }),
   verify: (email: string, code: string) =>
     request<{ token: string; host: Host }>("/api/v1/auth/verify", { method: "POST", body: { email, code }, auth: "none" }),
-  me: () => request<{ host: Host }>("/api/v1/me"),
-  updateMe: (patch: { name?: string; locale?: Locale }) => request<{ host: Host }>("/api/v1/me", { method: "PATCH", body: patch }),
-  /** Deletes the account, the events it owns (all files) and memberships. 409 `org_owner` while it owns an active partner account. */
+  me: () => request<{ host: Host; subscription?: Subscription }>("/api/v1/me"),
+  updateMe: (patch: { name?: string; locale?: Locale }) => request<{ host: Host; subscription?: Subscription }>("/api/v1/me", { method: "PATCH", body: patch }),
+  /** Deletes the account and the events it owns (all files) and memberships. */
   deleteAccount: () => request<{ ok: true }>("/api/v1/me", { method: "DELETE" }),
   registerPushToken: (token: string, platform: "ios" | "android") =>
     request<{ ok: true }>("/api/v1/push-tokens", { method: "POST", body: { token, platform } }),
@@ -167,26 +167,6 @@ export const hostApi = {
   shareLinks: (id: string) => request<{ links: ShareLink[] }>(`/api/v1/occasions/${enc(id)}/share-links`),
   createShareLink: (id: string, body: { label?: string; scope: string }) =>
     request<{ links: ShareLink[] }>(`/api/v1/occasions/${enc(id)}/share-links`, { method: "POST", body }),
-
-  checkout: (id: string, plan: "tek" | "buyuk") =>
-    request<{ url: string }>(`/api/v1/occasions/${enc(id)}/checkout`, { method: "POST", body: { plan } }),
-};
-
-// ---------------- Organisations (venues / Partner plan) ----------------
-/**
- * PROVISIONAL: announced under /api/v1/organisations but not yet in docs/API.md.
- * A 404 (route not deployed yet) is treated as "no organisations".
- */
-export const orgApi = {
-  list: async (): Promise<Organisation[]> => {
-    try {
-      return (await request<{ organisations: Organisation[] }>("/api/v1/organisations")).organisations ?? [];
-    } catch (e) {
-      if (e instanceof ApiError && (e.status === 404 || e.status === 405)) return [];
-      throw e;
-    }
-  },
-  occasions: (orgId: string) => request<{ occasions: OccasionSummary[] }>(`/api/v1/organisations/${enc(orgId)}/occasions`),
 };
 
 // ---------------- Guest ----------------
@@ -216,18 +196,20 @@ export const guestApi = {
 export type { GuestAuth };
 
 /** Maps an error to a user-facing i18n key. */
-export function errorKey(e: unknown): "errors.network" | "errors.session" | "errors.notFound" | "errors.generic" {
+export function errorKey(e: unknown): "errors.network" | "errors.session" | "errors.notFound" | "errors.downloadsLocked" | "errors.generic" {
   if (e instanceof ApiError) {
     if (e.isNetwork) return "errors.network";
     if (e.status === 401) return "errors.session";
     if (e.status === 404) return "errors.notFound";
+    // 402 `plan_required`: downloads are locked on this account. Neutral message, no purchase prompt.
+    if (e.status === 402) return "errors.downloadsLocked";
   }
   return "errors.generic";
 }
 
 /** Server message if it sent a human-readable one, else the generic key's text. */
 export function errorMessage(e: unknown, t: (k: ReturnType<typeof errorKey>) => string): string {
-  if (e instanceof ApiError && e.status >= 400 && e.status < 500 && e.status !== 401 && e.status !== 404 && e.message && !e.message.startsWith("http_")) {
+  if (e instanceof ApiError && e.status >= 400 && e.status < 500 && e.status !== 401 && e.status !== 402 && e.status !== 404 && e.message && !e.message.startsWith("http_")) {
     return e.message;
   }
   return t(errorKey(e));

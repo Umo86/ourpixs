@@ -3,11 +3,13 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { route, json, readJson, badRequest, planLimit } from "@/lib/http";
 import { requireMember } from "@/lib/auth";
+import { accessForOccasion, assertWritable } from "@/lib/access";
 import { deleteObjects, headObject } from "@/lib/storage";
 import { occasionPayload } from "@/lib/occasion-service";
 
 export const POST = route<{ id: string }>(async (req, { id }) => {
   const { occasion, role } = await requireMember(id);
+  assertWritable(await accessForOccasion(occasion));
   const { key } = await readJson(req, z.object({ key: z.string().max(300) }));
   const prefix = `o/${occasion.id}/cover/`;
   if (!key.startsWith(prefix) || !/^[\w-]+\.(webp|png|jpg)$/.test(key.slice(prefix.length))) throw badRequest("Upload the cover photo first");

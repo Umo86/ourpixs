@@ -25,6 +25,12 @@ export function Feed() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<number | null>(null);
+  const [note, setNote] = useState(false);
+  useEffect(() => {
+    if (!note) return;
+    const id = setTimeout(() => setNote(false), 4000);
+    return () => clearTimeout(id);
+  }, [note]);
   const sentinel = useRef<HTMLDivElement>(null);
   const req = useRef(0);
   const revealed = o.revealMode !== "next_morning" || (o.revealAt ? Date.now() >= new Date(o.revealAt).getTime() : false);
@@ -170,7 +176,8 @@ export function Feed() {
             </span>
             <span className="flex gap-2">
               {likeBtn(hero)}
-              {hero.displayUrl ? <a href={hero.displayUrl} download target="_blank" rel="noopener" aria-label={t("feed.download")} className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky"><Download size={18} aria-hidden /></a> : null}
+              {hero.displayUrl && !o.downloadsOpen ? <button type="button" onClick={() => setNote(true)} aria-label={t("feed.download")} className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky"><Download size={18} aria-hidden /></button> : null}
+              {hero.displayUrl && o.downloadsOpen ? <a href={hero.displayUrl} download target="_blank" rel="noopener" aria-label={t("feed.download")} className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky"><Download size={18} aria-hidden /></a> : null}
             </span>
           </div>
         </article>
@@ -198,8 +205,8 @@ export function Feed() {
 
       {open !== null && items[open] ? (
         <Lightbox items={items} index={open} onIndex={setOpen} onClose={() => setOpen(null)}
-          labels={{ close: t("common.close"), prev: t("common.previous"), next: t("common.next"), download: t("feed.download"), by: (n) => t("feed.by", { name: n }) }}
-          downloadUrl={(m) => m.displayUrl}
+          labels={{ close: t("common.close"), prev: t("common.previous"), next: t("common.next"), download: t("feed.download"), by: (n) => t("feed.by", { name: n }), videoLocked: t("feed.videoLocked") }}
+          downloadUrl={(m) => m.displayUrl} onDownloadLocked={o.downloadsOpen ? undefined : () => setNote(true)}
           actions={(m) => (
             <>
               {likeBtn(m, false)}
@@ -207,6 +214,7 @@ export function Feed() {
             </>
           )} />
       ) : null}
+      {note ? <div role="status" className="fixed bottom-28 left-1/2 z-[60] w-[min(92vw,420px)] -translate-x-1/2 rounded-2xl bg-white px-5 py-3 text-center text-sm font-bold text-ink shadow-xl">{t("feed.downloadsLocked")}</div> : null}
     </main>
   );
 }

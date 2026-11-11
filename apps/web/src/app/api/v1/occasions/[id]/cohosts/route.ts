@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { route, json, readJson, readQuery, planFeature, badRequest } from "@/lib/http";
+import { route, json, readJson, readQuery, badRequest } from "@/lib/http";
 import { normalizeEmail, requireMember } from "@/lib/auth";
-import { planOf } from "@/lib/occasion";
+import { accessForOccasion, assertWritable } from "@/lib/access";
 import { emailConfigured, sendCohostInvite } from "@/lib/email";
 import { limit } from "@/lib/rate-limit";
 import { requestLocale } from "@/lib/request";
@@ -27,7 +27,7 @@ export const GET = route<{ id: string }>(async (_req, { id }) => {
 
 export const POST = route<{ id: string }>(async (req, { id }) => {
   const { host, occasion } = await requireMember(id, { owner: true });
-  if (!planOf(occasion).cohosts) throw planFeature("co-hosts");
+  assertWritable(await accessForOccasion(occasion));
   await limit(`invite:${host.id}`, 20, 86400);
   const { email: raw } = await readJson(req, z.object({ email: z.email().max(200) }));
   const email = normalizeEmail(raw);

@@ -25,7 +25,7 @@ export function isSlug(s: string): boolean {
 const RESERVED = new Set([
   "admin", "api", "app", "apps", "dashboard", "login", "logout", "wall", "www", "help", "support", "g", "s", "d", "new",
   "settings", "ourpixs", "bizimresimler", "static", "null", "undefined", "test", "privacy", "terms", "pricing", "features",
-  "partners", "credits", "about", "contact", "blog", "mail", "root", "system", "official", "billing", "account", "demo",
+  "credits", "about", "contact", "blog", "mail", "root", "system", "official", "billing", "account", "demo",
 ]);
 
 /** Vanity link names: lowercase a–z, 0–9 and single hyphens, 3–40 chars, not reserved. Returns null if valid, else an error code. */

@@ -7,8 +7,7 @@ import { ApiError } from "./http";
 import { getGuest, hasPinAccess, occasionBySlug } from "./guest";
 import { loadDays } from "./queries";
 import { coverUrlFor, toPublicOccasion } from "./serializers";
-import { resolveBranding, type Branding } from "./org";
-import { BRANDS } from "./config";
+import { accessForOccasion } from "./access";
 import { DEMO_COOKIE, demoOccasion, isDemo } from "./demo";
 import type { PublicOccasion } from "./api-types";
 
@@ -25,7 +24,6 @@ type GuestContext = {
   guest: { id: string; displayName: string; shotsTaken: number } | null;
   locale: "en" | "tr";
   publicOccasion: PublicOccasion;
-  branding: Branding;
   pinOk: boolean;
   demo: boolean;
 };
@@ -40,7 +38,6 @@ export const loadGuestContext = cache(async (slug: string): Promise<GuestContext
       o: { id: "demo", slug: "demo", title: po.title },
       guest: name ? { id: "demo-guest", displayName: safeDecode(name).slice(0, 40), shotsTaken: 0 } : null,
       locale, publicOccasion: po, pinOk: true, demo: true,
-      branding: { mode: "platform", platform: true, platformName: BRANDS[po.brand].name, venueName: null, logoUrl: null, poweredBy: false, colours: po.branding.colours },
     };
   }
   let o;
@@ -52,12 +49,12 @@ export const loadGuestContext = cache(async (slug: string): Promise<GuestContext
   }
   const h = await headers();
   const ip = (h.get("x-forwarded-for") || "").split(",")[0]?.trim() || "unknown";
-  const [guest, days, branding, cover] = await Promise.all([getGuest(o), loadDays(o.id), resolveBranding(o), coverUrlFor(o.coverKey)]);
+  const [guest, days, access, cover] = await Promise.all([getGuest(o), loadDays(o.id), accessForOccasion(o), coverUrlFor(o.coverKey)]);
   // Rendering never spends PIN rate-limit tokens: only the proof cookie / a joined device count here.
   const pinOk = !o.pinHash || !!guest || (await hasPinAccess(o, ip, guest).catch(() => false));
   return {
     o: { id: o.id, slug: o.slug, title: o.title },
     guest: guest ? { id: guest.id, displayName: guest.displayName, shotsTaken: guest.shotsTaken } : null,
-    locale, publicOccasion: toPublicOccasion(o, days, locale, cover, branding), branding, pinOk, demo: false,
+    locale, publicOccasion: toPublicOccasion(o, days, locale, cover, access), pinOk, demo: false,
   };
 });

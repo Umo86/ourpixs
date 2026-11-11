@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SiteHeader, SiteFooter, CookieNotice, supportEmail } from "@/components/site";
 import { Container } from "@/components/ui";
 import { getBrand, getT } from "@/i18n";
+import { pricingVars } from "@/components/marketing/format";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT("host");
@@ -12,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SupportPage() {
   const { t } = await getT("host");
   const email = supportEmail(await getBrand());
-  const faq = t("support.faq").split("|").map((pair) => pair.split("::"));
+  const faq = t("support.faq", pricingVars(email)).split("|").map((pair) => pair.split("::"));
   return (
     <div className="flex min-h-screen flex-col bg-white text-ink">
       <SiteHeader variant="light" />

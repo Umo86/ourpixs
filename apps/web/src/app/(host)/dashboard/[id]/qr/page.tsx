@@ -11,7 +11,6 @@ import { BRANDS, OCCASIONS, THEMES } from "@/lib/config";
 import { TEMPLATES } from "@/content/templates";
 import { activeDays, brandLocale, dayGuestUrl, guestUrl } from "@/lib/occasion";
 import { loadDays } from "@/lib/queries";
-import { resolveBranding } from "@/lib/org";
 import { coverUrlFor } from "@/lib/serializers";
 import { ShareButtons } from "@/components/app/ShareButtons";
 import { formatDate } from "@/lib/client/format";
@@ -48,10 +47,9 @@ export default async function QrPage({ params, searchParams }: { params: Promise
   const days = activeDays(o, await loadDays(o.id));
   const day = days.length > 1 ? days.find((d) => d.id === sp.day) ?? null : null;
   const url = day ? dayGuestUrl(o, day.id) : guestUrl(o);
-  const [branding, cover] = await Promise.all([resolveBranding(o), coverUrlFor(o.coverKey)]);
+  const cover = await coverUrlFor(o.coverKey);
   // The six designs from the marketing /templates page. Default: the one matching the event's theme.
   const template = TEMPLATES.find((x) => x.id === sp.template) ?? TEMPLATES.find((x) => x.theme === o.theme) ?? TEMPLATES[0]!;
-  const venueLook = branding.mode === "venue";
   const qr = await QRCode.toDataURL(url, { margin: 1, width: 1200, errorCorrectionLevel: "Q", color: { dark: "#0A0A0A", light: "#FFFFFF" } });
 
   // Card copy is bilingual: the event's own language first, the other underneath.
@@ -61,20 +59,19 @@ export default async function QrPage({ params, searchParams }: { params: Promise
   const s = makeT(secondary, "host");
   const copy = {
     eyebrow: [day ? day.name : OCCASIONS[o.type].label[primary], (day?.date ?? o.startsOn) ? formatDate((day?.date ?? o.startsOn)!, primary) : null,
-      branding.mode === "both" && branding.venueName ? p("qr.atVenue", { venue: branding.venueName }) : null].filter(Boolean).join(" · "),
+      o.venueName ? p("qr.atVenue", { venue: o.venueName }) : null].filter(Boolean).join(" · "),
     title: o.title,
     sticker: p("qr.sticker"),
     headline: p("qr.headline"),
     accent: p("qr.accent"),
     body: p("qr.body"),
     secondary: s("qr.body"),
-    brand: branding.platform ? BRANDS[o.brand].name : branding.venueName && !branding.logoUrl ? branding.venueName : "",
+    brand: BRANDS[o.brand].name,
     url: url.replace(/^https?:\/\//, "").replace(/\?d=.*$/, ""),
-    poweredBy: !branding.platform && branding.poweredBy ? p("qr.poweredBy", { brand: BRANDS[o.brand].name }) : undefined,
   };
   const art = {
-    qr, copy, cover: venueLook ? null : cover, logo: branding.logoUrl,
-    theme: venueLook ? branding.colours : THEMES[template.theme], layout: template.layout,
+    qr, copy, cover, logo: null,
+    theme: THEMES[template.theme], layout: template.layout,
   };
   const q = (patch: Record<string, string | undefined>) => {
     const v = new URLSearchParams();

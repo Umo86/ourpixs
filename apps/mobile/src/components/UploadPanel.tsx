@@ -27,13 +27,10 @@ function statusLabel(t: ReturnType<typeof useI18n>["t"], i: QueueItem) {
  * Upload screen body shared by host and guest: pick from library, take photos, and watch the queue.
  * Moments/days are optional taggers (guests).
  */
-export function UploadPanel({ target, tone, body, allowVideo, maxVideoBytes, maxVideoSeconds, moments = [], days = [], shotsLeft, disabledReason, missionId, onDisposableShot }: {
+export function UploadPanel({ target, tone, body, moments = [], days = [], shotsLeft, disabledReason, missionId, onDisposableShot }: {
   target: UploadTarget;
   tone: Tone;
   body: string;
-  allowVideo: boolean;
-  maxVideoBytes?: number;
-  maxVideoSeconds?: number;
   moments?: string[];
   days?: { id: string; name: string }[];
   shotsLeft?: number | null;
@@ -53,11 +50,6 @@ export function UploadPanel({ target, tone, body, allowVideo, maxVideoBytes, max
   const addAssets = (assets: PickedAsset[], fromDisposable = false) => {
     const ok: PickedAsset[] = [];
     for (const a of assets) {
-      if (a.kind === "video" && !allowVideo) continue;
-      if (a.kind === "video" && maxVideoBytes && a.bytes && a.bytes > maxVideoBytes) {
-        Alert.alert(t("upload.tooBig", { name: a.name ?? "" }));
-        continue;
-      }
       ok.push(a);
     }
     if (ok.length) enqueue(target, ok, { ...extras, fromDisposable: fromDisposable || undefined });
@@ -65,7 +57,7 @@ export function UploadPanel({ target, tone, body, allowVideo, maxVideoBytes, max
 
   const pick = async () => {
     try {
-      const assets = await pickFromLibrary({ allowVideo, maxVideoSeconds });
+      const assets = await pickFromLibrary({ allowVideo: true });
       addAssets(assets);
     } catch {
       Alert.alert(t("errors.permissionPhotos"), undefined, [
@@ -86,7 +78,6 @@ export function UploadPanel({ target, tone, body, allowVideo, maxVideoBytes, max
       </Txt>
 
       {disabledReason ? <Notice tone={tone} text={disabledReason} icon="lock" /> : null}
-      {!allowVideo && !disabledReason ? <Notice tone={tone} text={t("upload.videosNeedPlan")} icon="video" /> : null}
 
       {days.length > 1 ? (
         <View style={{ gap: 8 }}>

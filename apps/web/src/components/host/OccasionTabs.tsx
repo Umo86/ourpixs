@@ -1,11 +1,11 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Lock, Monitor } from "lucide-react";
+import { Monitor } from "lucide-react";
 
 type Tab = { href: string; label: string; exact?: boolean };
 
-export function OccasionTabs({ tabs, wall, label, lockedLabel }: { tabs: Tab[]; wall: { href: string; label: string; locked?: boolean }; label: string; lockedLabel: string }) {
+export function OccasionTabs({ tabs, wall, label }: { tabs: Tab[]; wall: { href: string; label: string }; label: string }) {
   const path = usePathname();
   const base = "inline-flex min-h-11 flex-none items-center gap-2 whitespace-nowrap rounded-full px-5 text-[14px] font-bold no-underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky";
   return (
@@ -20,11 +20,7 @@ export function OccasionTabs({ tabs, wall, label, lockedLabel }: { tabs: Tab[]; 
           );
         })}
         <li>
-          {wall.locked ? (
-            <Link href={wall.href} className={`${base} bg-tint text-muted`} aria-label={`${wall.label} (${lockedLabel})`}><Lock size={16} aria-hidden />{wall.label}</Link>
-          ) : (
-            <a href={wall.href} target="_blank" rel="noopener" className={`${base} bg-royal text-white hover:bg-royal-dark`}><Monitor size={16} aria-hidden />{wall.label}</a>
-          )}
+          <a href={wall.href} target="_blank" rel="noopener" className={`${base} bg-royal text-white hover:bg-royal-dark`}><Monitor size={16} aria-hidden />{wall.label}</a>
         </li>
       </ul>
     </nav>

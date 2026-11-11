@@ -10,9 +10,9 @@ import { OCCASIONS } from "@/lib/config";
 import { publicSlug, revealedForGuests, shareUrl } from "@/lib/occasion";
 import { liveMedia, mediaPage } from "@/lib/queries";
 import { coverUrlFor, toMediaItems } from "@/lib/serializers";
-import { resolveBranding } from "@/lib/org";
+import { accessForOccasion } from "@/lib/access";
+import { THEMES } from "@/lib/config";
 import { formatDate } from "@/lib/client/format";
-import { BrandedBar, PoweredBy } from "@/components/guest/Branded";
 import { Title } from "@/components/guest/Title";
 import { ShareGallery } from "@/components/guest/ShareGallery";
 
@@ -32,19 +32,20 @@ export default async function SharePage({ params, searchParams }: { params: Prom
   const locale = await getLocale();
   const t = makeT(locale, "guest");
   const where = [...liveMedia(o.id), eq(schema.media.visibility, "visible"), eq(schema.media.approved, true), inArray(schema.media.kind, ["photo", "video"]), revealedForGuests(o)];
-  const [page, branding, cover] = await Promise.all([
+  const [page, access, cover] = await Promise.all([
     mediaPage({ where, cursor: typeof cursor === "string" ? cursor : undefined, limit: 60 }).catch(() => ({ rows: [], nextCursor: null })),
-    resolveBranding(o),
+    accessForOccasion(o),
     coverUrlFor(o.coverKey),
   ]);
-  const items = await toMediaItems(page.rows, "guest");
+  // Share links are for viewing; downloads follow the owner's account (locked during the trial / when unpaid).
+  const items = await toMediaItems(page.rows, "guest", { canDownload: access.canDownload });
   const eyebrow = [OCCASIONS[o.type].label[locale], o.startsOn ? formatDate(o.startsOn, locale) : null, o.city].filter(Boolean).join(" · ");
 
   return (
     <div className="flex min-h-dvh flex-col bg-ink text-white">
-      {branding.platform ? <SiteHeader variant="dark" minimal /> : <BrandedBar name={branding.venueName} logoUrl={branding.logoUrl} label={t("lang")} />}
+      <SiteHeader variant="dark" minimal />
       <main id="main" className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-5 pb-12 sm:px-8">
-        <section className="relative flex min-h-[38vh] flex-col justify-end overflow-hidden rounded-[32px] p-6 sm:p-10" style={{ background: branding.colours.bg }}>
+        <section className="relative flex min-h-[38vh] flex-col justify-end overflow-hidden rounded-[32px] p-6 sm:p-10" style={{ background: THEMES[o.theme].bg }}>
           {cover ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -59,16 +60,16 @@ export default async function SharePage({ params, searchParams }: { params: Prom
           </div>
         </section>
         <div className="flex flex-wrap items-center gap-3">
-          {link.scope === "view_upload" ? (
+          {link.scope === "view_upload" && access.canUpload ? (
             <Link href={`/g/${publicSlug(o)}?k=${token}`} className="inline-flex min-h-12 items-center rounded-full bg-royal px-6 font-extrabold text-white no-underline hover:bg-royal-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky">{t("share.addYours")}</Link>
           ) : null}
         </div>
-        <ShareGallery items={items} shareUrl={shareUrl(o, token)} shareText={t("share.message", { title: o.title })} title={o.title} />
+        <ShareGallery items={items} downloadsOpen={access.canDownload} shareUrl={shareUrl(o, token)} shareText={t("share.message", { title: o.title })} title={o.title} />
         {page.nextCursor ? (
           <Link href={`?cursor=${page.nextCursor}`} className="inline-flex min-h-12 items-center justify-center self-center rounded-full bg-surface px-6 font-bold text-white no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky">{t("share.more")}</Link>
         ) : null}
       </main>
-      {branding.platform ? <SiteFooter compact /> : <PoweredBy show={branding.poweredBy} brand={branding.platformName} label={t("poweredBy", { brand: branding.platformName })} />}
+      <SiteFooter compact />
     </div>
   );
 }

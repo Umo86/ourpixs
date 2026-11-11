@@ -2,7 +2,7 @@
 import type { MediaItem, Mission, ShareLink } from "@/api/types";
 import {
   DEMO_GUEST_TOKEN, demoGuestMissions, demoHost, demoMedia, demoMessages, demoMissionTitles, demoOccasion, demoOccasions, demoPublic,
-  demoOrg, demoShareLinks, demoStats, demoVenueOccasions,
+  demoAccess, demoShareLinks, demoStats, demoSubscription,
 } from "./data";
 
 let media: MediaItem[] | null = null;
@@ -33,12 +33,12 @@ export async function demoRequest<T>(method: string, path: string, body?: unknow
 
   if (p === "/auth/request-code") return { ok: true, previewCode: "123456" } as T;
   if (p === "/auth/verify") return { token: "demo-token", host: demoHost } as T;
-  if (p === "/me") return { host: demoHost } as T;
+  if (p === "/me") return { host: demoHost, subscription: demoSubscription } as T;
   if (p === "/push-tokens") return { ok: true } as T;
 
   if (p === "/occasions" && method === "GET") return { occasions: demoOccasions() } as T;
   if (p === "/occasions" && method === "POST") {
-    return { occasion: { ...demoOccasion("demo-wedding"), id: "demo-new", title: String(b.title ?? ""), type: String(b.type ?? "dugun"), mediaCount: 0, guestCount: 0, plan: "free" } } as T;
+    return { occasion: { ...demoOccasion("demo-wedding"), id: "demo-new", title: String(b.title ?? ""), type: String(b.type ?? "dugun"), mediaCount: 0, guestCount: 0, access: demoAccess } } as T;
   }
 
   if ((m = p.match(/^\/occasions\/([^/]+)$/))) {
@@ -85,16 +85,12 @@ export async function demoRequest<T>(method: string, path: string, body?: unknow
     }
     return { links } as T;
   }
-  if ((m = p.match(/^\/occasions\/([^/]+)\/checkout$/))) return { url: "https://ourpixs.com/pricing" } as T;
   if ((m = p.match(/\/uploads$/))) {
     const files = (b.files as { clientId: string }[]) ?? [];
     const target = { url: "demo://upload", method: "PUT" as const, headers: {} };
     return { uploads: files.map((f) => ({ clientId: f.clientId, mediaId: `demo-${f.clientId}`, original: target, display: target, thumb: target })) } as T;
   }
   if (p.endsWith("/uploads/complete")) return { ok: true } as T;
-
-  if (p === "/organisations") return { organisations: [demoOrg] } as T;
-  if ((m = p.match(/^\/organisations\/([^/]+)\/occasions$/))) return { occasions: demoVenueOccasions() } as T;
 
   // guest
   if ((m = p.match(/^\/g\/([^/]+)$/))) return { occasion: demoPublic() } as T;

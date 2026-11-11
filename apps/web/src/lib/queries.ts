@@ -106,13 +106,6 @@ export async function occasionStats(o: OccasionRow): Promise<Stats> {
   };
 }
 
-/** Count of media that counts towards the plan's maxMedia (anything not deleted, including in-flight uploads). */
-export async function mediaCountForLimit(occasionId: string) {
-  const [r] = await db.select({ n: sql<number>`count(*)::int` }).from(media)
-    .where(and(eq(media.occasionId, occasionId), ne(media.visibility, "deleted"), ne(media.status, "failed"), ne(media.kind, "voice")));
-  return Number(r?.n ?? 0);
-}
-
 export async function messagesWithNames(occasionId: string) {
   return db.select({ message: messages, guestName: guests.displayName })
     .from(messages).leftJoin(guests, eq(guests.id, messages.guestId))

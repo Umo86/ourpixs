@@ -5,45 +5,34 @@ import { Button } from "@/components/ui";
 import { Notice } from "@/components/app/Notice";
 import { useT } from "@/i18n/client";
 import { api } from "@/lib/client/api";
-import { EXT, openSaveTarget, safeName, saveZip, type ZipEntry } from "@/lib/client/zip";
-import type { MediaItem } from "@/lib/api-types";
+import { openSaveTarget, safeName, saveZip, type ZipEntry } from "@/lib/client/zip";
+import { ApiClientError } from "@/lib/client/api";
+import { UpgradeDialog } from "./Billing";
 
 type Day = { id: string; name: string };
+type ManifestFile = { id: string; name: string; url: string; createdAt: string };
 
-async function fetchAll(occasionId: string, dayId: string | null): Promise<MediaItem[]> {
-  const out: MediaItem[] = [];
-  let cursor: string | null = null;
-  do {
-    const p = new URLSearchParams({ limit: "200" });
-    if (dayId) p.set("dayId", dayId);
-    if (cursor) p.set("cursor", cursor);
-    const r: { items: MediaItem[]; nextCursor: string | null } = await api(`/api/v1/occasions/${occasionId}/media?${p}`);
-    out.push(...r.items);
-    cursor = r.nextCursor;
-  } while (cursor);
-  return out;
+/** Signed originals from the server (402 plan_required while downloads are locked). */
+async function manifest(occasionId: string, dayId: string | null): Promise<ManifestFile[]> {
+  const r = await api<{ files: ManifestFile[] }>(`/api/v1/occasions/${occasionId}/download${dayId ? `?dayId=${dayId}` : ""}`);
+  return r.files;
 }
 
-function entriesFor(items: MediaItem[], folder: string | null): ZipEntry[] {
-  return items.filter((i) => i.originalUrl).reverse().map((i, n) => {
-    const d = new Date(i.createdAt);
-    const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}`;
-    const ext = EXT[i.mime || ""] || (i.kind === "video" ? "mp4" : "jpg");
-    const name = `${stamp}_${String(n + 1).padStart(4, "0")}_${safeName(i.guestName || "host")}.${ext}`;
-    return { name: folder ? `${safeName(folder)}/${name}` : name, url: i.originalUrl!, lastModified: d };
-  });
-}
+const toEntries = (files: ManifestFile[], folder: string | null): ZipEntry[] =>
+  files.map((f) => ({ name: folder ? `${safeName(folder)}/${f.name}` : f.name, url: f.url, lastModified: new Date(f.createdAt) }));
 
 /** Client-side streaming ZIP per day (or everything), straight from storage to disk. */
-export function DownloadClient({ occasionId, title, days }: { occasionId: string; title: string; days: Day[] }) {
+export function DownloadClient({ occasionId, title, days, canDownload, isOwner, payments }: { occasionId: string; title: string; days: Day[]; canDownload: boolean; isOwner: boolean; payments: boolean }) {
   const t = useT("host");
   const [running, setRunning] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ files: number; totalFiles: number; bytes: number } | null>(null);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const abort = useRef<AbortController | null>(null);
+  const [locked, setLocked] = useState(false);
 
   async function run(key: string, label: string, dayId: string | null, perDayFolders: boolean) {
     const filename = `${safeName(title)}${dayId ? ` - ${safeName(label)}` : ""}.zip`;
+    if (!canDownload) { setLocked(true); return; }
     setMessage(null);
     let target: WritableStream<Uint8Array> | null = null;
     try {
@@ -57,12 +46,16 @@ export function DownloadClient({ occasionId, title, days }: { occasionId: string
     try {
       let entries: ZipEntry[] = [];
       if (perDayFolders && days.length > 1) {
-        for (const d of days) entries = entries.concat(entriesFor(await fetchAll(occasionId, d.id), d.name));
-        const all = await fetchAll(occasionId, null);
-        const known = new Set(entries.map((e) => e.url.split("?")[0]));
-        entries = entries.concat(entriesFor(all.filter((i) => i.originalUrl && !known.has(i.originalUrl.split("?")[0])), t("download.otherFolder")));
+        const seen = new Set<string>();
+        for (const d of days) {
+          const files = await manifest(occasionId, d.id);
+          files.forEach((f) => seen.add(f.id));
+          entries = entries.concat(toEntries(files, d.name));
+        }
+        const rest = (await manifest(occasionId, null)).filter((f) => !seen.has(f.id));
+        entries = entries.concat(toEntries(rest, t("download.otherFolder")));
       } else {
-        entries = entriesFor(await fetchAll(occasionId, dayId), null);
+        entries = toEntries(await manifest(occasionId, dayId), null);
       }
       if (!entries.length) {
         setMessage({ tone: "error", text: t("download.nothing") });
@@ -73,7 +66,9 @@ export function DownloadClient({ occasionId, title, days }: { occasionId: string
       await saveZip(entries, filename, setProgress, { signal: abort.current.signal, target });
       setMessage({ tone: "success", text: t("download.saved") });
     } catch (e) {
-      if ((e as Error).name !== "AbortError") setMessage({ tone: "error", text: t("download.failed") });
+      await target?.abort().catch(() => {});
+      if (e instanceof ApiClientError && e.code === "plan_required") setLocked(true);
+      else if ((e as Error).name !== "AbortError") setMessage({ tone: "error", text: t("download.failed") });
     } finally {
       setRunning(null);
       abort.current = null;
@@ -112,6 +107,7 @@ export function DownloadClient({ occasionId, title, days }: { occasionId: string
       ) : null}
       {message ? <Notice tone={message.tone}>{message.text}</Notice> : null}
       <p className="m-0 text-sm text-muted">{t("download.browserNote")}</p>
+      <UpgradeDialog open={locked} onClose={() => setLocked(false)} isOwner={isOwner} payments={payments} />
     </div>
   );
 }

@@ -4,7 +4,6 @@
  */
 import type { GuestMission, MediaItem, PublicOccasion } from "./api-types";
 import type { Locale } from "./config";
-import { THEMES } from "./config";
 
 export const DEMO_SLUG = "demo";
 export const DEMO_COOKIE = "op_demo_name";
@@ -20,16 +19,14 @@ export function demoOccasion(locale: Locale): PublicOccasion {
   const yesterday = new Date(today.getTime() - 86400000);
   return {
     slug: DEMO_SLUG, type: "dugun", title: "Elif & Can", honorees: ["Elif", "Can"], startsOn: iso(today), venueName: "The Grand", city: "London",
-    theme: "noir", brand: tr ? "bizimresimler" : "ourpixs", plan: "buyuk",
+    theme: "noir", brand: tr ? "bizimresimler" : "ourpixs",
     days: [
       { id: "demo-day-1", name: tr ? "Kına" : "Henna night", date: iso(yesterday), sortOrder: 0, uploadOpen: true },
       { id: "demo-day-2", name: tr ? "Düğün" : "Wedding", date: iso(today), sortOrder: 1, uploadOpen: true },
     ],
     moments: tr ? ["Gelin girişi", "İlk dans", "Takı töreni", "Halay", "Pasta", "Aile"] : ["Grand entrance", "First dance", "Gold ceremony", "Halay", "Cake", "Family"],
-    liveWall: true, missionsEnabled: true, disposableShots: 12, voiceGuestbook: true, uploadOpen: true, revealMode: "live", revealAt: null,
-    coverUrl: "/media/wedding.jpg", hasPin: false,
-    brandingMode: "platform",
-    branding: { mode: "platform", venueName: null, logoUrl: null, poweredBy: false, colours: { ...THEMES.noir }, venueLogoUrl: null, primaryColor: null, accentColor: null, monogram: null, coupleLogoUrl: null },
+    liveWall: true, missionsEnabled: true, disposableShots: 12, voiceGuestbook: true, uploadOpen: true, uploadsOpen: true, downloadsOpen: true,
+    revealMode: "live", revealAt: null, coverUrl: "/media/wedding.jpg", hasPin: false,
   };
 }
 

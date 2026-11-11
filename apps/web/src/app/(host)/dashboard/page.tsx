@@ -5,10 +5,15 @@ import { Button, Container, Sticker } from "@/components/ui";
 import { getT } from "@/i18n";
 import { requireHostPage } from "@/lib/auth";
 import { summariesFor } from "@/lib/occasion-service";
-import { OCCASIONS, PLANS } from "@/lib/config";
+import { OCCASIONS } from "@/lib/config";
 import { formatDate, formatNumber } from "@/lib/client/format";
 import { coverFallback } from "@/components/host/occasion-art";
 import { DeleteAccountButton } from "@/components/host/DeleteAccountButton";
+import { SubscriptionCard, UpgradePrompt } from "@/components/host/Billing";
+import { Notice } from "@/components/app/Notice";
+import { computeAccess } from "@/lib/access";
+import { toSubscription } from "@/lib/serializers";
+import { paymentsEnabled } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 
@@ -17,10 +22,13 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("dashboard.metaTitle") };
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ subscribed?: string; checkout?: string }> }) {
   const host = await requireHostPage("/dashboard");
+  const sp = await searchParams;
   const { t, locale } = await getT("host");
   const list = await summariesFor(host.id);
+  const sub = toSubscription(computeAccess(host));
+  const payments = paymentsEnabled();
 
   return (
     <Container className="flex flex-col gap-10 py-8 sm:py-12">
@@ -31,8 +39,12 @@ export default async function DashboardPage() {
             {t("dashboard.title")} <span className="font-serif text-royal">{t("dashboard.titleAccent")}</span>
           </h1>
         </div>
-        <Button href="/dashboard/new" size="lg"><Plus size={20} aria-hidden />{t("dashboard.new")}</Button>
+        {sub.canCreateEvents ? <Button href="/dashboard/new" size="lg"><Plus size={20} aria-hidden />{t("dashboard.new")}</Button> : null}
       </div>
+
+      {sp.subscribed ? <Notice tone="success">{t("billing.subscribedNotice")}</Notice> : null}
+      {sp.checkout === "cancelled" ? <Notice>{t("plan.cancelledNotice")}</Notice> : null}
+      <UpgradePrompt sub={sub} payments={payments} />
 
       {list.length === 0 ? (
         <div className="grid gap-8 overflow-hidden rounded-[32px] bg-ink text-white md:grid-cols-2">
@@ -57,7 +69,7 @@ export default async function DashboardPage() {
                   <span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink">{OCCASIONS[o.type].label[locale]}</span>
                   <span className="flex gap-2">
                     {o.role === "cohost" ? <span className="rounded-full bg-black/60 px-3 py-1.5 text-xs font-bold">{t("dashboard.cohost")}</span> : null}
-                    {o.plan !== "free" ? <Sticker rotate={6} className="!px-3 !py-1.5 !text-xs">{PLANS[o.plan].name[locale]}</Sticker> : null}
+                    {o.access.readOnly ? <Sticker rotate={6} className="!px-3 !py-1.5 !text-xs">{t("billing.readOnlyBadge")}</Sticker> : null}
                   </span>
                 </div>
                 <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5">
@@ -73,13 +85,9 @@ export default async function DashboardPage() {
       )}
 
       <section aria-labelledby="acct-h" className="mt-6 grid gap-4 border-t border-[#E6E8EF] pt-8 md:grid-cols-2">
-        <div className="flex flex-col items-start gap-3 rounded-[28px] bg-tint p-6">
-          <h2 id="acct-h" className="m-0 text-xl font-black">{t("dashboard.partnerTitle")}</h2>
-          <p className="m-0 text-sm text-text-2">{t("dashboard.partnerBody")}</p>
-          <Button href="/dashboard/partner" variant="secondary">{t("dashboard.partnerCta")}</Button>
-        </div>
+        <SubscriptionCard sub={sub} payments={payments} />
         <div className="flex flex-col items-start gap-3 rounded-[28px] border border-[#E6E8EF] p-6">
-          <h2 className="m-0 text-xl font-black">{t("dashboard.accountTitle")}</h2>
+          <h2 id="acct-h" className="m-0 text-xl font-black">{t("dashboard.accountTitle")}</h2>
           <p className="m-0 text-sm text-text-2">{t("dashboard.accountBody", { email: host.email })}</p>
           <DeleteAccountButton />
         </div>

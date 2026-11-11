@@ -10,11 +10,7 @@
     },
     "pricing": {
       "title": "Fiyatlar",
-      "description": "Etkinlik başına tek ödeme, herkesi davet edin. Abonelik yok, misafir başına ücret yok. Ücretsiz başlayın."
-    },
-    "partners": {
-      "title": "Partner planı: mekanınızın kendi fotoğraf uygulaması",
-      "description": "Mekanlar, organizatörler, DJ'ler ve fotoğrafçılar için beyaz etiketli misafir fotoğraf albümleri. Logonuz ve renkleriniz, sınırsız etkinlik, tek panel. Aylık, istediğiniz zaman iptal."
+      "description": "Her şeyin dahil olduğu tek plan, sınırsız etkinlik için: aylık {monthly} ya da yıllık {yearly}. {trialDays} gün ücretsiz deneme, kart bilgisi gerekmez."
     },
     "privacy": {
       "title": "Gizlilik politikası",
@@ -99,7 +95,7 @@
         {
           "key": "birthday",
           "label": "Doğum günleri",
-          "tag": "Ücretsiz plan var",
+          "tag": "3 gün ücretsiz",
           "alt": "Doğum günü pastası ve maytaplarla kutlama yapan arkadaşlar"
         },
         {
@@ -222,7 +218,7 @@
       "title": "Siz partinin keyfini çıkarın,",
       "accent": "kareleri biz toplayalım.",
       "cta": "Etkinliğinizi oluşturun →",
-      "note": "Ücretsiz deneyin · Kredi kartı gerekmez · {days} gün para iade garantisi"
+      "note": "3 gün ücretsiz · Kart bilgisi gerekmez · {days} gün para iade garantisi"
     }
   },
   "features": {
@@ -347,227 +343,74 @@
     }
   },
   "pricing": {
-    "title": "Bir kez ödeyin.",
-    "accent": "Herkesi davet edin.",
-    "lead": "Abonelik yok, misafir başına ücret yok. İster 50 kişi olsun ister 500, fiyat aynı.",
-    "perEvent": "etkinlik başına, tek seferlik",
-    "badge": "En popüler",
-    "plans": {
-      "free": {
-        "note": "Küçük bir buluşmada deneyin",
-        "cta": "Ücretsiz başlayın",
-        "items": [
-          "{days} gün, en fazla {media} fotoğraf",
-          "Yazdırılabilir QR kartları",
-          "Canlı akış ve tepkiler",
-          "{storage} saklama süresi"
-        ]
-      },
-      "tek": {
-        "note": "Doğum günü, nişan, parti",
-        "cta": "{name} planını seçin",
-        "items": [
-          "Sınırsız misafir ve fotoğraf",
-          "{minutes} dakikaya kadar video",
-          "Canlı ekran ve fotoğraf görevleri",
-          "Tek kullanımlık kamera modu",
-          "{storage} saklama süresi"
-        ]
-      },
-      "buyuk": {
-        "note": "Düğünler ve çok günlü etkinlikler",
-        "cta": "{name} planını seçin",
-        "items": [
-          "{tekName} planındaki her şey",
-          "Tek albümde {days} güne kadar",
-          "{minutes} dakikaya kadar video",
-          "Sesli anı defteri",
-          "Ortak ev sahipleri ve yurt dışındaki aile için bağlantılar",
-          "{storage} saklama süresi",
-          "Özet video (yakında)"
-        ]
-      }
+    "title": "Tek plan.",
+    "accent": "Her etkinlik.",
+    "lead": "Her şey dahil, istediğiniz kadar etkinlik için. Misafir başına ücret yok: 50 misafir de olsa 500 de, fiyat aynı.",
+    "priceLine": "aylık {monthly} ya da yıllık {yearly}",
+    "perMonth": "/ ay",
+    "perYear": "/ yıl",
+    "trial": {
+      "sticker": "Ücretsiz başlayın: {trialDays} gün, kart gerekmez",
+      "short": "{trialDays} gün ücretsiz deneme",
+      "body": "Denemeniz ilk etkinliğinizi oluşturduğunuzda başlar; böylece o özel günü de kapsar. Video ve canlı ekran dahil her şey çalışır. İndirmeler abone olduğunuzda açılır.",
+      "cta": "Ücretsiz başlayın"
     },
-    "partner": {
-      "kicker": "Mekanlar ve organizatörler için · Aylık {price}",
-      "title": "Mekanınızın kendi",
-      "accent": "fotoğraf uygulaması.",
-      "body": "Ağırladığınız her etkinlik için beyaz etiketli albümler: logonuz ve renkleriniz, sınırsız etkinlik, tek panel. Aylık, istediğiniz zaman iptal.",
-      "cta": "Partner planını görün →"
+    "monthly": {
+      "name": "Aylık",
+      "note": "Kullandıkça ödeyin. İstediğiniz zaman iptal edin.",
+      "cta": "Ücretsiz başlayın, sonra ayda {monthly}"
     },
+    "yearly": {
+      "name": "Yıllık",
+      "note": "Aylık {yearlyPerMonth}'a gelir. Yılda birden fazla etkinlik yapıyorsanız ideal.",
+      "cta": "Ücretsiz başlayın, sonra yılda {yearly}",
+      "save": "%{saving} tasarruf"
+    },
+    "items": [
+      "Sınırsız etkinlik, misafir, fotoğraf ve video",
+      "Etkinlik başına {maxDays} güne kadar, her günün kendi QR kodu",
+      "{minutes} dakikaya kadar videolar",
+      "Canlı ekran ve fotoğraf görevleri",
+      "Tek kullanımlık kamera modu",
+      "Sesli ve görüntülü anı defteri",
+      "Ortak ev sahipleri ve yurt dışındaki aile için özel bağlantılar",
+      "Tüm orijinalleri ZIP olarak indirme",
+      "Otomatik kopya, bulanıklık ve güvenlik kontrolleri"
+    ],
+    "guarantee": "İlk ödemenizde {days} gün para iade garantisi",
+    "vat": "Fiyatlar GBP cinsindendir, KDV dahildir. Yıllık plan, 12 aylık ödemeye göre %{saving} daha uygundur. Adil kullanım geçerlidir.",
     "faqTitle": "Merak",
     "faqAccent": "edilenler",
     "faq": [
       {
-        "q": "Gerçekten tek ödeme mi?",
-        "a": "Evet, etkinlik planlarında: etkinlik başına bir kez ödersiniz, sonrasında iptal edilecek bir şey yoktur. (İstisna, mekanlar için Partner planıdır: o aylık bir aboneliktir.)"
+        "q": "Ücretsiz deneme nasıl işliyor?",
+        "a": "Kaydolun ve ilk etkinliğinizi oluşturun: {trialDays} günlük ücretsiz deneme böylece başlar, kart bilgisi gerekmez. Video, canlı ekran ve paylaşım bağlantıları dahil her şey çalışır. Plan gerektiren tek şey orijinalleri ve ZIP dosyalarını indirmektir."
+      },
+      {
+        "q": "Aylık mı, yıllık mı?",
+        "a": "İkisi de her şeyi içerir ve sınırsız etkinliği kapsar. Aylık plan ayda {monthly}. Yıllık plan {yearly}; bir yıl boyunca aylık ödemeye göre %{saving} daha uygun. “Ödemeleri yönet” bölümünden istediğiniz zaman geçiş yapabilirsiniz."
+      },
+      {
+        "q": "İstediğim zaman iptal edebilir miyim?",
+        "a": "Evet. Panelinizdeki “Ödemeleri yönet” bölümünden iptal edin. İptal, ödediğiniz dönemin sonunda geçerli olur; o zamana kadar her şey çalışmaya devam eder."
+      },
+      {
+        "q": "İptal edersem fotoğraflarıma ne olur?",
+        "a": "Ödediğiniz dönem bittiğinde etkinlikleriniz yeni yükleme almaz. {readOnlyDays} gün boyunca her şeyi görüntüleyip indirebilirsiniz, sonra dosyalar silinir. Bundan önce size e-posta göndeririz. Bu {readOnlyDays} gün içinde yeniden abone olursanız her şey hemen geri gelir."
+      },
+      {
+        "q": "Denemeden sonra abone olmazsam ne olur?",
+        "a": "Etkinlikleriniz salt okunur olur ve indirmeler kapalı kalır. Dosyaları deneme bittikten sonra {trialKeepDays} gün saklarız ve silinmeden bir hafta önce size e-posta göndeririz. Bu {trialKeepDays} gün içinde abone olursanız her şey hemen açılır."
       },
       {
         "q": "Para iadesi alabilir miyim?",
-        "a": "Evet. Tüm ücretli etkinlik planlarında {days} gün para iade garantisi vardır. Satın almanızdan sonraki {days} gün içinde {email} adresine yazın, sebep sormadan ödemenizin tamamını iade ederiz."
+        "a": "Evet. İlk ödemeniz {days} gün para iade garantisiyle gelir. Ödemeden sonraki {days} gün içinde {email} adresine yazın, sebep sormadan tamamını iade edelim."
       },
       {
-        "q": "Sonradan yükseltebilir miyim?",
-        "a": "Evet. İstediğiniz zaman {tekName} planından {bigName} planına geçebilir, yalnızca {upgrade} farkı ödersiniz."
-      },
-      {
-        "q": "Saklama süresi bitince ne olur?",
-        "a": "Süre dolmadan 30 gün ve 7 gün kala size e-postayla hatırlatırız; böylece her şeyi indirebilirsiniz. Daha uzun süre mi gerekiyor? Saklama süresini uzatmak için bizimle iletişime geçin."
-      },
-      {
-        "q": "Misafirler ücret öder mi?",
-        "a": "Asla. Misafirler uygulama indirmeden, hesap açmadan ücretsiz olarak okutup yükler."
-      },
-      {
-        "q": "Partner planı nasıl işliyor?",
-        "a": "Mekanlar, organizatörler, DJ'ler ve fotoğrafçılar için aylık bir aboneliktir: sınırsız etkinlik oluşturursunuz ve her biri sizin markanızı taşıyan bir Büyük Gün albümüyle gelir. İstediğiniz zaman iptal edebilirsiniz. İçinde bulunulan ay için iade yapılmaz; erişiminiz o ayın sonuna kadar sürer."
+        "q": "Misafirler bir şey öder mi?",
+        "a": "Asla. Misafirler QR kodu okutur ve ücretsiz yükler; uygulama ya da hesap gerekmez."
       }
-    ],
-    "guarantee": "{days} gün para iade garantisi"
-  },
-  "partners": {
-    "sticker": "Partner planı · Beyaz etiket",
-    "title": "Mekanınızın kendi",
-    "accent": "fotoğraf uygulaması.",
-    "lead": "Ağırladığınız her etkinliğin sizin markanızı taşıyan kendi misafir albümü olur. Misafirler okutur, yükler, geceyi yeniden yaşar; bizim adımızı hiç görmez.",
-    "cta": "Bize ulaşın →",
-    "ctaSecondary": "Fiyatları görün",
-    "priceKicker": "Partner planı",
-    "perMonth": "/ ay",
-    "priceNote": "Aylık. İstediğiniz zaman iptal edin.",
-    "priceFine": "Mekanlar, organizatörler, DJ'ler ve fotoğrafçılar için.",
-    "benefitsTitle": "Neler",
-    "benefitsAccent": "kazanırsınız?",
-    "benefits": [
-      {
-        "title": "Her etkinliğe bir Büyük Gün albümü",
-        "body": "Her etkinlik Büyük Gün deneyimini tam olarak alır: çok günlü albüm, canlı ekran, sesli anı defteri, ortak ev sahipleri ve aile bağlantıları."
-      },
-      {
-        "title": "Sizin markanız, bizimki değil",
-        "body": "Misafirlere {platform} markası gösterilmez. Logonuz, renkleriniz, mekan adınız."
-      },
-      {
-        "title": "Sınırsız etkinlik",
-        "body": "Ağırladığınız kadar etkinlik oluşturun. Etkinlik başına ücret yok."
-      },
-      {
-        "title": "Kendi QR kart tasarımlarınız",
-        "body": "Masa kartlarını ve tabelaları kendi tasarımlarınızla, logonuzla yazdırın."
-      },
-      {
-        "title": "Tek partner paneli",
-        "body": "Tüm etkinlikleri tek yerden yönetin, gece bitince her albümü teslim edin."
-      },
-      {
-        "title": "Aylık, istediğiniz zaman iptal",
-        "body": "Sözleşme ya da uzun vadeli taahhüt yok. Başlamış bir ay için iade yapılmaz."
-      }
-    ],
-    "brandingTitle": "Markalama",
-    "brandingAccent": "sizin seçiminiz.",
-    "brandingLead": "Her etkinliğin nasıl görüneceğine siz karar verirsiniz; her etkinlikte farklı bir seçenek kullanabilirsiniz.",
-    "branding": [
-      {
-        "title": "Mekanın markası",
-        "body": "Kapakta, QR kartlarında ve canlı ekranda sizin logonuz, renkleriniz ve mekan adınız.",
-        "example": "The Grand Hall"
-      },
-      {
-        "title": "Çiftin markası",
-        "body": "Onların isimleri, kapak fotoğrafı ve renkleri; bizden hiçbir iz yok.",
-        "example": "Elif & Can"
-      },
-      {
-        "title": "İkisi birlikte",
-        "body": "Kapakta çiftin isimlerinin yanında mekanınızın adı ve logosu.",
-        "example": "Elif & Can · The Grand Hall"
-      }
-    ],
-    "roiTitle": "Kendini",
-    "roiAccent": "amorti edebilir.",
-    "roiBody": "Örneğin düğün paketlerinize çift başına {price} karşılığında ekleyin; Partner planı {events} etkinlikte kendini amorti eder. Sonraki her etkinlik ek kâr demektir.",
-    "roiNote": "Bu bir örnektir, tahmin değildir. Paketlerinize uygun fiyatı siz belirleyin.",
-    "whoTitle": "Kimler",
-    "whoAccent": "için?",
-    "who": [
-      {
-        "title": "Mekanlar",
-        "body": "Her çifte misafir fotoğraflarını toplamanın hazır bir yolunu, sizin adınızla sunun."
-      },
-      {
-        "title": "Organizatörler",
-        "body": "Koordine ettiğiniz her etkinliğe müşterinizin ya da sizin markanızla bir misafir albümü ekleyin."
-      },
-      {
-        "title": "DJ'ler ve sunucular",
-        "body": "QR kodu dans pistine koyun, kalabalık sizin için en iyi içeriği üretsin."
-      },
-      {
-        "title": "Fotoğrafçılar ve kameramanlar",
-        "body": "Orada olamadığınız anları da yakalayın, tek ve eksiksiz bir albüm teslim edin."
-      }
-    ],
-    "stepsTitle": "Nasıl",
-    "stepsAccent": "çalışır?",
-    "steps": [
-      {
-        "title": "Bize kendinizi anlatın",
-        "body": "Aşağıdaki formu işletmenizle ilgili birkaç bilgiyle doldurun."
-      },
-      {
-        "title": "Markanızı ekleriz",
-        "body": "Logonuzu ve renklerinizi eklemek, partner panelini göstermek için sizinle iletişime geçeriz."
-      },
-      {
-        "title": "Müşterileriniz için etkinlik oluşturun",
-        "body": "Bir sonraki rezervasyonunuzda QR kodları paylaşmaya başlayın."
-      }
-    ],
-    "sample": {
-      "eyebrow": "Örnek",
-      "title": "Markanızla",
-      "accent": "böyle görünür.",
-      "body": "Bir çiftin misafirleri şunu görür: kapakta çiftin isimleri ve mekan logonuz, altında kendi fotoğrafları. Örnek içerikli bir taslaktır.",
-      "label": "Ortak markalı örnek albüm",
-      "logo": "Logonuz",
-      "venue": "The Grand Hall",
-      "album": "Elif & Can",
-      "at": "Mekan:",
-      "by": "Misafirlerinin çektiği fotoğraflar",
-      "alt": "Ortak markalı misafir albümü taslağı"
-    },
-    "referral": {
-      "title": "Tavsiye kodu",
-      "body": "Tavsiye kodu için bize yazın; işletmenize özel bir kod oluşturalım."
-    },
-    "formTitle": "Bize",
-    "formAccent": "yazın.",
-    "formLead": "İşletmenizden kısaca bahsedin, size e-postayla dönelim.",
-    "form": {
-      "name": "Adınız",
-      "email": "E-posta",
-      "company": "İşletme adı (isteğe bağlı)",
-      "type": "İşletme türü",
-      "message": "Bilmemiz gereken bir şey var mı? (isteğe bağlı)",
-      "types": {
-        "venue": "Mekan",
-        "dj": "DJ ya da sunucu",
-        "photographer": "Fotoğrafçı ya da kameraman",
-        "planner": "Organizatör",
-        "other": "Diğer"
-      },
-      "submit": "Gönder",
-      "sending": "Gönderiliyor…",
-      "errName": "Lütfen adınızı yazın.",
-      "errEmail": "Lütfen geçerli bir e-posta adresi girin.",
-      "errServer": "Mesajınızı şu anda gönderemedik. Lütfen biraz sonra tekrar deneyin.",
-      "okTitle": "Teşekkürler!",
-      "okBody": "Mesajınız bize ulaştı. En kısa sürede e-postayla dönüş yapacağız.",
-      "privacy": "Bilgilerinizi yalnızca size yanıt vermek için kullanırız.",
-      "privacyLink": "Gizlilik politikası",
-      "emailLine": "E-postayı mı tercih edersiniz? {email} adresine yazabilirsiniz."
-    }
+    ]
   },
   "credits": {
     "title": "Fotoğraf ve videolar,",
@@ -605,9 +448,9 @@
       {
         "h": "Hangi verileri topluyoruz",
         "list": [
-          "Ev sahipleri: e-posta adresiniz, adınız, oluşturduğunuz etkinliklerin bilgileri ve ödeme kayıtları. Kart bilgileriniz Stripe tarafından işlenir, bize ulaşmaz.",
+          "Ev sahipleri: e-posta adresiniz, adınız, oluşturduğunuz etkinliklerin bilgileri ve abonelik ile ödeme kayıtlarınız (plan, durum, yenileme tarihleri). Kart bilgileriniz Stripe tarafından işlenir, bize ulaşmaz.",
           "Misafirler: yazdığınız ad ile yüklediğiniz fotoğraf, video, sesli mesaj ve tepkiler.",
-          "Talepler: bizimle iletişime geçtiğinizde ya da partner formunu kullandığınızda bize ilettiğiniz bilgiler.",
+          "Talepler: bizimle iletişime geçtiğinizde bize ilettiğiniz bilgiler.",
           "Teknik veriler: IP adresi, cihaz türü ve temel kullanım kayıtları. Hizmetin güvenli ve çalışır durumda kalması için kullanılır."
         ]
       },
@@ -658,9 +501,9 @@
       {
         "h": "Ne kadar süre saklıyoruz",
         "list": [
-          "Etkinlik fotoğrafları, videoları ve mesajları: ev sahibinin planındaki saklama süresi boyunca (Ücretsiz planda {freeStorage}, Tek Gün planında {tekStorage}, Büyük Gün planında {bigStorage}); ev sahibi süreyi uzatmazsa silinir. Ev sahipleri bir etkinliği ya da tek tek yüklemeleri dilediği zaman silebilir.",
-          "Hesap bilgileri: hesabınız etkin olduğu sürece; sonrasında talep üzerine silinir veya anonim hale getirilir.",
-          "Ödeme ve fatura kayıtları: vergi ve muhasebe nedeniyle altı yıl.",
+          "Etkinlik fotoğrafları, videoları ve mesajları: ev sahibinin aboneliği etkin olduğu sürece. Ev sahibinin ücretsiz denemesi abonelik olmadan sona ererse {trialKeepDays} gün saklanır, sonra silinir. Abonelik sona ererse, ödenen dönem bittikten sonra {readOnlyDays} gün boyunca görüntülenebilir ve indirilebilir kalır, ardından silinir. Ev sahipleri bir etkinliği ya da tek tek yüklemeleri dilediği zaman silebilir.",
+          "Hesap bilgileri: hesabınız açık olduğu sürece; hesabınızı sildiğinizde (bu işlem varsa aboneliği de iptal eder) ya da talep üzerine silinir.",
+          "Ödeme, abonelik ve fatura kayıtları: Birleşik Krallık vergi ve muhasebe kuralları gereği bizim ve Stripe tarafından altı yıl saklanır. Stripe ayrıca kendi gizlilik politikası kapsamında bağımsız veri sorumlusu olarak kendi kayıtlarını tutar.",
           "Talepler: ilgili talebi sonuçlandırmak için gereken süre boyunca."
         ]
       },
@@ -719,7 +562,7 @@
       {
         "h": "Hizmet",
         "p": [
-          "{brand}, ev sahibinin bir etkinlik sayfası ve QR kod oluşturmasını, misafirlerin de fotoğraf, video ve mesaj yükleyip görüntülemesini sağlar. Özellikler ev sahibinin planına göre değişir."
+          "{brand}, ev sahibinin bir etkinlik sayfası ve QR kod oluşturmasını, misafirlerin de fotoğraf, video ve mesaj yükleyip görüntülemesini sağlar. Ev sahipleri hizmeti ücretsiz denemeyle ya da ücretli bir abonelikle kullanır. Orijinallerin indirilmesi ücretli abonelik gerektirir; bunun dışındaki tüm özellikler ikisinde de vardır."
         ]
       },
       {
@@ -743,36 +586,52 @@
         ]
       },
       {
-        "h": "Planlar ve ödeme",
-        "p": [
-          "Ücretli etkinlik planları, etkinlik başına sterlin (GBP) cinsinden tek seferlik bir ödemedir ve Stripe aracılığıyla işlenir. Plan limitleri ve saklama süreleri fiyatlar sayfasında yer alır. Partner planı, siz iptal edene kadar her ay yenilenen aylık bir aboneliktir."
+        "h": "Abonelik ve ödeme",
+        "list": [
+          "Tek bir abonelik vardır; aylık (ayda {monthly}) ya da yıllık (yılda {yearly}) olarak, sterlin (GBP) cinsinden ve KDV dahil faturalandırılır ve Stripe aracılığıyla işlenir. Adil kullanım koşuluyla hesaptaki sınırsız etkinliği kapsar.",
+          "Aboneliğiniz her ayın ya da yılın sonunda otomatik olarak yenilenir ve iptal edene kadar kullandığınız karttan ücret alınır. Yıllık yenilemeden önce size hatırlatma göndeririz.",
+          "Panelinizdeki “Ödemeleri yönet” bölümünden istediğiniz zaman iptal edebilirsiniz. İptal, ödediğiniz dönemin sonunda geçerli olur; o zamana kadar tüm erişiminiz sürer ve sizden tekrar ücret alınmaz.",
+          "“Ödemeleri yönet” bölümünden aylık ve yıllık plan arasında geçiş yapabilirsiniz. Değişikliği Stripe yönetir ve kullanılmayan süreyi hesabınıza yansıtabilir.",
+          "Fiyatı değiştirirsek, değişiklik bir sonraki yenilemenize uygulanmadan en az 30 gün önce size e-posta göndeririz; dilerseniz bu tarihten önce iptal edebilirsiniz.",
+          "Bir yenileme ödemesi alınamazsa, kartınızı güncellemeniz için her şey {graceDays} gün boyunca çalışmaya devam eder. Sonrasında abonelik sona erer ve etkinlikleriniz “Saklama ve silme” bölümünde anlatıldığı gibi salt okunur olur."
         ]
       },
       {
         "h": "İptal ve iadeler",
         "list": [
-          "Para iade garantisi: satın almanızdan sonraki {days} gün içinde, sebep belirtmeden, ücretli etkinlik planı için ödediğiniz tutarın tamamının iadesini isteyebilirsiniz. Hesabınızdaki e-posta adresinden {email} adresine yazmanız yeterlidir. İadeler Stripe aracılığıyla ilk ödeme yöntemine yapılır.",
-          "Yasal cayma hakkınız: Birleşik Krallık'ta 2013 tarihli Tüketici Sözleşmeleri (Bilgilendirme, İptal ve Ek Ücretler) Yönetmeliği uyarınca dijital bir hizmeti genellikle 14 gün içinde iptal edebilirsiniz. Bir etkinlik oluşturarak hizmetin hemen başlamasını talep etmiş olursunuz. Etkinlik başlamışsa ya da yüklemeler başlamışsa bu yasal hak kaybolabilir veya orantılı bir iadeyle sınırlanabilir; ancak para iade garantimiz, satın almanızdan sonraki {days} gün boyunca yine de geçerlidir.",
-          "Partner planı: aşağıdaki “Partner planı” bölümüne bakın."
+          "Para iade garantisi: ilk abonelik ödemenizden sonraki {days} gün içinde, sebep belirtmeden, bu ödemenin tamamının iadesini isteyebilirsiniz. Hesabınızdaki e-posta adresinden {email} adresine yazmanız yeterlidir. İadeyi destek ekibimiz Stripe aracılığıyla ilk ödeme yöntemine yapar ve iade sırasında abonelik iptal edilir. Garanti müşteri başına bir kez geçerlidir ve sonraki yenilemeleri kapsamaz.",
+          "Yasal cayma hakkınız: Birleşik Krallık'ta 2013 tarihli Tüketici Sözleşmeleri (Bilgilendirme, İptal ve Ek Ücretler) Yönetmeliği uyarınca dijital bir hizmet sözleşmesini, başlangıcından itibaren genellikle 14 gün içinde iptal edebilirsiniz. Abone olarak hizmetin hemen başlamasını talep etmiş olursunuz. Bu 14 gün içinde iptal ederseniz, o ana kadar sunulan hizmet için orantılı bir ücret istenebilir; yukarıdaki para iade garantimiz ise her durumda ilk ödemenizin tamamını iade eder.",
+          "Yenileme ödemeleri iade edilmez; ancak istediğiniz zaman iptal ederek bir sonraki ödemenin alınmasını önleyebilirsiniz."
         ]
       },
       {
-        "h": "Saklama",
-        "p": [
-          "Etkinlik içeriğini ev sahibinin planındaki süre boyunca saklarız. Bu süre dolmadan albümünüzü indirin. Kesintisiz hizmet garantisi veremeyiz; bu yüzden önemli içeriklerin kendi kopyalarını saklayın."
+        "h": "Ücretsiz deneme",
+        "list": [
+          "Ücretsiz deneme {trialDays} gün sürer ve ilk etkinliğinizi oluşturduğunuzda başlar. Kart bilgisi gerekmez; deneme bittiğinde otomatik olarak hiçbir ücret alınmaz.",
+          "Deneme süresince indirmeler dışında her şey çalışır: siz ve misafirleriniz canlı ekran ve paylaşım bağlantıları dahil her şeyi görüntüleyebilirsiniz; orijinaller ve ZIP dosyaları ise yalnızca ücretli abonelikle indirilebilir.",
+          "Her kişi için bir ücretsiz deneme vardır. Bu kuralı aşmak için kullanılan denemeleri sonlandırabiliriz."
         ]
       },
       {
-        "h": "Partner planı",
+        "h": "Saklama ve silme",
+        "list": [
+          "Aboneliğiniz etkin olduğu sürece etkinliklerinizin fotoğraf, video ve mesajlarını saklarız.",
+          "Denemeniz abonelik olmadan sona ererse etkinlikleriniz salt okunur olur (yeni yükleme alınmaz) ve indirmeler kapalı kalır. Dosyaları deneme bittikten sonra {trialKeepDays} gün saklar, sonra sileriz.",
+          "Aboneliğiniz sona ererse etkinlikleriniz salt okunur olur; ödenen dönem bittikten sonra {readOnlyDays} gün boyunca her şeyi görüntüleyip indirebilirsiniz. Ardından dosyalar silinir.",
+          "Dosyalar silinmeden önce size e-posta göndeririz. Silinme tarihinden önce yeniden abone olursanız her şey hemen geri gelir.",
+          "Kesintisiz hizmet garantisi veremeyiz; bu yüzden önemli içeriklerin kendi kopyalarını saklayın."
+        ]
+      },
+      {
+        "h": "Adil kullanım",
         "p": [
-          "Partner planı; mekanlar, organizatörler, DJ'ler ve fotoğrafçılar gibi işletmeler içindir, bu nedenle yukarıdaki tüketici cayma hakları bu plana uygulanmaz. Plan aylık olarak peşin faturalandırılır ve istediğiniz zaman iptal edebilirsiniz. İptal, içinde bulunulan ayın sonunda yürürlüğe girer; o ay için iade yapılmaz ve erişiminiz o zamana kadar sürer.",
-          "Yüklediğiniz logolar ve içerikler üzerinde gerekli haklara sahip olmalı, müşterilerinize ve onların misafirlerine fotoğrafların nasıl toplanıp kullanılacağını bildirmelisiniz."
+          "Sınırsız, normal kişisel kullanım için sınırsız demektir: kendi düğünleriniz, partileriniz ve aile etkinlikleriniz. Kullanım bunun çok ötesindeyse (örneğin başkaları adına ticari olarak etkinlik düzenlemek ya da hizmeti başkaları için etkileyen depolama veya trafik) sizinle iletişime geçebilir, gerekirse hesabı sınırlayabilir ya da askıya alabiliriz. Bunu her zaman önce size bildirir ve içeriğinizi indirmeniz için fırsat tanırız."
         ]
       },
       {
         "h": "Sorumluluk",
         "p": [
-          "Hizmeti makul özenle ancak “olduğu gibi” sunarız. Yasaların izin verdiği ölçüde dolaylı zararlardan sorumlu değiliz ve toplam sorumluluğumuz ilgili etkinlik için ödenen tutarla sınırlıdır. İhmalden kaynaklanan ölüm veya kişisel yaralanma ve hile dahil, yasayla sınırlandırılamayacak hiçbir sorumluluk bu koşullarla sınırlandırılmaz."
+          "Hizmeti makul özenle ancak “olduğu gibi” sunarız. Yasaların izin verdiği ölçüde dolaylı zararlardan sorumlu değiliz ve toplam sorumluluğumuz, talepten önceki 12 ay içinde bize ödediğiniz tutarla sınırlıdır. İhmalden kaynaklanan ölüm veya kişisel yaralanma ve hile dahil, yasayla sınırlandırılamayacak hiçbir sorumluluk bu koşullarla sınırlandırılmaz."
         ]
       },
       {
@@ -784,7 +643,7 @@
       {
         "h": "Değişiklikler",
         "p": [
-          "Bu koşulları güncelleyebiliriz; güncelleme tarihini yukarıda gösteririz. Önemli bir değişiklik olursa etkin etkinliği bulunan ev sahiplerine e-postayla bildiririz."
+          "Bu koşulları güncelleyebiliriz; güncelleme tarihini yukarıda gösteririz. Önemli bir değişiklik olursa, yürürlüğe girmeden önce aboneliği ya da etkin denemesi olan ev sahiplerine e-postayla bildiririz."
         ]
       },
       {

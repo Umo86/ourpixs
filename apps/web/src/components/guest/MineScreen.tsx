@@ -11,8 +11,14 @@ import { ScreenHeader } from "./ScreenHeader";
 
 export function MineScreen() {
   const t = useT("guest");
-  const { path, api: url, uploader } = useGuest();
+  const { occasion: o, path, api: url, uploader } = useGuest();
   const [items, setItems] = useState<MediaItem[] | null>(null);
+  const [note, setNote] = useState(false);
+  useEffect(() => {
+    if (!note) return;
+    const id = setTimeout(() => setNote(false), 4000);
+    return () => clearTimeout(id);
+  }, [note]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,12 +53,14 @@ export function MineScreen() {
             {m.kind === "video" ? <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/65 px-2 py-0.5 text-[11px] font-bold"><Play size={10} fill="currentColor" aria-hidden />{formatDuration(m.durationS)}</span> : null}
             {m.approved === false ? <span className="absolute left-2 top-2 rounded-full bg-royal px-2 py-0.5 text-[11px] font-bold">{t("mine.pending")}</span> : null}
             <span className="absolute inset-x-2 bottom-2 flex justify-end gap-2">
+              {!o.downloadsOpen ? <button type="button" onClick={() => setNote(true)} aria-label={t("feed.download")} className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/65 text-white"><Download size={18} aria-hidden /></button> : null}
               {m.originalUrl ? <a href={m.originalUrl} download target="_blank" rel="noopener" aria-label={t("feed.download")} className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/65 text-white"><Download size={18} aria-hidden /></a> : null}
               <button type="button" onClick={() => remove(m)} aria-label={t("mine.delete")} className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/65 text-white"><Trash2 size={18} aria-hidden /></button>
             </span>
           </li>
         ))}
       </ul>
+      {note ? <div role="status" className="fixed bottom-28 left-1/2 z-[60] w-[min(92vw,420px)] -translate-x-1/2 rounded-2xl bg-white px-5 py-3 text-center text-sm font-bold text-ink shadow-xl">{t("feed.downloadsLocked")}</div> : null}
     </main>
   );
 }

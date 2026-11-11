@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { getBrand, getT } from "@/i18n";
-import { BRANDS, brandBaseUrl } from "@/lib/config";
+import { BRANDS, SUPPORT_EMAIL, brandBaseUrl } from "@/lib/config";
+import { pricingVars } from "./format";
 
-type Page = "home" | "features" | "pricing" | "partners" | "privacy" | "terms" | "credits";
+type Page = "home" | "features" | "pricing" | "privacy" | "terms" | "credits";
 
 /** Shared metadata builder: canonical + hreflang alternates (ourpixs.com = en, bizimresimler.com = tr). */
 export async function buildMetadata(opts: {
@@ -31,9 +32,10 @@ export async function buildMetadata(opts: {
 export async function pageMetadata(page: Page, path: string): Promise<Metadata> {
   const [{ t }, brand] = await Promise.all([getT("marketing"), getBrand()]);
   const name = BRANDS[brand].name;
+  const vars = { ...pricingVars(SUPPORT_EMAIL[brand]), brand: name };
   return buildMetadata({
-    title: t(`meta.${page}.title`, { brand: name }),
-    description: t(`meta.${page}.description`, { brand: name }),
+    title: t(`meta.${page}.title`, vars),
+    description: t(`meta.${page}.description`, vars),
     path,
     absolute: page === "home",
   });
