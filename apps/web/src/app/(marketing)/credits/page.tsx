@@ -3,7 +3,7 @@ import { getT } from "@/i18n";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Display } from "@/components/ui/SectionHeading";
-import { CREDITS, MEDIA, PEXELS_HOME } from "@/components/marketing/constants";
+import { CREDITS, MEDIA, PEXELS_HOME, UNSPLASH_HOME, mediaUrl } from "@/components/marketing/constants";
 import { pageMetadata } from "@/components/marketing/meta";
 
 export const generateMetadata = () => pageMetadata("credits", "/credits");
@@ -20,16 +20,22 @@ export default async function CreditsPage() {
         {CREDITS.map((c) => (
           <li key={c.key} className="flex items-center gap-4 rounded-3xl bg-tint p-3">
             <div className="relative size-20 flex-none overflow-hidden rounded-2xl bg-ink">
-              {c.key !== "video" ? <Image src={MEDIA[c.key]} alt="" fill sizes="80px" className="object-cover" /> : <Image src={MEDIA.poster} alt="" fill sizes="80px" className="object-cover" />}
+              <Image src={c.key !== "video" ? mediaUrl(c.key, 240) : MEDIA.poster} alt="" fill sizes="80px" className="object-cover" />
             </div>
             <div>
               <p className="m-0 text-sm text-muted">{t(`credits.roles.${c.key}`)}</p>
-              <p className="m-0 text-lg font-extrabold tracking-[-0.02em]">{c.name}</p>
+              <p className="m-0 text-lg font-extrabold tracking-[-0.02em]">
+                {c.url ? <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-ink underline decoration-1 underline-offset-4 hover:text-royal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky">{c.name}</a> : c.name}
+              </p>
+              <p className="m-0 text-sm text-muted">{t(c.source === "unsplash" ? "credits.onUnsplash" : "credits.onPexels")}</p>
             </div>
           </li>
         ))}
       </ul>
-      <Button href={PEXELS_HOME} variant="secondary" className="self-start" target="_blank" rel="noopener noreferrer">{t("credits.link")}</Button>
+      <div className="flex flex-wrap gap-3">
+        <Button href={UNSPLASH_HOME} variant="secondary" target="_blank" rel="noopener noreferrer">{t("credits.linkUnsplash")}</Button>
+        <Button href={PEXELS_HOME} variant="secondary" target="_blank" rel="noopener noreferrer">{t("credits.link")}</Button>
+      </div>
     </Container>
   );
 }

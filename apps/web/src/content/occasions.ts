@@ -33,7 +33,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
     en: {
       nav: "Weddings", metaTitle: "Wedding photo sharing with a QR code", metaDesc: "Collect every guest photo and video from your wedding in one album. Scan, upload, no app. Multi-day events, live wall and full-quality downloads.",
       title: "Every angle of", accent: "your wedding.", lead: "Your photographer shows the highlights. Your guests capture everything else: the grand entrance from the back row, the halay, the quiet moments at table nine. One QR code gathers it all.",
-      imageAlt: "Bride smiling on the dance floor under blue light", momentsLead: "Guests tag what they shoot, so the album is easy to browse afterwards. Henna night, wedding and after-party can live in one album.",
+      imageAlt: "Bride and a friend singing on the dance floor under stage lights", momentsLead: "Guests tag what they shoot, so the album is easy to browse afterwards. Henna night, wedding and after-party can live in one album.",
       steps: [
         { title: "Create the album", body: "Choose Wedding, add your names and dates, and add a day for each part of the celebration." },
         { title: "Put QR cards on the tables", body: "Print them from your dashboard in your colours, in English and Turkish, with a separate QR for each day if you like." },
@@ -46,7 +46,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
     tr: {
       nav: "Düğünler", metaTitle: "QR kodla düğün fotoğrafı paylaşımı", metaDesc: "Düğününüzdeki tüm misafir fotoğraf ve videolarını tek albümde toplayın. Okut, yükle; uygulama yok. Çok günlü etkinlik, canlı ekran ve tam kalite indirme.",
       title: "Düğününüzün", accent: "her açısı.", lead: "Fotoğrafçınız öne çıkan anları çeker. Gerisini misafirleriniz yakalar: arka sıradan gelin girişi, halay, dokuzuncu masadaki sessiz anlar. Tek bir QR kod hepsini bir araya getirir.",
-      imageAlt: "Mavi ışık altında dans pistinde gülümseyen gelin", momentsLead: "Misafirler çektiklerini bir ana etiketler; böylece albümde sonradan gezinmek kolaylaşır. Kına, düğün ve after party tek bir albümde durabilir.",
+      imageAlt: "Sahne ışıkları altında dans pistinde arkadaşıyla şarkı söyleyen gelin", momentsLead: "Misafirler çektiklerini bir ana etiketler; böylece albümde sonradan gezinmek kolaylaşır. Kına, düğün ve after party tek bir albümde durabilir.",
       steps: [
         { title: "Albümü oluşturun", body: "“Düğün” seçeneğini seçin, isimlerinizi ve tarihleri girin, kutlamanın her bölümü için bir gün ekleyin." },
         { title: "Masalara QR kartları koyun", body: "Panelinizden kendi renklerinizle, Türkçe ve İngilizce olarak yazdırın; isterseniz her gün için ayrı QR kullanın." },
@@ -91,7 +91,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
     en: {
       nav: "Sünnet celebrations", metaTitle: "Sünnet celebration photo sharing", metaDesc: "Collect photos and videos from a sünnet düğünü. The little prince, the family and the party, shared by every guest with one QR code.",
       title: "The little prince's day,", accent: "from every guest.", lead: "A sünnet celebration brings the whole family together: grandparents, cousins, neighbours. Everyone takes photos, but few people ever see them all. One QR code puts them in a single album.",
-      imageAlt: "Family raising a toast at an outdoor evening dinner", momentsLead: "Tag the prince, the family, the party and the cake, in Turkish or English.",
+      imageAlt: "Guests raising their glasses at a candlelit dinner under fairy lights", momentsLead: "Tag the prince, the family, the party and the cake, in Turkish or English.",
       steps: [
         { title: "Create the celebration", body: "Choose Sünnet, add the little prince's name and the date." },
         { title: "Invite the family", body: "Put a QR card on each table and share the link in the family group chat." },
@@ -104,7 +104,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
     tr: {
       nav: "Sünnet düğünleri", metaTitle: "Sünnet düğünü fotoğraf paylaşımı", metaDesc: "Sünnet düğünündeki fotoğraf ve videoları toplayın. Şehzade, aile ve eğlence; tek bir QR kodla her misafirden.",
       title: "Şehzadenin günü,", accent: "her misafirden.", lead: "Sünnet düğünü tüm aileyi bir araya getirir: büyükanneler, kuzenler, komşular. Herkes fotoğraf çeker ama hepsini gören pek olmaz. Tek bir QR kod hepsini tek albümde toplar.",
-      imageAlt: "Açık havada akşam yemeğinde kadeh kaldıran aile", momentsLead: "Şehzadeyi, aileyi, eğlenceyi ve pastayı Türkçe ya da İngilizce olarak etiketleyin.",
+      imageAlt: "Işık süslerinin altında, mum ışığında kadeh kaldıran misafirler", momentsLead: "Şehzadeyi, aileyi, eğlenceyi ve pastayı Türkçe ya da İngilizce olarak etiketleyin.",
       steps: [
         { title: "Kutlamayı oluşturun", body: "“Sünnet” seçeneğini seçin, şehzadenin adını ve tarihi girin." },
         { title: "Aileyi davet edin", body: "Her masaya bir QR kart koyun, bağlantıyı aile grubunda paylaşın." },
@@ -120,7 +120,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
     en: {
       nav: "Engagements", metaTitle: "Engagement party (nişan) photo sharing", metaDesc: "Capture the ring moment, the halay and the families coming together. One QR code collects every guest photo from your engagement.",
       title: "The ring moment,", accent: "from every seat.", lead: "Two families, one room, one very important minute. Your guests will all film it from different angles. Collect the lot without chasing anyone on WhatsApp.",
-      imageAlt: "Bride and groom laughing together in black and white", momentsLead: "Ring moment, halay, cake and family are ready to tag.",
+      imageAlt: "Bride and groom laughing together on a beach", momentsLead: "Ring moment, halay, cake and family are ready to tag.",
       steps: [
         { title: "Create the event", body: "Choose Engagement and add both names." },
         { title: "Share the QR", body: "Put a card on each table and send the link to anyone who couldn't be there." },
@@ -133,7 +133,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
     tr: {
       nav: "Nişanlar", metaTitle: "Nişan fotoğraf paylaşımı", metaDesc: "Yüzük takma anını, halayı ve iki ailenin buluşmasını yakalayın. Tek bir QR kod, nişanınızdaki tüm misafir fotoğraflarını toplar.",
       title: "Yüzük takma anı,", accent: "her koltuktan.", lead: "İki aile, tek salon, çok önemli bir dakika. Misafirlerin hepsi farklı açılardan çekecek. Kimsenin peşinden WhatsApp'ta koşmadan hepsini toplayın.",
-      imageAlt: "Siyah beyaz bir karede birlikte gülen gelin ve damat", momentsLead: "Yüzük takma, halay, pasta ve aile anları etiketlenmeye hazır.",
+      imageAlt: "Sahilde birlikte gülen gelin ve damat", momentsLead: "Yüzük takma, halay, pasta ve aile anları etiketlenmeye hazır.",
       steps: [
         { title: "Etkinliği oluşturun", body: "“Nişan” seçeneğini seçin, iki ismi de girin." },
         { title: "QR kodu paylaşın", body: "Her masaya bir kart koyun, gelemeyenlere bağlantıyı gönderin." },
@@ -178,7 +178,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
     en: {
       nav: "House parties", metaTitle: "House party and get-together photo sharing", metaDesc: "Friends and family get-togethers, housewarmings and dinners: collect everyone's photos in one place with a QR code. Free to try.",
       title: "A night with friends,", accent: "in one album.", lead: "Group chats bury photos and compress them. A shared QR album keeps the originals together and lets everyone see the night through everyone else's eyes.",
-      imageAlt: "Friends taking a group selfie at a party", momentsLead: "Dancing, friends and food are ready to tag.",
+      imageAlt: "Friends waving and laughing in a group selfie", momentsLead: "Dancing, friends and food are ready to tag.",
       steps: [
         { title: "Create it in minutes", body: "Choose House party, name it, and you're done." },
         { title: "Share the link", body: "Send it to the group chat or show the QR on the fridge." },
@@ -191,7 +191,7 @@ export const OCCASION_PAGES: OccasionPage[] = [
     tr: {
       nav: "Ev partileri", metaTitle: "Ev partisi ve aile buluşması fotoğraf paylaşımı", metaDesc: "Arkadaş ve aile buluşmaları, yeni ev partileri ve yemekler: herkesin fotoğraflarını QR kodla tek yerde toplayın. Ücretsiz deneyin.",
       title: "Arkadaşlarla bir gece,", accent: "tek albümde.", lead: "Grup sohbetleri fotoğrafları sıkıştırır ve mesajların arasında kaybeder. Ortak bir QR albüm orijinalleri bir arada tutar, herkesin geceyi başkalarının gözünden de görmesini sağlar.",
-      imageAlt: "Partide toplu selfie çeken arkadaşlar", momentsLead: "Dans, arkadaşlar ve yemek anları etiketlenmeye hazır.",
+      imageAlt: "Toplu selfie'de el sallayıp gülen arkadaşlar", momentsLead: "Dans, arkadaşlar ve yemek anları etiketlenmeye hazır.",
       steps: [
         { title: "Dakikalar içinde oluşturun", body: "“Ev partisi” seçeneğini seçin, bir ad verin; hepsi bu." },
         { title: "Bağlantıyı paylaşın", body: "Grup sohbetine gönderin ya da QR kodu buzdolabına koyun." },

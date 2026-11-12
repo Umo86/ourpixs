@@ -91,7 +91,7 @@
           "key": "wedding",
           "label": "Düğünler",
           "tag": "{days} güne kadar",
-          "alt": "Mavi ışık altında dans pistinde gülümseyen gelin"
+          "alt": "Sahne ışıkları altında dans pistinde arkadaşıyla şarkı söyleyen gelin"
         },
         {
           "key": "birthday",
@@ -109,13 +109,13 @@
           "key": "family",
           "label": "Aile buluşmaları",
           "tag": "Her yaştan",
-          "alt": "Açık havada akşam yemeğinde kadeh kaldıran aile"
+          "alt": "Işık süslerinin altında, mum ışığında kadeh kaldıran misafirler"
         },
         {
           "key": "grad",
           "label": "Mezuniyetler",
           "tag": "2027 mezunları",
-          "alt": "Kep ve cüppeyle kutlama yapan iki mezun"
+          "alt": "Kep ve cüppesiyle konfeti üfleyen bir mezun"
         },
         {
           "key": "baby",
@@ -127,7 +127,7 @@
           "key": "nisan",
           "label": "Nişanlar",
           "tag": "Yüzük takma anı",
-          "alt": "Siyah beyaz bir karede birlikte gülen gelin ve damat"
+          "alt": "Sahilde birlikte gülen gelin ve damat"
         },
         {
           "key": "sunnet",
@@ -142,7 +142,7 @@
       "accent": "fotoğrafçı.",
       "uploaded": "Yüklendi · 2 sn önce",
       "loves": "24 kalp",
-      "selfieAlt": "Partide toplu selfie çeken arkadaşlar",
+      "selfieAlt": "Toplu selfie'de el sallayıp gülen arkadaşlar",
       "steps": [
         {
           "title": "Etkinliğinizi oluşturun",
@@ -194,7 +194,7 @@
       "title": "Gece",
       "accent": "böyle geçer.",
       "sticker": "Canlı ekran",
-      "imageAlt": "Siyah beyaz bir karede gülen gelin ve damat",
+      "imageAlt": "Siyah beyaz bir karede, sahilde gülen gelin ve damat",
       "cta": "Tüm özellikleri görün",
       "items": [
         {
@@ -416,7 +416,7 @@
   "credits": {
     "title": "Fotoğraf ve videolar,",
     "accent": "teşekkürlerle.",
-    "lead": "Bu sitedeki fotoğraflar ve video Pexels'ten alınmıştır. Aşağıdaki fotoğrafçılara ve kameramanlara teşekkür ederiz.",
+    "lead": "Bu sitedeki fotoğraflar Unsplash ve Pexels'ten, video ise Pexels'ten alınmıştır. Aşağıdaki fotoğrafçılara ve kameramanlara teşekkür ederiz.",
     "roles": {
       "video": "Ana sayfa videosu",
       "wedding": "Düğün fotoğrafı",
@@ -429,7 +429,10 @@
       "baby": "Baby shower fotoğrafı",
       "poster": "Kapak görseli"
     },
-    "link": "Pexels'i ziyaret edin"
+    "link": "Pexels'i ziyaret edin",
+    "linkUnsplash": "Unsplash'i ziyaret edin",
+    "onUnsplash": "Unsplash'te",
+    "onPexels": "Pexels'te"
   },
   "legal": {
     "updated": "Son güncelleme: 11 Kasım 2026"

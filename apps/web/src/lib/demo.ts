@@ -3,13 +3,14 @@
  * Nothing touches the DB or storage: the server renders static data and the browser simulates the API.
  */
 import type { GuestMission, MediaItem, PublicOccasion } from "./api-types";
+import { MEDIA, mediaUrl } from "@/components/marketing/constants";
 import { MAIN_BRAND, type Locale } from "./config";
 
 export const DEMO_SLUG = "demo";
 export const DEMO_COOKIE = "op_demo_name";
 export const isDemo = (slug: string) => slug === DEMO_SLUG;
 
-const PHOTOS = ["wedding", "couple", "henna", "family", "selfie", "birthday", "baby", "grad", "poster"];
+const PHOTOS: (keyof typeof MEDIA)[] = ["wedding", "couple", "henna", "family", "selfie", "birthday", "baby", "grad", "poster"];
 const NAMES = ["Zeynep", "Mert", "Ayşe Teyze", "Burak", "Selin", "Hakan Amca", "Derya", "Ömer", "Elif"];
 
 export function demoOccasion(locale: Locale): PublicOccasion {
@@ -26,14 +27,14 @@ export function demoOccasion(locale: Locale): PublicOccasion {
     ],
     moments: tr ? ["Gelin girişi", "İlk dans", "Takı töreni", "Halay", "Pasta", "Aile"] : ["Grand entrance", "First dance", "Gold ceremony", "Halay", "Cake", "Family"],
     liveWall: true, missionsEnabled: true, disposableShots: 12, voiceGuestbook: true, uploadOpen: true, uploadsOpen: true, downloadsOpen: true,
-    revealMode: "live", revealAt: null, coverUrl: "/media/wedding.jpg", hasPin: false,
+    revealMode: "live", revealAt: null, coverUrl: MEDIA.wedding, hasPin: false,
   };
 }
 
 export function demoMedia(locale: Locale): MediaItem[] {
   const o = demoOccasion(locale);
   return PHOTOS.map((p, i) => ({
-    id: `demo-${p}`, kind: "photo", thumbUrl: `/media/${p}.jpg`, displayUrl: `/media/${p}.jpg`, width: 800, height: 1000, durationS: null,
+    id: `demo-${p}`, kind: "photo", thumbUrl: mediaUrl(p, 600), displayUrl: mediaUrl(p, 1400), width: 800, height: 1000, durationS: null,
     momentTag: o.moments[i % o.moments.length] ?? null, dayId: i < 3 ? "demo-day-1" : "demo-day-2", guestName: NAMES[i] ?? null,
     reactionCount: 24 - i * 2, reactedByMe: false, createdAt: new Date(Date.now() - (i + 1) * 7 * 60000).toISOString(),
   }));

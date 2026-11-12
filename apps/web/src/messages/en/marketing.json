@@ -91,7 +91,7 @@
           "key": "wedding",
           "label": "Weddings",
           "tag": "Up to {days} days",
-          "alt": "Bride smiling on the dance floor under blue light"
+          "alt": "Bride and a friend singing on the dance floor under stage lights"
         },
         {
           "key": "birthday",
@@ -109,13 +109,13 @@
           "key": "family",
           "label": "Family get-togethers",
           "tag": "All ages",
-          "alt": "Family raising a toast at an outdoor evening dinner"
+          "alt": "Guests raising their glasses at a candlelit dinner under fairy lights"
         },
         {
           "key": "grad",
           "label": "Graduations",
           "tag": "Class of 2027",
-          "alt": "Two graduates celebrating in caps and gowns"
+          "alt": "Graduate in cap and gown blowing confetti"
         },
         {
           "key": "baby",
@@ -127,7 +127,7 @@
           "key": "nisan",
           "label": "Engagements",
           "tag": "Ring moment",
-          "alt": "Bride and groom laughing together in black and white"
+          "alt": "Bride and groom laughing together on a beach"
         },
         {
           "key": "sunnet",
@@ -142,7 +142,7 @@
       "accent": "photographer.",
       "uploaded": "Uploaded · 2 sec ago",
       "loves": "24 loves",
-      "selfieAlt": "Friends taking a group selfie at a party",
+      "selfieAlt": "Friends waving and laughing in a group selfie",
       "steps": [
         {
           "title": "Create your event",
@@ -194,7 +194,7 @@
       "title": "How it looks",
       "accent": "on the night.",
       "sticker": "Live wall",
-      "imageAlt": "Bride and groom laughing, in black and white",
+      "imageAlt": "Bride and groom laughing together on a beach, in black and white",
       "cta": "See all features",
       "items": [
         {
@@ -416,7 +416,7 @@
   "credits": {
     "title": "Photos and video,",
     "accent": "with thanks.",
-    "lead": "The images and video on this website come from Pexels. Thank you to the photographers and videographers below.",
+    "lead": "The photos on this website come from Unsplash and Pexels, and the video from Pexels. Thank you to the photographers and videographers below.",
     "roles": {
       "video": "Hero video",
       "wedding": "Wedding photo",
@@ -429,7 +429,10 @@
       "baby": "Baby shower photo",
       "poster": "Poster"
     },
-    "link": "Visit Pexels"
+    "link": "Visit Pexels",
+    "linkUnsplash": "Visit Unsplash",
+    "onUnsplash": "on Unsplash",
+    "onPexels": "on Pexels"
   },
   "legal": {
     "updated": "Last updated 11 November 2026"

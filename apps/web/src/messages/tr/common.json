@@ -3,5 +3,5 @@
   "nav": { "features": "Özellikler", "pricing": "Fiyatlar", "signIn": "Giriş yap", "startFree": "Ücretsiz başlayın", "dashboard": "Panel" },
   "actions": { "save": "Kaydet", "cancel": "Vazgeç", "continue": "Devam et", "back": "Geri", "delete": "Sil", "close": "Kapat", "download": "İndir", "copy": "Kopyala", "copied": "Kopyalandı", "retry": "Tekrar dene", "loading": "Yükleniyor…" },
   "errors": { "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.", "notFound": "Bu sayfayı bulamadık.", "offline": "İnternet bağlantınız yok. Tekrar denemeye devam ediyoruz." },
-  "footer": { "privacy": "Gizlilik", "terms": "Koşullar", "contact": "İletişim", "credits": "Fotoğraf ve videolar Pexels'ten." }
+  "footer": { "privacy": "Gizlilik", "terms": "Koşullar", "contact": "İletişim", "credits": "Fotoğraflar Unsplash ve Pexels'ten." }
 }

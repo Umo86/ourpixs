@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { MEDIA } from "@/components/marketing/constants";
 import { Plus } from "lucide-react";
 import { Button, Container, Sticker } from "@/components/ui";
 import { getT } from "@/i18n";
@@ -49,7 +50,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {list.length === 0 ? (
         <div className="grid gap-8 overflow-hidden rounded-[32px] bg-ink text-white md:grid-cols-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/media/family.jpg" alt="" className="h-64 w-full object-cover md:h-full" />
+          <img src={MEDIA.family} alt="" className="h-64 w-full object-cover md:h-full" />
           <div className="flex flex-col items-start gap-5 p-8 sm:p-12">
             <Sticker rotate={-4}>{t("dashboard.emptySticker")}</Sticker>
             <h2 className="m-0 text-4xl font-black leading-none tracking-[-0.03em]">{t("dashboard.emptyTitle")} <span className="font-serif text-sky-soft">{t("dashboard.emptyAccent")}</span></h2>
