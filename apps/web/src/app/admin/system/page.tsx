@@ -54,7 +54,7 @@ export default async function AdminSystemPage() {
               <li key={c.key} className="flex min-h-14 items-center gap-3 rounded-2xl bg-tint px-4 py-3">
                 <Icon size={20} aria-hidden className={`flex-none ${tone}`} />
                 <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-[15px] font-bold">{t(`system.checks.${c.key}`)}</span>
+                  <span className="break-words text-[15px] font-bold">{t(`system.checks.${c.key}`)}</span>
                   {detailText(c.key, c.detail, t) ? <span className="text-[13px] text-text-2">{detailText(c.key, c.detail, t)}</span> : null}
                 </span>
                 <Pill tone={c.key === "storage" && c.warn ? "red" : c.warn ? "amber" : c.ok ? "green" : c.required ? "red" : "grey"}>

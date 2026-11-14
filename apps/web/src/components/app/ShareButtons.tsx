@@ -30,7 +30,7 @@ export function ShareButtons({ url, text, title, labels, tone = "light", classNa
     tone === "dark" ? "bg-surface-2 text-white hover:bg-[#2E323D]" : "border-[1.5px] border-ink text-ink hover:bg-ink hover:text-white"}`;
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
-      <a href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener" className={`${btn} !border-[#1FAF5A] bg-[#25D366] !text-[#0A0A0A] hover:!bg-[#1FAF5A]`}>
+      <a href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener" className={`${btn} !border-[#1FAF5A] !bg-[#25D366] !text-[#0A0A0A] hover:!bg-[#1FAF5A]`}>
         <WhatsAppIcon />{labels.whatsapp}
       </a>
       {canShare ? (

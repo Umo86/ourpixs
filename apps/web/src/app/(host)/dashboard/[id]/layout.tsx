@@ -41,7 +41,7 @@ export default async function OccasionLayout({ children, params }: { children: R
       <Container className="flex flex-col gap-5 pt-4 print:hidden sm:pt-6">
         <div className="flex flex-col gap-2">
           <span className="text-[13px] font-bold uppercase tracking-[0.14em] text-royal">{eyebrow}</span>
-          <h1 className="m-0 text-[clamp(2.2rem,6vw,4.25rem)] font-black leading-[0.92] tracking-[-0.04em]">{o.title}</h1>
+          <h1 className="m-0 text-[clamp(2.2rem,6vw,4.25rem)] font-black leading-[1] tracking-[-0.04em]">{o.title}</h1>
           {o.status === "archived" ? <p className="m-0 text-sm font-semibold text-[#8A1C1C]">{t("occasion.archived")}</p> : null}
           {o.status !== "archived" && readOnlyText ? <Notice className="mt-2">{readOnlyText}</Notice> : null}
         </div>

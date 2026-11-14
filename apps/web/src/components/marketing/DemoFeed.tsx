@@ -24,7 +24,7 @@ export function DemoFeed({ event, tabs, photos, likeLabel, likedLabel, ago, by }
         {photos.map((p, i) => {
           const on = !!liked[p.key];
           return (
-            <li key={p.key} className="overflow-hidden rounded-3xl bg-surface">
+            <li key={p.key} className="flex-none overflow-hidden rounded-3xl bg-surface">
               <div className="relative aspect-[4/3]">
                 <Image src={MEDIA[p.key as keyof typeof MEDIA]} alt={p.alt} fill sizes="400px" className="object-cover" priority={i < 2} />
                 <span className="absolute left-3 top-3 rounded-full bg-ink/70 px-3 py-1 text-xs font-bold">{p.tag}</span>

@@ -33,6 +33,12 @@ const PRINT_CSS = `
 .qr-sheet.cards { display: grid; grid-template-columns: 105mm 105mm; grid-template-rows: 148.5mm 148.5mm; }
 .qr-sheet.cards > div { border: 0.2mm dashed #C8CAD2; }
 @media screen { .qr-sheet { box-shadow: 0 20px 60px rgba(10,10,10,.12); border-radius: 6px; overflow: hidden; } }
+/* Phones and small tablets: show the whole A4 sheet scaled to the screen instead of a clipped corner (screen only; print stays 1:1). */
+@media screen and (max-width: 859px) { .qr-sheet { zoom: .86; } }
+@media screen and (max-width: 719px) { .qr-sheet { zoom: .7; } }
+@media screen and (max-width: 599px) { .qr-sheet { zoom: .55; } }
+@media screen and (max-width: 479px) { .qr-sheet { zoom: .45; } }
+@media screen and (max-width: 399px) { .qr-sheet { zoom: .4; } }
 @media print {
   html, body { background: #fff !important; }
   .qr-screen-wrap { padding: 0 !important; overflow: visible !important; }

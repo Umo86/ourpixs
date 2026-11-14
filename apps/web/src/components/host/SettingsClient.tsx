@@ -262,7 +262,7 @@ export function SettingsClient({ initial, isOwner, storage }: Props) {
           })}
         </ul>
         {days.length < maxDays ? (
-          <Button variant="ghost" className="mt-4" onClick={() => setDays((a) => [...a, { name: t("wizard.newDay", { n: a.length + 1 }), date: "", opens: "", closes: "" }])}>{t("wizard.addDay")}</Button>
+          <Button variant="ghost" className="mr-2 mt-5" onClick={() => setDays((a) => [...a, { name: t("wizard.newDay", { n: a.length + 1 }), date: "", opens: "", closes: "" }])}>{t("wizard.addDay")}</Button>
         ) : null}
         {saveBtn("days", () => save("days", { days: days.map((d) => ({ id: d.id, name: d.name.trim() || "—", date: d.date || null, uploadOpensAt: fromLocalInput(d.opens), uploadClosesAt: fromLocalInput(d.closes) })) }).then((r) => {
           if (r) setDays(r.days.map((d) => ({ id: d.id, name: d.name, date: d.date || "", opens: toLocalInput(d.uploadOpensAt), closes: toLocalInput(d.uploadClosesAt) })));

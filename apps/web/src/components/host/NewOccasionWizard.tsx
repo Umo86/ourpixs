@@ -14,6 +14,7 @@ import type { Occasion, Theme } from "@/lib/api-types";
 import { OCCASION_ART } from "./occasion-art";
 import { WindowFields } from "./EventPackage";
 import { formatGBP } from "@/components/marketing/format";
+import { formatDate } from "@/lib/client/format";
 import { formatInZone, utcToZoned, zonedToUtc } from "@/lib/tz";
 import { defaultWindow, windowError } from "@/lib/window";
 
@@ -224,7 +225,7 @@ export function NewOccasionWizard({ templateId, initialTheme, windowDays, priceP
                   className="h-6 w-6 flex-none accent-royal" aria-label={t("wizard.includeDay", { name: d.name })} />
                 <input aria-label={t("wizard.dayName")} value={d.name} maxLength={60} onChange={(e) => setDays((arr) => arr.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
                   className="min-h-11 min-w-0 flex-1 rounded-xl border-[1.5px] border-[#D5D8E2] bg-white px-3 text-[15px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky" />
-                <span className="w-28 text-right text-sm text-muted">{startsOn ? shift(startsOn, d.offset) : ""}</span>
+                <span className="w-28 text-right text-sm text-muted">{startsOn ? formatDate(shift(startsOn, d.offset), locale, { weekday: "short", day: "numeric", month: "short" }) : ""}</span>
               </div>
             ))}
             {days.length < MAX_DAYS ? (

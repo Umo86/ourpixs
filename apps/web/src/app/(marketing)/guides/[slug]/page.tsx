@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/client/format";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getBrand, getT } from "@/i18n";
@@ -63,7 +64,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
         <header className="flex flex-col gap-4">
           <Display as="h1" size="lg">{g.title}</Display>
           <p className="m-0 text-sm text-muted">
-            {ui.published} <time dateTime={g.date}>{g.date}</time> · {ui.min.replace("{n}", String(g.minutes))}
+            {ui.published} <time dateTime={g.date}>{formatDate(g.date, hit.locale)}</time> · {ui.min.replace("{n}", String(g.minutes))}
           </p>
           <p className="m-0 text-xl leading-relaxed text-text-2">{g.description}</p>
         </header>

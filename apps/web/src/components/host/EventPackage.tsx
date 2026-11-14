@@ -96,10 +96,10 @@ export function PackageCard({ occasionId, pkg, isOwner, payments, testUsed }: {
       ) : null}
       {pkg.status === "setup" ? (
         <p className="m-0 flex items-center gap-2 text-[15px] font-semibold text-white">
-          <CalendarClock size={18} aria-hidden />{range ? t("package.setupDates", { range }) : t("package.setupNoDates")}
+          <CalendarClock size={18} aria-hidden className="flex-none" />{range ? t("package.setupDates", { range }) : t("package.setupNoDates")}
         </p>
       ) : range && (pkg.status === "paid" || pkg.status === "live") ? (
-        <p className="m-0 flex items-center gap-2 text-[15px] font-semibold"><CalendarClock size={18} aria-hidden />{range}</p>
+        <p className="m-0 flex items-center gap-2 text-[15px] font-semibold"><CalendarClock size={18} aria-hidden className="flex-none" />{range}</p>
       ) : null}
       {pkg.comped && pkg.status !== "setup" ? <p className="m-0 text-sm font-semibold text-royal">{t("package.comped")}</p> : null}
       <div className="flex flex-wrap items-start gap-3">
@@ -275,7 +275,7 @@ export function WindowEditor({ occasion, onSaved }: { occasion: Occasion; onSave
         </>
       ) : (
         <>
-          <p className="m-0 flex items-center gap-2 text-[15px] font-semibold"><CalendarClock size={18} aria-hidden />{range}</p>
+          <p className="m-0 flex items-center gap-2 text-[15px] font-semibold"><CalendarClock size={18} aria-hidden className="flex-none" />{range}</p>
           {pkg.status === "live" ? <Notice>{t("window.lockedLive")}</Notice> : pkg.status === "ended" ? <Notice>{t("window.lockedEnded")}</Notice> : null}
           {pkg.canEndEarly ? (
             <Button variant="secondary" className="self-start border-[#B42318]! text-[#B42318]! hover:bg-[#B42318]! hover:text-white!" disabled={busy} onClick={endNow}>
