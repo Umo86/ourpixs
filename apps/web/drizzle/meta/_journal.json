@@ -57,6 +57,13 @@
       "when": 1794621011939,
       "tag": "0007_event_package",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794622938292,
+      "tag": "0008_short_kitty_pryde",
+      "breakpoints": true
     }
   ]
 }

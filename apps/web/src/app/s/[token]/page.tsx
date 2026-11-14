@@ -40,7 +40,7 @@ export default async function SharePage({ params, searchParams }: { params: Prom
     coverUrlFor(o.coverKey),
   ]);
   // Share links are for viewing; downloads follow the event's download access.
-  const items = await toMediaItems(page.rows, "guest", { canDownload: access.canDownload });
+  const items = await toMediaItems(page.rows, { kind: "share" });
   const eyebrow = [OCCASIONS[o.type].label[locale], o.startsOn ? formatDate(o.startsOn, locale) : null, o.city].filter(Boolean).join(" · ");
 
   return (
@@ -66,7 +66,7 @@ export default async function SharePage({ params, searchParams }: { params: Prom
             <Link href={`/g/${publicSlug(o)}?k=${token}`} className="inline-flex min-h-12 items-center rounded-full bg-royal px-6 font-extrabold text-white no-underline hover:bg-royal-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky">{t("share.addYours")}</Link>
           ) : null}
         </div>
-        <ShareGallery items={items} downloadsOpen={access.canDownload} shareUrl={shareUrl(o, token)} shareText={t("share.message", { title: o.title })} title={o.title} />
+        <ShareGallery items={items} shareUrl={shareUrl(o, token)} shareText={t("share.message", { title: o.title })} title={o.title} />
         {page.nextCursor ? (
           <Link href={`?cursor=${page.nextCursor}`} className="inline-flex min-h-12 items-center justify-center self-center rounded-full bg-surface px-6 font-bold text-white no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky">{t("share.more")}</Link>
         ) : null}

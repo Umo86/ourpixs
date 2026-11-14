@@ -107,7 +107,8 @@
   "duplicates": "{n} duplicate payment(s) to refund",
   "byPackage": "Events by package state",
   "liveNow": "Galleries live now",
-  "fairUse": "Over fair use"
+  "fairUse": "Over fair use",
+  "recentPayments": "Recent payments"
  },
  "users": {
   "title": "Every",
@@ -264,7 +265,8 @@
   "orderStatus": {
    "paid": "Paid",
    "refunded": "Refunded",
-   "duplicate": "Duplicate: refund"
+   "duplicate": "Duplicate: refund",
+   "pending": "Pending"
   },
   "markPaid": "Mark as paid (free)",
   "markPaidTitle": "Mark this event as paid",
@@ -277,7 +279,13 @@
   "clearFairUse": "Clear fair-use flag",
   "clearFairUseTitle": "Clear the fair-use flag",
   "clearFairUseBody": "Removes the flag. If the event is still over the limit, the next upload flags it again and admins get another email.",
-  "clearFairUseConfirm": "Clear flag"
+  "clearFairUseConfirm": "Clear flag",
+  "kind": "Kind",
+  "kinds": {
+   "event_package": "Event package",
+   "guest_download": "Guest download",
+   "legacy": "Legacy order"
+  }
  },
  "guests": {
   "name": "Name",
@@ -389,11 +397,13 @@
   "environment": "Environment",
   "cron": {
    "expiry": "Gallery ended and reminder emails (expiry)",
-   "cleanup": "Retention and clean-up (cleanup)"
+   "cleanup": "Retention and clean-up (cleanup)",
+   "media": "Photo and video processing (media)"
   },
   "cronLead": {
    "expiry": "Daily: “gallery ended, download everything” emails, and reminders 30 and 7 days before files are deleted.",
-   "cleanup": "Daily: deletes files of events past their retention date, abandoned uploads, old login codes and expired share links."
+   "cleanup": "Daily: deletes files of events past their retention date, abandoned uploads, old login codes and expired share links.",
+   "media": "Retries guest previews, watermarks and video transcodes that are still pending or failed 10+ minutes after upload (3 tries each). Daily on Hobby, every 10 minutes on Pro."
   },
   "runNow": "Run now",
   "running": "Running…",
@@ -401,7 +411,8 @@
   "runTitle": "Run {name} now?",
   "runBody": {
    "expiry": "Runs the same job as the daily schedule. It is safe to repeat: each event gets each email once. Emails may be sent.",
-   "cleanup": "Runs the same job as the daily schedule. Files of events past their deletion date are deleted for good."
+   "cleanup": "Runs the same job as the daily schedule. Files of events past their deletion date are deleted for good.",
+   "media": "Processes up to 60 waiting photos and videos now (about 4 minutes at most). Safe to repeat."
   },
   "runDone": "Done. The run is listed below.",
   "noRuns": "No runs recorded yet.",
@@ -412,7 +423,9 @@
   "trigger": {
    "admin": "Run by an admin",
    "schedule": "Scheduled"
-  }
+  },
+  "blobWarningTitle": "Storage is Vercel Blob: originals are not private",
+  "blobWarningBody": "Blob files are public behind unguessable links, so \"originals only after payment\" is not guaranteed and signed links can't expire. Set up the private Cloudflare R2 bucket (R2_* settings) before going live."
  },
  "settings": {
   "title": "Product",

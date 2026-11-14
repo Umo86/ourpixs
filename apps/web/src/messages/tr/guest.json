@@ -5,7 +5,8 @@
   "loading": "Yükleniyor…",
   "next": "Sonraki",
   "previous": "Önceki",
-  "retry": "Tekrar dene"
+  "retry": "Tekrar dene",
+  "cancel": "Vazgeç"
  },
  "errors": {
   "generic": "Bir şeyler ters gitti. Lütfen tekrar dene.",
@@ -32,7 +33,11 @@
   "not_open": "Bu galeri henüz açılmadı.",
   "event_unavailable": "Bu galeri artık kullanılamıyor.",
   "payment_required": "Bu etkinlik için indirmeler henüz açık değil.",
-  "test_limit": "Yüklemeler şu anda kapalı."
+  "test_limit": "Yüklemeler şu anda kapalı.",
+  "purchase_required": "Bunu indirmek için tüm fotoğraf ve videoları tam kalitede al.",
+  "already_paid": "Bu etkinliğin tüm fotoğraf ve videoları zaten sende.",
+  "cannot_pay": "Bu galeri için tam kalite indirme şu an satın alınamıyor.",
+  "payments_unavailable": "Ödemeler çok yakında."
  },
  "demo": {
   "banner": "Demo etkinlik: her şeyi dene, hiçbir şey kaydedilmez."
@@ -88,8 +93,9 @@
   "report": "Bildir",
   "reportPrompt": "Bu fotoğrafta sorun ne? (isteğe bağlı)",
   "reported": "Teşekkürler. Ev sahipleri bakacak.",
-  "downloadsLocked": "Bu albümde indirmeler henüz açık değil. Ev sahipleri açabilir.",
-  "videoLocked": "Bu video, ev sahipleri indirmeleri açtığında izlenebilir. Albümde güvende."
+  "processing": "Hazırlanıyor…",
+  "processingLong": "Bu kare hâlâ hazırlanıyor. Birazdan burada.",
+  "unavailable": "Önizleme yok"
  },
  "upload": {
   "title": "Karelerini",
@@ -214,5 +220,60 @@
   "unavailableTitle": "Bu galeri kapalı.",
   "unavailableBody": "Artık kullanılamıyor. Bir yanlışlık olduğunu düşünüyorsanız ev sahiplerine sorun.",
   "keepLink": "Bu bağlantıyı saklayın: indirilecek bir şey yok, hesap gerekmez."
+ },
+ "purchase": {
+  "productName": "Tüm fotoğraf ve videolar",
+  "sticker": "Tam kalite",
+  "title": "Tüm fotoğraf ve videolar tam kalitede: {price}",
+  "body": "Bu etkinlikteki her kare, çekildiği gibi. Tek ZIP, filigran yok; üstüne 30 gün geçerli bir e-posta linki.",
+  "cta": "{price} ile hepsini al",
+  "opening": "Ödeme sayfası açılıyor…",
+  "dialogBody": "Burada filigranlı küçük önizlemeleri görüyorsun. Etkinliğin tüm fotoğraf ve videolarını tam kalitede, filigransız al: kaydedeceğin tek bir ZIP ve 30 gün geçerli bir e-posta linki. Kendi fotoğraflarını indirmek her zaman ücretsiz.",
+  "unavailable": "Bu galeri için tam kalite indirme şu an yok.",
+  "comingSoon": "Tam kalite indirme çok yakında.",
+  "fine": "Kart, Apple Pay ya da Google Pay ile tek seferlik ödeme. Hesap açman gerekmez.",
+  "haveTitle": "Tüm fotoğraf ve videolar sende",
+  "until": "İndirmelerin {date} tarihine kadar hazır.",
+  "open": "İndirmelere git"
+ },
+ "download": {
+  "title": "İndirmelerin",
+  "titleAccent": "burada.",
+  "confirming": "Ödemen onaylanıyor…",
+  "confirmingBody": "Genelde birkaç saniye sürer. Birazdan yenile ya da sana gönderdiğimiz linki aç.",
+  "refresh": "Yenile",
+  "thanks": "Teşekkürler! Her şey aşağıda hazır.",
+  "thanksEmail": "Teşekkürler! Her şey aşağıda hazır; linki {email} adresine de gönderdik.",
+  "sticker": "Tam kalite",
+  "counts": "{photos} fotoğraf, {videos} video · {size}",
+  "until": "İndirmeler {date} tarihine kadar açık.",
+  "everything": "Hepsini indir",
+  "splitHint": "Epey kare var; bu yüzden aşağıda her gün için ayrı bir ZIP var.",
+  "otherDay": "Diğer",
+  "dayCounts": "{n} dosya · {size}",
+  "zip": "ZIP indir",
+  "progress": "{total} dosyanın {done} tanesi eklendi…",
+  "preparing": "Dosya listesi hazırlanıyor…",
+  "keepOpen": "Bitene kadar bu sayfayı kapatma.",
+  "saved": "İndirme tamamlandı.",
+  "nothing": "Henüz indirilecek bir şey yok.",
+  "oneByOne": "Ya da tek tek",
+  "one": "Bunu indir",
+  "oneBy": "{name} kişisinin fotoğrafını indir",
+  "more": "Burada en yeni 300 kare görünüyor. ZIP’te hepsi var.",
+  "browserNote": "Büyük indirmeler bilgisayarda Chrome ya da Edge ile en iyi sonucu verir. Telefonda birkaçar birkaçar kaydet.",
+  "slowDown": "Biraz bekle lütfen",
+  "invalidTitle": "Bu linkin süresi dolmuş",
+  "invalidBody": "İndirme linkleri 30 gün geçerli. Bir yanlışlık olduğunu düşünüyorsan e-postayı yanıtla, yardımcı olalım."
+ },
+ "email": {
+  "purchase": {
+   "subject": "{title} fotoğrafların hazır",
+   "heading": "Tüm fotoğraf ve videolar, tam kalitede",
+   "body": "Teşekkürler! {title} etkinliğindeki her kare indirmeye hazır, çekildiği gibi.",
+   "body2": "Bu link {date} tarihine kadar çalışır. En büyük indirmeler için bilgisayarda aç.",
+   "cta": "Hepsini indir",
+   "footer": "Bunu {brand} üzerinden aldın. Bu e-postayı sakla: link yalnızca bir kez gönderilir."
+  }
  }
 }

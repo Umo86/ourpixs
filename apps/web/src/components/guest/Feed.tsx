@@ -6,11 +6,14 @@ import { Chip } from "@/components/app/Chip";
 import { Lightbox } from "@/components/app/Lightbox";
 import { Spinner } from "@/components/app/Spinner";
 import { useLocale, useT } from "@/i18n/client";
-import { api, errorMessage } from "@/lib/client/api";
+import { api, ApiClientError, errorMessage } from "@/lib/client/api";
 import { formatDateTime, formatDuration, initial, timeAgo } from "@/lib/client/format";
 import type { MediaItem } from "@/lib/api-types";
 import { useGuest } from "./GuestContext";
 import { Title } from "./Title";
+import { PurchaseCard, PurchaseDialog } from "./PurchaseOffer";
+import { ProcessingTile } from "@/components/app/ProcessingTile";
+import { useProcessingRefresh } from "@/components/app/useProcessingRefresh";
 
 type F = { kind?: "video"; sort?: "top"; moment?: string };
 const POLL_MS = 15000;
@@ -25,10 +28,11 @@ export function Feed() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<number | null>(null);
-  const [note, setNote] = useState(false);
+  const [offer, setOffer] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
   useEffect(() => {
     if (!note) return;
-    const id = setTimeout(() => setNote(false), 4000);
+    const id = setTimeout(() => setNote(null), 4000);
     return () => clearTimeout(id);
   }, [note]);
   const sentinel = useRef<HTMLDivElement>(null);
@@ -75,6 +79,8 @@ export function Feed() {
   }, [items, f.sort, url, qs, load]);
 
   useEffect(() => uploader.onDone(() => setTimeout(() => void load(true, null), 800)), [uploader, load]);
+  // New shots show as "getting ready" until their previews exist; swap them in when they do.
+  useProcessingRefresh(items, async () => (await api<{ items: MediaItem[] }>(`${url("/feed")}?${qs({})}`)).items, setItems);
 
   useEffect(() => {
     const el = sentinel.current;
@@ -106,6 +112,22 @@ export function Feed() {
       window.alert(errorMessage(t, e));
     }
   }
+
+  /**
+   * Download: own uploads (free) and, after buying, everyone's: a fresh signed link to the original. Other people's
+   * photos without a purchase open the "download everything" offer instead.
+   */
+  async function download(m: MediaItem) {
+    if (!m.mine && !o.guestDownload.purchased) { setOffer(true); return; }
+    try {
+      const r = await api<{ url: string }>(url(`/media/${m.id}/download`));
+      window.location.assign(r.url);
+    } catch (e) {
+      if (e instanceof ApiClientError && e.code === "purchase_required") setOffer(true);
+      else setNote(errorMessage(t, e));
+    }
+  }
+  const processingLabel = (m: MediaItem) => (m.processing === "failed" ? t("feed.unavailable") : t("feed.processing"));
 
   const day = o.days.find((d) => d.date === new Date().toISOString().slice(0, 10));
   const hero = items[0];
@@ -147,6 +169,8 @@ export function Feed() {
         </div>
       ) : null}
 
+      {revealed ? <PurchaseCard /> : null}
+
       {error ? <p role="alert" className="m-0 rounded-2xl bg-surface p-4 text-sm">{error} <button type="button" className="font-bold underline" onClick={() => load(true, null)}>{t("common.retry")}</button></p> : null}
 
       {revealed && !loading && !error && !items.length ? (
@@ -161,7 +185,7 @@ export function Feed() {
         <article className="overflow-hidden rounded-[28px] bg-surface">
           <button type="button" onClick={() => setOpen(0)} className="relative block w-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-sky" aria-label={hero.guestName ? t("feed.by", { name: hero.guestName }) : t("feed.open")}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            {hero.displayUrl ? <img src={hero.displayUrl} alt="" className="max-h-[70vh] w-full object-cover" style={{ aspectRatio: hero.width && hero.height ? `${hero.width}/${hero.height}` : "4/5" }} /> : <span className="block aspect-[4/5] bg-surface-2" />}
+            {hero.displayUrl ? <img src={hero.displayUrl} alt="" className="max-h-[70vh] w-full object-cover" style={{ aspectRatio: hero.width && hero.height ? `${hero.width}/${hero.height}` : "4/5" }} /> : <span className="block aspect-[4/5]"><ProcessingTile failed={hero.processing === "failed"} label={processingLabel(hero)} /></span>}
             <span className="absolute inset-x-3.5 top-3.5 flex justify-between gap-2">
               {hero.momentTag ? <span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink">{hero.momentTag}</span> : <span />}
               <span className="rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold">{timeAgo(hero.createdAt, locale)}</span>
@@ -176,8 +200,7 @@ export function Feed() {
             </span>
             <span className="flex gap-2">
               {likeBtn(hero)}
-              {hero.displayUrl && !o.downloadsOpen ? <button type="button" onClick={() => setNote(true)} aria-label={t("feed.download")} className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky"><Download size={18} aria-hidden /></button> : null}
-              {hero.displayUrl && o.downloadsOpen ? <a href={hero.displayUrl} download target="_blank" rel="noopener" aria-label={t("feed.download")} className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky"><Download size={18} aria-hidden /></a> : null}
+              <button type="button" onClick={() => download(hero)} aria-label={t("feed.download")} className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky"><Download size={18} aria-hidden /></button>
             </span>
           </div>
         </article>
@@ -189,7 +212,7 @@ export function Feed() {
             <li key={m.id} className="relative aspect-square overflow-hidden rounded-2xl bg-surface-2 [content-visibility:auto] [contain-intrinsic-size:120px]">
               <button type="button" onClick={() => setOpen(i + 1)} aria-label={m.guestName ? t("feed.by", { name: m.guestName }) : t("feed.open")} className="block h-full w-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-sky">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {m.thumbUrl ? <img src={m.thumbUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : null}
+                {m.thumbUrl ? <img src={m.thumbUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <ProcessingTile failed={m.processing === "failed"} label={processingLabel(m)} />}
                 {m.kind === "video" ? <span className="absolute right-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-black/65 px-1.5 py-0.5 text-[10px] font-bold"><Play size={9} fill="currentColor" aria-hidden />{formatDuration(m.durationS)}</span> : null}
                 <span className="absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-black/70 to-transparent p-1.5 text-[11px] font-bold">
                   <span className="truncate">{m.guestName}</span>
@@ -205,8 +228,8 @@ export function Feed() {
 
       {open !== null && items[open] ? (
         <Lightbox items={items} index={open} onIndex={setOpen} onClose={() => setOpen(null)}
-          labels={{ close: t("common.close"), prev: t("common.previous"), next: t("common.next"), download: t("feed.download"), by: (n) => t("feed.by", { name: n }), videoLocked: t("feed.videoLocked") }}
-          downloadUrl={(m) => m.displayUrl} onDownloadLocked={o.downloadsOpen ? undefined : () => setNote(true)}
+          labels={{ close: t("common.close"), prev: t("common.previous"), next: t("common.next"), download: t("feed.download"), by: (n) => t("feed.by", { name: n }), processing: t("feed.processingLong"), unavailable: t("feed.unavailable") }}
+          onDownload={download}
           actions={(m) => (
             <>
               {likeBtn(m, false)}
@@ -214,7 +237,8 @@ export function Feed() {
             </>
           )} />
       ) : null}
-      {note ? <div role="status" className="fixed bottom-28 left-1/2 z-[60] w-[min(92vw,420px)] -translate-x-1/2 rounded-2xl bg-white px-5 py-3 text-center text-sm font-bold text-ink shadow-xl">{t("feed.downloadsLocked")}</div> : null}
+      <PurchaseDialog open={offer} onClose={() => setOffer(false)} />
+      {note ? <div role="status" className="fixed bottom-28 left-1/2 z-[60] w-[min(92vw,420px)] -translate-x-1/2 rounded-2xl bg-white px-5 py-3 text-center text-sm font-bold text-ink shadow-xl">{note}</div> : null}
     </main>
   );
 }

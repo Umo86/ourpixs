@@ -22,5 +22,5 @@ export const GET = route<{ slug: string }>(async (req, { slug }) => {
   // until the event is refunded or deleted.
   const [{ rows }, stats, access] = await Promise.all([mediaPage({ where, limit: 40 }), occasionStats(o), accessForOccasion(o)]);
   if (access.state === "expired" || access.state === "refunded") throw new ApiError(410, "event_unavailable", "This gallery is no longer available");
-  return json({ items: await toMediaItems(rows, "guest", { canDownload: access.canDownload }), stats: { photos: stats.photos + stats.videos, guests: stats.guests } });
+  return json({ items: await toMediaItems(rows, { kind: "wall" }), stats: { photos: stats.photos + stats.videos, guests: stats.guests } });
 });

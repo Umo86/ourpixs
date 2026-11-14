@@ -9,6 +9,7 @@ import { loadDays } from "./queries";
 import { coverUrlFor, toPublicOccasion } from "./serializers";
 import { accessForOccasion } from "./access";
 import { getSettings } from "./settings";
+import { activePurchase, guestDownloadInfo } from "./guest-purchase";
 import { touchEnded } from "./package";
 import { DEMO_COOKIE, demoOccasion, isDemo } from "./demo";
 import type { PublicOccasion } from "./api-types";
@@ -52,12 +53,13 @@ export const loadGuestContext = cache(async (slug: string): Promise<GuestContext
   const h = await headers();
   const ip = (h.get("x-forwarded-for") || "").split(",")[0]?.trim() || "unknown";
   const [guest, days, access, cover, s] = await Promise.all([getGuest(o), loadDays(o.id), accessForOccasion(o), coverUrlFor(o.coverKey), getSettings()]);
+  const purchase = await activePurchase(o.id, guest?.id);
   touchEnded(o, access);
   // Rendering never spends PIN rate-limit tokens: only the proof cookie / a joined device count here.
   const pinOk = !o.pinHash || !!guest || (await hasPinAccess(o, ip, guest).catch(() => false));
   return {
     o: { id: o.id, slug: o.slug, title: o.title },
     guest: guest ? { id: guest.id, displayName: guest.displayName, shotsTaken: guest.shotsTaken } : null,
-    locale, publicOccasion: toPublicOccasion(o, days, locale, cover, access, s.videoMaxSeconds), pinOk, demo: false,
+    locale, publicOccasion: toPublicOccasion(o, days, locale, cover, access, s.videoMaxSeconds, guestDownloadInfo(access, s, purchase)), pinOk, demo: false,
   };
 });

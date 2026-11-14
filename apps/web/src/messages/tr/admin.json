@@ -107,7 +107,8 @@
   "duplicates": "İade edilecek {n} çift ödeme",
   "byPackage": "Paket durumuna göre etkinlikler",
   "liveNow": "Şu an yayındaki galeriler",
-  "fairUse": "Adil kullanımı aşan"
+  "fairUse": "Adil kullanımı aşan",
+  "recentPayments": "Son ödemeler"
  },
  "users": {
   "title": "Tüm",
@@ -264,7 +265,8 @@
   "orderStatus": {
    "paid": "Ödendi",
    "refunded": "İade edildi",
-   "duplicate": "Çift ödeme: iade edin"
+   "duplicate": "Çift ödeme: iade edin",
+   "pending": "Bekliyor"
   },
   "markPaid": "Ödendi olarak işaretle (ücretsiz)",
   "markPaidTitle": "Bu etkinliği ödendi olarak işaretle",
@@ -277,7 +279,13 @@
   "clearFairUse": "Adil kullanım işaretini kaldır",
   "clearFairUseTitle": "Adil kullanım işaretini kaldır",
   "clearFairUseBody": "İşareti kaldırır. Etkinlik hâlâ sınırın üzerindeyse bir sonraki yüklemede yeniden işaretlenir ve yöneticilere yeni bir e-posta gider.",
-  "clearFairUseConfirm": "İşareti kaldır"
+  "clearFairUseConfirm": "İşareti kaldır",
+  "kind": "Tür",
+  "kinds": {
+   "event_package": "Etkinlik paketi",
+   "guest_download": "Misafir indirmesi",
+   "legacy": "Eski sipariş"
+  }
  },
  "guests": {
   "name": "Ad",
@@ -389,11 +397,13 @@
   "environment": "Ortam",
   "cron": {
    "expiry": "Galeri kapandı ve hatırlatma e-postaları (expiry)",
-   "cleanup": "Saklama ve temizlik (cleanup)"
+   "cleanup": "Saklama ve temizlik (cleanup)",
+   "media": "Fotoğraf ve video işleme (media)"
   },
   "cronLead": {
    "expiry": "Her gün: “galeri kapandı, her şeyi indirin” e-postaları ve dosyalar silinmeden 30 ve 7 gün önce hatırlatmalar.",
-   "cleanup": "Her gün: saklama süresi dolan etkinliklerin dosyalarını, yarım kalan yüklemeleri, eski giriş kodlarını ve süresi geçen paylaşım bağlantılarını siler."
+   "cleanup": "Her gün: saklama süresi dolan etkinliklerin dosyalarını, yarım kalan yüklemeleri, eski giriş kodlarını ve süresi geçen paylaşım bağlantılarını siler.",
+   "media": "Yüklemeden 10+ dakika sonra hâlâ bekleyen ya da hata veren misafir önizlemelerini, filigranları ve video dönüştürmelerini yeniden dener (her biri en fazla 3 kez). Hobby'de günde bir, Pro'da 10 dakikada bir."
   },
   "runNow": "Şimdi çalıştır",
   "running": "Çalışıyor…",
@@ -401,7 +411,8 @@
   "runTitle": "{name} şimdi çalıştırılsın mı?",
   "runBody": {
    "expiry": "Günlük zamanlamayla aynı görevi çalıştırır. Tekrar çalıştırmak güvenlidir: her etkinlik her e-postayı bir kez alır. E-posta gönderilebilir.",
-   "cleanup": "Günlük zamanlamayla aynı görevi çalıştırır. Silme tarihi geçmiş etkinliklerin dosyaları kalıcı olarak silinir."
+   "cleanup": "Günlük zamanlamayla aynı görevi çalıştırır. Silme tarihi geçmiş etkinliklerin dosyaları kalıcı olarak silinir.",
+   "media": "Bekleyen en fazla 60 fotoğraf ve videoyu şimdi işler (en fazla yaklaşık 4 dakika). Tekrar çalıştırmak güvenli."
   },
   "runDone": "Tamamlandı. Çalıştırma aşağıda listelendi.",
   "noRuns": "Henüz kayıtlı çalıştırma yok.",
@@ -412,7 +423,9 @@
   "trigger": {
    "admin": "Bir yönetici çalıştırdı",
    "schedule": "Zamanlanmış"
-  }
+  },
+  "blobWarningTitle": "Depolama Vercel Blob: orijinaller gizli değil",
+  "blobWarningBody": "Blob dosyaları tahmin edilemeyen linklerle herkese açık; bu yüzden \"orijinaller yalnızca ödemeden sonra\" garanti değil ve imzalı linklerin süresi dolmuyor. Yayına almadan önce gizli Cloudflare R2 bucket'ını (R2_* ayarları) kur."
  },
  "settings": {
   "title": "Ürün",

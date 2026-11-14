@@ -3,6 +3,7 @@ import { getT } from "@/i18n";
 import { requireAdmin } from "@/lib/admin";
 import { recentCronRuns } from "@/lib/admin-queries";
 import { integrationChecks, publicUrls } from "@/lib/admin-system";
+import { storageDriver } from "@/lib/storage";
 import { CRON_JOBS } from "@/lib/cron";
 import { formatDateTime } from "@/lib/client/format";
 import { Card, Empty, Facts, PageHeader, Pill } from "@/components/admin/ui";
@@ -37,6 +38,12 @@ export default async function AdminSystemPage() {
   return (
     <>
       <PageHeader eyebrow={t("nav.system")} title={t("system.title")} accent={t("system.accent")} />
+      {storageDriver() === "blob" ? (
+        <div role="alert" className="flex flex-col gap-1 rounded-[24px] border-2 border-[#8A1C1C] bg-[#FDECEC] px-5 py-4 text-[#8A1C1C]">
+          <strong className="text-[17px]">{t("system.blobWarningTitle")}</strong>
+          <span className="text-[15px] leading-snug">{t("system.blobWarningBody")}</span>
+        </div>
+      ) : null}
       <Card title={t("system.integrations")} id="s-int">
         <p className="m-0 text-[13px] text-text-2">{t("system.integrationsLead")}</p>
         <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0 md:grid-cols-2">
@@ -50,7 +57,7 @@ export default async function AdminSystemPage() {
                   <span className="text-[15px] font-bold">{t(`system.checks.${c.key}`)}</span>
                   {detailText(c.key, c.detail, t) ? <span className="text-[13px] text-text-2">{detailText(c.key, c.detail, t)}</span> : null}
                 </span>
-                <Pill tone={c.warn ? "amber" : c.ok ? "green" : c.required ? "red" : "grey"}>
+                <Pill tone={c.key === "storage" && c.warn ? "red" : c.warn ? "amber" : c.ok ? "green" : c.required ? "red" : "grey"}>
                   {c.key === "previewCode" ? (c.warn ? t("system.on") : t("system.off")) : c.ok ? t("system.configured") : c.required ? t("system.missing") : t("system.notSet")}
                 </Pill>
               </li>

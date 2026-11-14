@@ -3,7 +3,7 @@ import { and, asc, desc, eq, ilike, isNotNull, isNull, ne, or, sql, type SQL } f
 import { db, schema } from "@/db";
 import { computeAccess, packageStateSql, type Access } from "./access";
 import { getSettings } from "./settings";
-import { signMany } from "./storage";
+import { privateGetUrl, signMany, storageDriver } from "./storage";
 import { likePattern, PAGE } from "./admin";
 
 /**
@@ -11,7 +11,7 @@ import { likePattern, PAGE } from "./admin";
  * and aggregate with sub-queries in the same statement, so a page is a fixed number of round-trips.
  */
 
-const { hosts, occasions, media, guests, leads, adminAudit, cronRuns, occasionMembers, days, orders } = schema;
+const { hosts, occasions, media, guests, leads, adminAudit, cronRuns, occasionMembers, days, orders, guestPurchases } = schema;
 
 /** Start of today in London (events and uploads are counted by UK calendar day). */
 const londonMidnight = sql`(date_trunc('day', now() at time zone 'Europe/London') at time zone 'Europe/London')`;
@@ -225,19 +225,25 @@ export type AdminMedia = {
   bytes: number; occasionId: string; occasionTitle?: string; reportCount?: number; reasons?: string[];
 };
 
-type MediaRowLite = { id: string; kind: "photo" | "video" | "voice"; keyOriginal: string; keyDisplay: string | null; keyThumb: string | null };
+type MediaRowLite = { id: string; kind: "photo" | "video" | "voice"; keyOriginal: string; keyDisplay: string | null; keyThumb: string | null; keyVideo?: string | null };
 
-/** Signed thumb / display / playback URLs for admin viewing (admins can always view, whatever the download lock). */
+/**
+ * Signed thumb / display / playback URLs for admin viewing (moderation: admins always see the clean copies, whatever the
+ * download lock). Videos play the 1080p transcode once ready; until then, and for photos with no display copy, the
+ * original through a short-lived private link.
+ */
 async function signAdmin(rows: MediaRowLite[]) {
-  const [thumbs, displays, originals] = await Promise.all([
+  const needsOriginal = (r: MediaRowLite) => (r.kind === "video" ? !r.keyVideo : !r.keyDisplay);
+  const [thumbs, displays, videos, originals] = await Promise.all([
     signMany(rows.map((r) => r.keyThumb ?? r.keyDisplay)),
     signMany(rows.map((r) => r.keyDisplay ?? r.keyThumb)),
-    signMany(rows.map((r) => (r.kind === "video" || !r.keyDisplay ? r.keyOriginal : null))),
+    signMany(rows.map((r) => (r.kind === "video" ? r.keyVideo ?? null : null))),
+    Promise.all(rows.map((r) => (needsOriginal(r) && storageDriver() ? privateGetUrl(r.keyOriginal, 3600).catch(() => null) : Promise.resolve(null)))),
   ]);
   return rows.map((r, i) => ({
     thumbUrl: thumbs[i] ?? (r.kind === "photo" ? originals[i] : null) ?? null,
     displayUrl: displays[i] ?? (r.kind === "photo" ? originals[i] : null) ?? null,
-    playbackUrl: r.kind === "video" ? originals[i] ?? null : null,
+    playbackUrl: r.kind === "video" ? videos[i] ?? originals[i] ?? null : null,
   }));
 }
 
@@ -278,6 +284,8 @@ export async function eventDetail(id: string, opts: { mediaPage: number; mediaFi
     db.select().from(orders).where(eq(orders.occasionId, id)).orderBy(desc(orders.createdAt)).limit(20),
     getSettings(),
   ]);
+  const purchaseRows = await db.select().from(guestPurchases).where(and(eq(guestPurchases.occasionId, id), ne(guestPurchases.status, "pending")))
+    .orderBy(desc(guestPurchases.createdAt)).limit(50);
   const mPage = paged(mediaRows, opts.mediaPage);
   const signed = await signAdmin(mPage.rows.map((r) => r.m));
   const items: AdminMedia[] = mPage.rows.map((r, i) => ({
@@ -286,7 +294,12 @@ export async function eventDetail(id: string, opts: { mediaPage: number; mediaFi
   }));
   const s = stats[0];
   return {
-    occasion: o, owner, days: dayRows, members, orders: orderRows, settings,
+    occasion: o, owner, days: dayRows, members, settings,
+    // Event packages and guests' "download everything" purchases, newest first.
+    orders: [
+      ...orderRows.map((r) => ({ id: r.id, kind: r.kind, amountPence: r.amountPence, status: r.status, livemode: r.livemode, paidAt: r.paidAt, createdAt: r.createdAt, ref: r.stripeSessionId })),
+      ...purchaseRows.map((r) => ({ id: r.id, kind: "guest_download", amountPence: r.amountPence, status: r.status, livemode: r.livemode, paidAt: r.paidAt, createdAt: r.createdAt, ref: r.email ?? r.stripeCheckoutSessionId })),
+    ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
     access: computeAccess(o, owner, settings),
     stats: {
       guests: int(s?.guests), media: int(s?.media), bytes: int(s?.bytes), photos: int(s?.photos), videos: int(s?.videos),
@@ -300,13 +313,21 @@ export async function eventDetail(id: string, opts: { mediaPage: number; mediaFi
 
 // ── Payments ───────────────────────────────────────────────────────────────────────────────────────
 
-/** Latest event-package payments (all statuses), with the event and owner. */
+/** Latest payments of both kinds (event packages and guests' "download everything"), all statuses, with the event. */
 export async function recentPayments(n = 20) {
-  return db.select({
-    id: orders.id, occasionId: orders.occasionId, title: occasions.title, email: hosts.email, amountPence: orders.amountPence,
-    status: orders.status, livemode: orders.livemode, paidAt: orders.paidAt, createdAt: orders.createdAt, stripeSessionId: orders.stripeSessionId,
-  }).from(orders).innerJoin(occasions, eq(occasions.id, orders.occasionId)).innerJoin(hosts, eq(hosts.id, orders.hostId))
-    .where(eq(orders.kind, "event_package")).orderBy(desc(orders.createdAt)).limit(n);
+  const [pkg, guest] = await Promise.all([
+    db.select({
+      id: orders.id, kind: orders.kind, occasionId: orders.occasionId, title: occasions.title, email: hosts.email, amountPence: orders.amountPence,
+      status: orders.status, livemode: orders.livemode, paidAt: orders.paidAt, createdAt: orders.createdAt,
+    }).from(orders).innerJoin(occasions, eq(occasions.id, orders.occasionId)).innerJoin(hosts, eq(hosts.id, orders.hostId))
+      .where(eq(orders.kind, "event_package")).orderBy(desc(orders.createdAt)).limit(n),
+    db.select({
+      id: guestPurchases.id, kind: sql<string>`'guest_download'`, occasionId: guestPurchases.occasionId, title: occasions.title, email: guestPurchases.email,
+      amountPence: guestPurchases.amountPence, status: guestPurchases.status, livemode: guestPurchases.livemode, paidAt: guestPurchases.paidAt, createdAt: guestPurchases.createdAt,
+    }).from(guestPurchases).innerJoin(occasions, eq(occasions.id, guestPurchases.occasionId))
+      .where(ne(guestPurchases.status, "pending")).orderBy(desc(guestPurchases.createdAt)).limit(n),
+  ]);
+  return [...pkg, ...guest].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, n);
 }
 
 // ── Moderation ─────────────────────────────────────────────────────────────────────────────────────

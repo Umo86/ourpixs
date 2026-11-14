@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/expiry",
       "schedule": "40 3 * * *"
+    },
+    {
+      "path": "/api/cron/media",
+      "schedule": "52 5 * * *"
     }
   ]
 }

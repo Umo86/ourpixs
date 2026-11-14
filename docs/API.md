@@ -24,8 +24,9 @@ Auth: `Authorization: Bearer <jwt>` (same JWT as the web `op_session` cookie, 30
 - `GET /api/v1/occasions/:id/messages` → `{ messages: Message[] }`
 - `GET|POST|DELETE /api/v1/occasions/:id/missions` → `{ missions: Mission[] }` (POST `{ title }`, DELETE `?missionId=`)
 - `GET|POST /api/v1/occasions/:id/share-links` → `{ links: ShareLink[] }` (POST `{ label?, scope }`)
-- `GET /api/v1/occasions/:id/download?dayId=` → `{ files: { id, name, url, mime, kind, bytes, dayId, guestName, createdAt }[] }` — ZIP manifest: every visible original (oldest first) with signed download URLs (1 hour). `402 payment_required` before the event is paid (other states: `410 event_expired`, `403 download_closed` / `account_suspended`).
-- `GET /api/v1/occasions/:id/media/:mediaId/download` → `{ url }` — signed download URL for one original. Same errors as above.
+- `GET /api/v1/occasions/:id/download?dayId=` → `{ files: { id, name, url, mime, kind, bytes, dayId, guestName, createdAt }[], totalBytes }` — ZIP manifest: every visible original (oldest first) with signed download URLs (≤1 hour, minted per request). Hosts and co-hosts only. `402 payment_required` before the event is paid (other states: `410 event_expired`, `403 download_closed` / `account_suspended`). Above ~2 GB, download one day at a time.
+- `POST /api/v1/occasions/:id/download` `{ ids: string[] }` (1–500) → same manifest for a selection (hidden items included).
+- `GET /api/v1/occasions/:id/media/:mediaId/download` → `{ url }` — signed download URL (≤1 hour) for one original. Same errors as above. This and the manifest are the ONLY way hosts get originals.
 
 ## Guest (web guest app + mobile "join by QR")
 Guest auth is a cookie on web; on mobile pass header `X-Guest-Token: <token>` returned by join.
@@ -50,11 +51,14 @@ type OccasionSummary = { id; slug; type; title; startsOn: string|null; coverUrl:
 type Occasion = OccasionSummary & { honorees: string[]; venueName; city; theme; brand; approvalMode: boolean; revealMode: "live"|"next_morning"; revealAt; uploadOpensAt; uploadClosesAt; hasPin: boolean; disposableShots: number|null; storageExpiresAt /* = package.deleteAfter, null before paying */; days: { id; name; date; sortOrder }[]; guestUrl: string; wallUrl: string; package: EventPackage };
 type Stats = { guests: number; photos: number; videos: number; messages: number; bytes: number; pendingApproval: number };
 type PublicOccasion = { slug; type; title; honorees; startsOn; venueName; city; theme; brand; days; moments: string[]; liveWall: boolean; missionsEnabled: boolean; disposableShots: number|null; voiceGuestbook: boolean; uploadOpen: boolean; uploadsOpen: boolean; downloadsOpen: boolean; revealMode; revealAt; galleryState: "not_open"|"live"|"ended"|"unavailable"; opensAt: string|null; closesAt: string|null; timeZone: string; videoMaxSeconds: number };
-// originalUrl is null when downloads are locked for the event (access.canDownload / downloadsOpen false):
-// on host and guest media, share links and the live wall. thumbUrl/displayUrl are always there.
-// This includes videos: while locked, videos have no playable URL (show the poster from displayUrl).
+// CHANGED (Nov 2026, media copies): originalUrl is ALWAYS null in lists (host album, guest feed and "mine", share links,
+// live wall). Originals only come from the download endpoints as signed links (≤1 h).
+// thumbUrl/displayUrl/playbackUrl are compressed copies: CLEAN for hosts/co-hosts, the live wall and a guest's own uploads
+// (`mine: true`); WATERMARKED for everyone else (other guests, share links). They are null while the copies are being made
+// (`processing: "pending"`: show a "processing" tile; never fall back to anything else) or when no preview could be made
+// (`processing: "failed"`: placeholder). Videos: playbackUrl = 1080p clean or 720p watermarked MP4, null until ready.
 // Every 402 uses the standard error shape: { "error": { "code": "payment_required", "message": "…" } }.
-type MediaItem = { id; kind: "photo"|"video"|"voice"; thumbUrl: string|null; displayUrl: string|null; originalUrl?: string|null; playbackUrl?: string|null /* videos only; always present so videos play while downloads are locked */; width; height; durationS; momentTag; dayId; guestName: string|null; reactionCount: number; reactedByMe?: boolean; favourite?: boolean; visibility?: string; approved?: boolean; createdAt: string };
+type MediaItem = { id; kind: "photo"|"video"|"voice"; thumbUrl: string|null; displayUrl: string|null; originalUrl?: null; playbackUrl?: string|null /* videos only */; processing?: "pending"|"ready"|"failed"; mine?: boolean /* guest feed */; width; height; durationS; momentTag; dayId; guestName: string|null; reactionCount: number; reactedByMe?: boolean; favourite?: boolean; visibility?: string; approved?: boolean; createdAt: string };
 type Mission = { id; title; sortOrder };
 type Message = { id; kind; body; mediaUrl: string|null; durationS; guestName: string|null; createdAt };
 type ShareLink = { id; token; url; scope; label; expiresAt };
@@ -111,9 +115,9 @@ PATCH, cover changes, missions (POST), share links (POST) and co-hosts (POST) fa
 - `uploadOpen` / `uploadsOpen` (same value) and `days[].uploadOpen` are true only while the gallery is live (and inside any per-day / legacy upload window). `galleryState` tells the guest app what to show: `not_open` → "This gallery opens on {opensAt}" (no join form), `live` → join and upload, `ended` → join and look, uploads closed, `unavailable` → refunded or deleted. Times are shown in `timeZone`. `downloadsOpen` follows the event's download access.
 - `join`, `feed`, `uploads`, `uploads/complete` and `messages` answer `403 not_open` before the gallery opens and `410 event_unavailable` after a refund or deletion; `GET /g/:slug` always answers (it drives the "opens on …" page).
 - `POST …/join` also accepts `shareToken?` (a `view_upload` share-link token skips the PIN).
-- `GET …/feed` also accepts `kind=photo|video`, `moment`, `dayId`, `sort=new|top`. Videos include `playbackUrl` (always, for playback); `originalUrl` follows the download lock.
+- `GET …/feed` also accepts `kind=photo|video`, `moment`, `dayId`, `sort=new|top`. Items carry `mine` and `processing`; other people's media are watermarked copies only (see MediaItem). `originalUrl` is always null.
 - `GET …/missions` also returns `leaderboard: { guestName, done }[]` and `me: { rank|null, done } | null`.
-- `GET …/mine` items include `originalUrl` and `approved`.
+- `GET …/mine` items are clean copies and include `approved`; `originalUrl` is null (download via `GET …/media/:mediaId/download`).
 - `POST /api/v1/g/:slug/messages/upload-url` `{ mime, bytes, kind?, durationS? }` → `{ mediaKey, upload: PresignedPut }` (voice/video guestbook). Then `POST …/messages` `{ kind, mediaKey, durationS? }`.
 - `POST /api/v1/g/:slug/report` `{ mediaId, reason? }` → `{ ok }` — sets `approved=false`, adds flag `reported`, emails + pushes the hosts.
 - `/g/demo` is a built-in demo (web only, simulated in the browser; the API returns 404 for `demo`).
@@ -149,3 +153,23 @@ Set by our team from the web admin dashboard (`/admin`, web only; not part of th
 - Error codes: `account_suspended` (403; `POST /auth/verify` and every host endpoint for a suspended account — show "Your account is suspended, please contact support"), `event_locked` (403; host edits and uploads on a locked event).
 - `POST /api/v1/g/:slug/report` also records the report (reason + a hash of the IP) for our moderation queue; the response is unchanged.
 
+
+### Media copies and guest downloads (Nov 2026, consumer launch stage B)
+**Copies.** After `uploads/complete` the server makes, from the clean display copy the app uploaded (photos: send a ≈2,000 px WebP `display` and ≈400 px `thumb` as before), a ≈1,200 px **watermarked** guest preview and a watermarked thumb; for videos a clean 1080p MP4, a 720p watermarked MP4 and posters (the app's own poster upload is replaced). This takes seconds for photos and up to a minute or two for videos; until then items have `processing: "pending"`. Re-read the list to pick up finished items (the web app re-polls the first page every 8 s while anything is pending). Hosts and the live wall get clean copies; guests get clean copies of their own uploads and watermarked copies of everyone else's.
+
+**PublicOccasion.guestDownload** (additive): `{ pricePence, available, payments, purchased, expiresAt }` — `available`: guests can buy "download everything" now (Stripe configured, event paid and live or ended); `payments`: Stripe is configured; `purchased`: this device has an active purchase (30 days, `expiresAt`).
+
+Guest endpoints (guest device token required):
+- `GET /api/v1/g/:slug/media/:mediaId/download` → `{ url }` — signed link (≤1 h) to one original. Own uploads: always free. Anyone else's: needs an active purchase on this device, else `402 purchase_required`.
+- `GET /api/v1/g/:slug/purchase` → `{ guestDownload, summary: { photos, videos, bytes, days: { id|null, name|null, count, bytes }[], split } | null }` (summary once bought; `split` = offer one ZIP per day, > ~2 GB).
+- `POST /api/v1/g/:slug/purchase` → `{ url }` — Stripe Checkout (mode payment, GBP, `guestDownloadPence`, card / Apple Pay / Google Pay; Checkout collects the email). Success returns to `/g/:slug/download?session_id=…`, cancel to `/g/:slug`. Errors: `409 cannot_pay` (event not paid, not open, expired, refunded), `409 already_paid`, `503 payments_unavailable`, `429 rate_limited`. **Web only:** mobile store builds must not sell this in the app (App Store 3.1.1 / Play billing); open the web page instead.
+- `GET /api/v1/g/:slug/purchase/files?dayId=<uuid>|none` → `{ files: { id, name, url, mime, kind, bytes, dayId, createdAt }[], totalBytes }` — ZIP manifest with fresh signed links (≤1 h) minted per request. `402 purchase_required` without an active purchase.
+
+Emailed link (no guest token; the token in the URL is the credential, valid 30 days from payment, stored only as a hash):
+- `GET /api/v1/d/:token` → `{ title, expiresAt, summary }`; `GET /api/v1/d/:token/files?dayId=` → manifest as above; `GET /api/v1/d/:token/files/:mediaId` → `{ url }`. `404 not_found` when the token is unknown, refunded, past 30 days, or the event's files are gone. Rate-limited per IP and per token (`429`).
+- Web pages: `/g/:slug/download` (after Checkout, on the paying device) and `/d/:token` (from the email).
+
+A purchase covers every visible, approved, revealed photo and video of the event at download time (also ones added after paying). A full refund in Stripe ends access and kills the link.
+
+**Internal (not for clients):** `POST /api/internal/media/process` (HMAC-signed ids, server-to-server) and `GET /api/cron/media` (Vercel Cron) make the copies.
+New error codes: `purchase_required` (402), `already_paid` / `cannot_pay` (409) on the guest purchase.

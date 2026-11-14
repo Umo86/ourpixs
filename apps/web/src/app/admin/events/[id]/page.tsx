@@ -88,6 +88,7 @@ export default async function AdminEventPage({ params, searchParams }: { params:
               <thead>
                 <tr>
                   <th scope="col" className={th}>{t("event.payments")}</th>
+                  <th scope="col" className={th}>{t("event.kind")}</th>
                   <th scope="col" className={th}>{t("event.amount")}</th>
                   <th scope="col" className={th}>{t("events.status")}</th>
                   <th scope="col" className={th}>{t("event.mode")}</th>
@@ -96,7 +97,8 @@ export default async function AdminEventPage({ params, searchParams }: { params:
               <tbody>
                 {data.orders.map((r) => (
                   <tr key={r.id}>
-                    <td className={td}>{dt(r.paidAt ?? r.createdAt)}<span className="block break-all text-xs text-muted">{r.stripeSessionId}</span></td>
+                    <td className={td}>{dt(r.paidAt ?? r.createdAt)}<span className="block break-all text-xs text-muted">{r.ref}</span></td>
+                    <td className={td}>{t(`event.kinds.${r.kind === "guest_download" ? "guest_download" : r.kind === "event_package" ? "event_package" : "legacy"}`)}</td>
                     <td className={td}>{formatGBP(r.amountPence)}</td>
                     <td className={td}><Pill tone={r.status === "paid" ? "green" : r.status === "refunded" ? "grey" : "red"}>{t(`event.orderStatus.${r.status}`)}</Pill></td>
                     <td className={td}>{r.livemode ? t("event.live") : t("event.test")}</td>

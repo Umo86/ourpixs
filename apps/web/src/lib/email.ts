@@ -124,3 +124,16 @@ export async function sendReportEmail(to: string, opts: { title: string; occasio
   const html = layout(opts.brand, { heading: t("email.report.heading"), body, cta: { href: url, label: t("email.report.cta") }, footer: t("email.report.footer") });
   await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n")}\n\n${url}`);
 }
+
+/**
+ * Guest "download everything" receipt: the /d/<token> link (valid 30 days). Brand = the event's brand, language = the
+ * guest's at checkout. Plain and friendly; the token in the link is the only copy (we store its hash).
+ */
+export async function sendGuestDownloadEmail(to: string, opts: { locale: Locale; brand: Brand; title: string; url: string; expiresAt: Date }) {
+  const t = makeT(opts.locale, "guest");
+  const vars = { brand: BRANDS[opts.brand].name, title: opts.title, date: formatEmailDate(opts.expiresAt, opts.locale) };
+  const subject = t("email.purchase.subject", vars);
+  const body = [t("email.purchase.body", vars), t("email.purchase.body2", vars)];
+  const html = layout(opts.brand, { heading: t("email.purchase.heading", vars), body, cta: { href: opts.url, label: t("email.purchase.cta") }, footer: t("email.purchase.footer", vars) });
+  await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${opts.url}\n\n${t("email.purchase.footer", vars)}`);
+}

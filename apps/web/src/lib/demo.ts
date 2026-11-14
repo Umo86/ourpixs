@@ -27,6 +27,7 @@ export function demoOccasion(locale: Locale): PublicOccasion {
     ],
     moments: tr ? ["Gelin girişi", "İlk dans", "Takı töreni", "Halay", "Pasta", "Aile"] : ["Grand entrance", "First dance", "Gold ceremony", "Halay", "Cake", "Family"],
     liveWall: true, missionsEnabled: true, disposableShots: 12, voiceGuestbook: true, uploadOpen: true, uploadsOpen: true, downloadsOpen: true,
+    guestDownload: { pricePence: PACKAGE_DEFAULTS.guestDownloadPence, available: false, payments: false, purchased: false, expiresAt: null },
     revealMode: "live", revealAt: null, coverUrl: MEDIA.wedding, hasPin: false,
     galleryState: "live", opensAt: yesterday.toISOString(), closesAt: new Date(today.getTime() + 6 * 86400000).toISOString(),
     timeZone: DEFAULT_TIME_ZONE, videoMaxSeconds: PACKAGE_DEFAULTS.videoMaxSeconds,

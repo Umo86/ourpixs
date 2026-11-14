@@ -14,7 +14,9 @@ export type Processed = {
   mime: string;
 };
 
-const DISPLAY = 1600;
+/** Clean display copy (host album, live wall, the uploader's own view) ≈2,000 px; thumb ≈400 px. The server makes the
+ * watermarked guest copies from the display copy (src/lib/media-processing.ts). */
+const DISPLAY = 2000;
 const THUMB = 400;
 
 /** Normalises odd/empty mime types from mobile pickers. */
@@ -54,7 +56,7 @@ async function resized(src: CanvasImageSource, w: number, h: number, max: number
   return toWebp(c, quality);
 }
 
-/** Photos: EXIF-oriented WebP display (1600px) + thumb (400px). Canvas output carries no EXIF, so no GPS. */
+/** Photos: EXIF-oriented WebP display (2000px, q0.82) + thumb (400px). Canvas output carries no EXIF, so no GPS. */
 async function processPhoto(file: File, mime: string): Promise<Processed> {
   let original: Blob = file;
   if (mime === "image/jpeg") {
@@ -71,7 +73,8 @@ async function processPhoto(file: File, mime: string): Promise<Processed> {
     bmp.close();
     return out;
   } catch {
-    // HEIC on browsers that can't decode it: upload the original only; the album shows it via the original URL.
+    // HEIC on browsers that can't decode it: upload the original only; the server tries to make the copies
+    // (if it can't, guests see a placeholder and only the hosts see the original).
     return { original, kind: "photo", mime };
   }
 }

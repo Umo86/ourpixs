@@ -3,7 +3,9 @@ import { adminRoute, audit } from "@/lib/admin";
 import { CRON_JOBS, runCron, type CronJob } from "@/lib/cron";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const runtime = "nodejs";
+// The media sweep transcodes videos (needs ffmpeg and a long function).
+export const maxDuration = 300;
 
 /** "Run now" on /admin/system: runs the same job logic as the scheduled cron, server-side. */
 export const POST = adminRoute<{ name: string }>(async (_req, { name }, admin) => {

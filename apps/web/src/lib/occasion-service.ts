@@ -9,7 +9,7 @@ import { loadDays, occasionExtras } from "./queries";
 import { coverUrlFor, toOccasion, toSummary } from "./serializers";
 import { randomSlug, vanityError } from "./slug";
 import { hashSecret } from "./crypto";
-import { deleteObjects } from "./storage";
+import { deleteObjects, mediaFileKeys } from "./storage";
 import { accessForOccasion, accessForOccasions, assertCanEditWindow, assertWritable, type Access } from "./access";
 import { getSettings } from "./settings";
 import { addMonths, defaultWindow, windowError } from "./window";
@@ -174,7 +174,10 @@ export async function updateOccasion(o: OccasionRow, p: z.infer<typeof patchSche
       const [m] = await db.select().from(schema.media)
         .where(and(eq(schema.media.id, p.coverMediaId), eq(schema.media.occasionId, o.id))).limit(1);
       if (!m) throw badRequest("Unknown photo");
-      set.coverKey = m.keyDisplay ?? m.keyThumb ?? m.keyOriginal;
+      // The cover is the host's choice and is shown on the guest welcome page: the clean display copy, never the original.
+      const key = m.kind === "photo" ? (m.keyDisplay ?? m.keyThumb) : null;
+      if (!key) throw badRequest("This photo can't be used as the cover");
+      set.coverKey = key;
     }
   }
   if (p.vanitySlug !== undefined) {
@@ -258,12 +261,11 @@ export async function deleteOccasion(occasionId: string) {
 }
 
 export async function keysForOccasion(occasionId: string) {
-  const media = await db.select({ a: schema.media.keyOriginal, b: schema.media.keyDisplay, c: schema.media.keyThumb })
-    .from(schema.media).where(eq(schema.media.occasionId, occasionId));
+  const media = await db.select().from(schema.media).where(eq(schema.media.occasionId, occasionId));
   const msgs = await db.select({ k: schema.messages.mediaKey }).from(schema.messages).where(eq(schema.messages.occasionId, occasionId));
   // Custom covers live under o/{id}/cover/ and aren't media rows.
   const [occ] = await db.select({ k: schema.occasions.coverKey }).from(schema.occasions).where(eq(schema.occasions.id, occasionId));
   const cover = occ?.k?.startsWith(`o/${occasionId}/cover/`) ? occ.k : null;
-  return [...media.flatMap((m) => [m.a, m.b, m.c]), ...msgs.map((m) => m.k), cover].filter((k): k is string => !!k);
+  return [...media.flatMap(mediaFileKeys), ...msgs.map((m) => m.k), cover].filter((k): k is string => !!k);
 }
 

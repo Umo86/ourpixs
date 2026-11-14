@@ -5,7 +5,8 @@
   "loading": "Loading…",
   "next": "Next",
   "previous": "Previous",
-  "retry": "Try again"
+  "retry": "Try again",
+  "cancel": "Cancel"
  },
  "errors": {
   "generic": "Something went wrong. Please try again.",
@@ -32,7 +33,11 @@
   "not_open": "This gallery isn't open yet.",
   "event_unavailable": "This gallery is no longer available.",
   "payment_required": "Downloads aren't available for this event yet.",
-  "test_limit": "Uploads are closed right now."
+  "test_limit": "Uploads are closed right now.",
+  "purchase_required": "Get every photo and video in full quality to download this one.",
+  "already_paid": "You already have every photo and video from this event.",
+  "cannot_pay": "Full-quality downloads can't be bought for this gallery right now.",
+  "payments_unavailable": "Payments are coming soon."
  },
  "demo": {
   "banner": "Demo event: try everything, nothing is saved."
@@ -88,8 +93,9 @@
   "report": "Report",
   "reportPrompt": "What's wrong with this photo? (optional)",
   "reported": "Thanks. The hosts will take a look.",
-  "downloadsLocked": "Downloads aren't open for this album yet. The hosts can turn them on.",
-  "videoLocked": "This video can be watched once the hosts turn on downloads. It's safe in the album."
+  "processing": "Getting ready…",
+  "processingLong": "This one is still getting ready. It will appear in a moment.",
+  "unavailable": "Preview not available"
  },
  "upload": {
   "title": "Add your",
@@ -214,5 +220,60 @@
   "unavailableTitle": "This gallery is closed.",
   "unavailableBody": "It isn't available any more. If you think this is a mistake, ask the hosts.",
   "keepLink": "Keep this link: nothing to install, no account needed."
+ },
+ "purchase": {
+  "productName": "Every photo and video",
+  "sticker": "Full quality",
+  "title": "Get every photo and video in full quality: {price}",
+  "body": "Everything from this event, the way it was taken. One ZIP, no watermark, plus a link by email for 30 days.",
+  "cta": "Get them all for {price}",
+  "opening": "Opening checkout…",
+  "dialogBody": "Here you see small previews with a watermark. Get every photo and video from the event in full quality, no watermark: one ZIP to save, plus an email link that works for 30 days. Your own photos are always free to download.",
+  "unavailable": "Full-quality downloads aren't available for this gallery right now.",
+  "comingSoon": "Full-quality downloads are coming soon.",
+  "fine": "One-off payment by card, Apple Pay or Google Pay. No account needed.",
+  "haveTitle": "You have every photo and video",
+  "until": "Your downloads are ready until {date}.",
+  "open": "Open downloads"
+ },
+ "download": {
+  "title": "Your",
+  "titleAccent": "downloads.",
+  "confirming": "We're confirming your payment…",
+  "confirmingBody": "This usually takes a few seconds. Refresh in a moment, or open the link we email you.",
+  "refresh": "Refresh",
+  "thanks": "Thank you! Everything's ready below.",
+  "thanksEmail": "Thank you! Everything's ready below, and we've sent a link to {email}.",
+  "sticker": "Full quality",
+  "counts": "{photos} photos, {videos} videos · {size}",
+  "until": "Downloads work until {date}.",
+  "everything": "Download everything",
+  "splitHint": "That's a lot of photos, so it comes as one ZIP per day below.",
+  "otherDay": "Other",
+  "dayCounts": "{n} files · {size}",
+  "zip": "Download ZIP",
+  "progress": "Adding {done} of {total} files…",
+  "preparing": "Getting the file list…",
+  "keepOpen": "Keep this page open until it finishes.",
+  "saved": "Download complete.",
+  "nothing": "There's nothing to download yet.",
+  "oneByOne": "Or one by one",
+  "one": "Download this one",
+  "oneBy": "Download photo by {name}",
+  "more": "Showing the newest 300 here. The ZIP has everything.",
+  "browserNote": "Big downloads work best in Chrome or Edge on a computer. On a phone, save a few at a time.",
+  "slowDown": "Please wait a moment",
+  "invalidTitle": "This link doesn't work any more",
+  "invalidBody": "Download links last 30 days. If you think this is a mistake, reply to the email and we will help."
+ },
+ "email": {
+  "purchase": {
+   "subject": "Your photos from {title}",
+   "heading": "Every photo and video, in full quality",
+   "body": "Thank you! Everything from {title} is ready to download, the way it was taken.",
+   "body2": "This link works until {date}. Open it on a computer for the biggest downloads.",
+   "cta": "Download everything",
+   "footer": "You bought this on {brand}. Keep this email: the link is only sent once."
+  }
  }
 }

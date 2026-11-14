@@ -6,7 +6,11 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { generateClientTokenFromReadWriteToken } from "@vercel/blob/client";
-import { head as blobHead, del as blobDel, BlobNotFoundError } from "@vercel/blob";
+import { head as blobHead, del as blobDel, put as blobPut, BlobNotFoundError } from "@vercel/blob";
+import { createReadStream, createWriteStream } from "node:fs";
+import { stat } from "node:fs/promises";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import { ApiError } from "./http";
 import { randomToken } from "./crypto";
 
@@ -16,6 +20,15 @@ import { randomToken } from "./crypto";
  *   BLOB_READ_WRITE_TOKEN                                               → Vercel Blob
  *   neither                                                             → StorageNotConfigured
  * Browsers/apps always upload directly to storage with a presigned PUT; bytes never pass through a Vercel function.
+ *
+ * ORIGINALS ARE PRIVATE. They are only ever handed out through `privateGetUrl` (short-lived signed links, minted per
+ * request by the permission-checked download endpoints). Feeds, the wall and share links never sign an original:
+ * they get the compressed copies (`presignGet`), see src/lib/media-urls.ts.
+ *
+ * !! Vercel Blob caveat: the Blob store used by this driver is PUBLIC; we only make the paths unguessable (a random
+ * 128-bit segment per file). Anyone holding a Blob URL can fetch it forever, and `privateGetUrl` cannot expire it.
+ * So Blob does NOT meet "originals only after payment" — it is a stop-gap for previews. Production must use R2
+ * (private bucket). /admin/system shows a red warning while the driver is Blob. See docs/SETUP.md.
  */
 
 export type Driver = "r2" | "blob";
@@ -92,6 +105,16 @@ export function mediaKeys(occasionId: string, mediaId: string, mime: string) {
   };
 }
 
+/** Server-made copies next to the original: o/{occasionId}/{mediaId}/{base}.{ext} (guest.webp, video.mp4, …). */
+export function derivedKey(occasionId: string, mediaId: string, base: string, ext: string) {
+  return `o/${occasionId}/${mediaId}/${fileName(base, ext)}`;
+}
+
+/** Every stored file of a media row (for deletions). */
+export function mediaFileKeys(m: { keyOriginal: string; keyDisplay: string | null; keyThumb: string | null; keyGuest?: string | null; keyGuestThumb?: string | null; keyVideo?: string | null; keyGuestVideo?: string | null }) {
+  return [m.keyOriginal, m.keyDisplay, m.keyThumb, m.keyGuest ?? null, m.keyGuestThumb ?? null, m.keyVideo ?? null, m.keyGuestVideo ?? null];
+}
+
 /** Guestbook voice/video notes: o/{occasionId}/msg/{guestId}/{random}.{ext} */
 export function messageKey(occasionId: string, guestId: string, mime: string) {
   return `o/${occasionId}/msg/${guestId}/${randomToken(12)}.${EXT_BY_MIME[mime] || "bin"}`;
@@ -137,16 +160,70 @@ export async function presignPut(key: string, contentType: string, bytes?: numbe
   };
 }
 
-/** Short-lived read URL (R2: presigned 1h; Blob: the unguessable public URL). */
+const disposition = (name: string) => `attachment; filename="${name.replace(/[^\w.\- ]/g, "_")}"`;
+
+/**
+ * Short-lived read URL for COMPRESSED copies (display, thumbs, guest previews, transcoded videos, covers, guestbook
+ * recordings). R2: presigned 1 h; Blob: the unguessable public URL. Never use this for originals: see privateGetUrl.
+ */
 export async function presignGet(key: string, opts: { download?: string } = {}): Promise<string> {
   const d = driver();
   if (d === "r2") {
     return getSignedUrl(r2(), new GetObjectCommand({
-      Bucket: bucket(), Key: key,
-      ResponseContentDisposition: opts.download ? `attachment; filename="${opts.download.replace(/[^\w.\- ]/g, "_")}"` : undefined,
+      Bucket: bucket(), Key: key, ResponseContentDisposition: opts.download ? disposition(opts.download) : undefined,
     }), { expiresIn: URL_TTL });
   }
   return opts.download ? `${blobPublicUrl(key)}?download=1` : blobPublicUrl(key);
+}
+
+/** Longest lifetime of a signed link to an original (in-app downloads). */
+export const PRIVATE_URL_MAX_TTL = 3600;
+
+/**
+ * THE only way an original is handed out: a signed, expiring GET (R2 presigned, default 1 h, capped at 1 h) minted
+ * per request by a permission-checked download endpoint. `download` sets the saved file name.
+ * Blob fallback: returns the public-but-unguessable URL, which does NOT expire (see the caveat at the top).
+ */
+export async function privateGetUrl(key: string, ttlSeconds = PRIVATE_URL_MAX_TTL, opts: { download?: string } = {}): Promise<string> {
+  const d = driver();
+  const ttl = Math.max(60, Math.min(PRIVATE_URL_MAX_TTL, Math.floor(ttlSeconds)));
+  if (d === "r2") {
+    return getSignedUrl(r2(), new GetObjectCommand({
+      Bucket: bucket(), Key: key, ResponseContentDisposition: opts.download ? disposition(opts.download) : undefined,
+    }), { expiresIn: ttl });
+  }
+  return opts.download ? `${blobPublicUrl(key)}?download=1` : blobPublicUrl(key);
+}
+
+/** Server-side: copies a stored object to a local file (e.g. /tmp) for processing. */
+export async function downloadToFile(key: string, path: string): Promise<void> {
+  const d = driver();
+  if (d === "r2") {
+    const r = await r2().send(new GetObjectCommand({ Bucket: bucket(), Key: key }));
+    if (!r.Body) throw new Error(`empty object ${key}`);
+    await pipeline(r.Body as Readable, createWriteStream(path));
+    return;
+  }
+  const res = await fetch(blobPublicUrl(key), { cache: "no-store" });
+  if (!res.ok || !res.body) throw new Error(`blob fetch ${res.status} for ${key}`);
+  await pipeline(Readable.fromWeb(res.body as import("node:stream/web").ReadableStream), createWriteStream(path));
+}
+
+/** Server-side: uploads a local file or buffer (processing outputs). */
+export async function uploadObject(key: string, body: Buffer | { path: string }, contentType: string): Promise<void> {
+  const d = driver();
+  if (d === "r2") {
+    if (Buffer.isBuffer(body)) {
+      await r2().send(new PutObjectCommand({ Bucket: bucket(), Key: key, Body: body, ContentType: contentType }));
+    } else {
+      const { size } = await stat(body.path);
+      await r2().send(new PutObjectCommand({ Bucket: bucket(), Key: key, Body: createReadStream(body.path), ContentLength: size, ContentType: contentType }));
+    }
+    return;
+  }
+  const data = Buffer.isBuffer(body) ? body : createReadStream(body.path);
+  const big = !Buffer.isBuffer(body) && (await stat(body.path)).size > MULTIPART_THRESHOLD;
+  await blobPut(key, data, { access: "public", token: blobToken(), contentType, addRandomSuffix: false, allowOverwrite: true, multipart: big });
 }
 
 /** Signs many keys; missing storage config yields nulls instead of throwing (lists still render). */

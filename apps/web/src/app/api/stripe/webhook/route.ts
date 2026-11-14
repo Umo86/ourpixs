@@ -3,9 +3,10 @@ import type { NextRequest } from "next/server";
 import { errorJson, json, toErrorResponse } from "@/lib/http";
 import { stripe } from "@/lib/stripe";
 import { fulfilCheckout, handleChargeRefunded } from "@/lib/billing";
+import { GUEST_DOWNLOAD_KIND, fulfilGuestPurchase } from "@/lib/guest-purchase";
 
 /**
- * Stripe webhook for the event package. Subscribe the endpoint to:
+ * Stripe webhook for the event package and guests' "download everything" purchases. Subscribe the endpoint to:
  *   checkout.session.completed, checkout.session.async_payment_succeeded, charge.refunded
  *
  * Signature-checked. Idempotent: every event re-reads the session / charge from Stripe and applies its current
@@ -30,7 +31,10 @@ export async function POST(req: NextRequest) {
       case "checkout.session.async_payment_succeeded": {
         const s = event.data.object as Stripe.Checkout.Session;
         // Delayed methods complete with payment_status "unpaid"; fulfilCheckout waits for async_payment_succeeded then.
-        if (s.mode === "payment") await fulfilCheckout(s.id);
+        if (s.mode !== "payment") break;
+        // Guests buying "download everything" (kind guest_download) vs the host's event package.
+        if (s.metadata?.kind === GUEST_DOWNLOAD_KIND) await fulfilGuestPurchase(s.id);
+        else await fulfilCheckout(s.id);
         break;
       }
       case "charge.refunded":

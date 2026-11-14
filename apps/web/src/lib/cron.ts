@@ -4,18 +4,20 @@ import { db, schema } from "@/db";
 import { DELETION_REMINDER_DAYS } from "./config";
 import { emailConfigured, sendDeletionReminder } from "./email";
 import { sendDueEndedEmails } from "./package";
-import { abortUpload, deleteObjects } from "./storage";
+import { abortUpload, deleteObjects, mediaFileKeys } from "./storage";
+import { sweepMedia } from "./media-processing";
 import { keysForOccasion } from "./occasion-service";
 
 /**
- * The two daily jobs, called by /api/cron/* (Vercel Cron) and by "Run now" on /admin/system.
+ * The jobs called by /api/cron/* (Vercel Cron) and by "Run now" on /admin/system: expiry and cleanup (daily) and the
+ * media sweep (daily on Hobby, every 10 minutes on Pro; retries pending/failed previews and transcodes).
  * Every run is recorded in `cron_runs` (name, start/finish, ok, summary).
  */
-export const CRON_JOBS = ["expiry", "cleanup"] as const;
+export const CRON_JOBS = ["expiry", "cleanup", "media"] as const;
 export type CronJob = (typeof CRON_JOBS)[number];
 
 export async function runCron(name: CronJob, trigger: "schedule" | "admin" = "schedule"): Promise<Record<string, unknown>> {
-  const fn = name === "expiry" ? runExpiry : runCleanup;
+  const fn = name === "expiry" ? runExpiry : name === "media" ? () => sweepMedia({ budgetMs: 240_000 }) : runCleanup;
   const [run] = await db.insert(schema.cronRuns).values({ name, summary: { trigger } }).returning({ id: schema.cronRuns.id })
     .catch((e) => { console.error("[cron] could not record run", e); return [] as { id: string }[]; });
   try {
@@ -115,13 +117,16 @@ export async function runCleanup(): Promise<Record<string, number>> {
   const archived = await deleteExpiredEvents();
   const { media } = schema;
   const dayAgo = new Date(Date.now() - 24 * 3600_000);
-  const stale = await db.select({ id: media.id, a: media.keyOriginal, b: media.keyDisplay, c: media.keyThumb, status: media.status })
+  const stale = await db.select({
+    id: media.id, status: media.status, keyOriginal: media.keyOriginal, keyDisplay: media.keyDisplay, keyThumb: media.keyThumb,
+    keyGuest: media.keyGuest, keyGuestThumb: media.keyGuestThumb, keyVideo: media.keyVideo, keyGuestVideo: media.keyGuestVideo,
+  })
     .from(media)
     .where(or(and(eq(media.status, "pending"), lt(media.createdAt, dayAgo)), eq(media.status, "failed"), eq(media.visibility, "deleted")))
     .limit(MEDIA_BATCH);
   if (stale.length) {
-    await Promise.all(stale.filter((s) => s.status === "pending").map((s) => abortUpload(s.a)));
-    await deleteObjects(stale.flatMap((s) => [s.a, s.b, s.c]));
+    await Promise.all(stale.filter((s) => s.status === "pending").map((s) => abortUpload(s.keyOriginal)));
+    await deleteObjects(stale.flatMap(mediaFileKeys));
     await db.delete(media).where(inArray(media.id, stale.map((s) => s.id)));
   }
   await db.delete(schema.loginTokens).where(lt(schema.loginTokens.createdAt, dayAgo));

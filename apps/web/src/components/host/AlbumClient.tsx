@@ -8,10 +8,12 @@ import { Lightbox } from "@/components/app/Lightbox";
 import { Notice } from "@/components/app/Notice";
 import { Spinner } from "@/components/app/Spinner";
 import { useT } from "@/i18n/client";
-import { api, errorMessage } from "@/lib/client/api";
+import { api, ApiClientError, errorMessage } from "@/lib/client/api";
 import { formatDuration } from "@/lib/client/format";
 import { Uploader } from "@/lib/client/uploader";
-import { EXT, openSaveTarget, safeName, saveZip } from "@/lib/client/zip";
+import { openSaveTarget, safeName, saveZip } from "@/lib/client/zip";
+import { ProcessingTile } from "@/components/app/ProcessingTile";
+import { useProcessingRefresh } from "@/components/app/useProcessingRefresh";
 import type { MediaItem } from "@/lib/api-types";
 import { DownloadLockedDialog } from "./EventPackage";
 
@@ -94,6 +96,8 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
       if (my === reqId.current) setLoading(false);
     }
   }, [occasionId, qs, cursor, t]);
+  // Videos (and photos the browser couldn't preview) show "processing" until the server copies exist.
+  useProcessingRefresh(items, async () => (await api<{ items: MediaItem[] }>(`/api/v1/occasions/${occasionId}/media?${qs(null)}`)).items, setItems);
 
   // Reload from the top whenever filters change.
   useEffect(() => {
@@ -202,27 +206,43 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
     }
   }
 
+  /** Originals never come with the album list: the server mints fresh signed links for the selection. */
   async function downloadSelected() {
     if (!canDownload) { setLocked(true); return; }
-    const chosen = items.filter((i) => selected.has(i.id) && i.originalUrl);
+    const chosen = items.filter((i) => selected.has(i.id) && i.kind !== "voice");
     if (!chosen.length) return;
     const filename = `${safeName(t("album.zipName"))}-${chosen.length}.zip`;
+    let target: WritableStream<Uint8Array> | null = null;
     try {
-      const target = await openSaveTarget(filename);
-      setZipping(t("download.progress", { done: 0, total: chosen.length }));
-      await saveZip(chosen.map((i, n) => ({
-        name: `${String(n + 1).padStart(4, "0")}_${safeName(i.guestName || "host")}.${EXT[i.mime || ""] || (i.kind === "video" ? "mp4" : "jpg")}`,
-        url: i.originalUrl!, lastModified: new Date(i.createdAt),
-      })), filename, (p) => setZipping(t("download.progress", { done: p.files, total: p.totalFiles })), { target });
+      target = await openSaveTarget(filename);
+      setZipping(t("download.preparing"));
+      const { files } = await api<{ files: { name: string; url: string; createdAt: string }[] }>(`/api/v1/occasions/${occasionId}/download`, { body: { ids: chosen.map((i) => i.id) } });
+      setZipping(t("download.progress", { done: 0, total: files.length }));
+      await saveZip(files.map((f) => ({ name: f.name, url: f.url, lastModified: new Date(f.createdAt) })), filename,
+        (p) => setZipping(t("download.progress", { done: p.files, total: p.totalFiles })), { target });
       setToast(t("download.saved"));
     } catch (e) {
-      if ((e as Error).name !== "AbortError") setToast(t("errors.generic"));
+      await target?.abort().catch(() => {});
+      if (e instanceof ApiClientError && e.code === "payment_required") setLocked(true);
+      else if ((e as Error).name !== "AbortError") setToast(t("errors.generic"));
     } finally {
       setZipping(null);
     }
   }
 
-  const lbLabels = { close: t("common.close"), prev: t("common.previous"), next: t("common.next"), download: t("common.download"), by: (n: string) => t("album.by", { name: n }), videoLocked: t("album.videoLocked") };
+  /** One original: a fresh signed link (1 h) from the server. */
+  async function downloadOne(m: MediaItem) {
+    if (!canDownload) { setLocked(true); return; }
+    try {
+      const r = await api<{ url: string }>(`/api/v1/occasions/${occasionId}/media/${m.id}/download`);
+      window.location.assign(r.url);
+    } catch (e) {
+      if (e instanceof ApiClientError && e.code === "payment_required") setLocked(true);
+      else setToast(errorMessage(t, e));
+    }
+  }
+
+  const lbLabels = { close: t("common.close"), prev: t("common.previous"), next: t("common.next"), download: t("common.download"), by: (n: string) => t("album.by", { name: n }), processing: t("album.processingLong"), unavailable: t("album.unavailable") };
   const iconBtn = "inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky";
   const select = "min-h-10 rounded-full border-[1.5px] border-[#D5D8E2] bg-white px-4 text-[13px] font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky";
   const allSelected = items.length > 0 && items.every((i) => selected.has(i.id));
@@ -336,7 +356,8 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
                 {m.thumbUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={m.thumbUrl} alt="" loading="lazy" decoding="async" className={`h-full w-full object-cover transition-transform group-hover:scale-105 ${m.visibility === "hidden" ? "opacity-40" : ""}`} />
-                ) : <span className="flex h-full w-full items-center justify-center text-xs text-muted-dark">{m.kind === "video" ? "VIDEO" : "HEIC"}</span>}
+                ) : <ProcessingTile tone="light" failed={m.processing === "failed"} label={m.processing === "failed" ? t("album.unavailable") : t("album.processing")} />}
+                {m.kind === "video" && m.processing === "pending" && m.thumbUrl ? <span className="absolute bottom-8 left-1.5 rounded-full bg-black/65 px-2 py-0.5 text-[11px] font-bold text-white">{t("album.processing")}</span> : null}
                 {m.kind === "video" ? <span className="absolute right-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-black/65 px-2 py-0.5 text-[11px] font-bold text-white"><Play size={10} aria-hidden fill="currentColor" />{formatDuration(m.durationS)}</span> : null}
                 {m.favourite ? <Star size={16} aria-hidden className="absolute left-1.5 top-1.5 fill-white text-white drop-shadow" /> : null}
                 {m.approved === false ? <span className="absolute bottom-1.5 left-1.5 rounded-full bg-royal px-2 py-0.5 text-[11px] font-bold text-white">{t("album.pendingBadge")}</span> : null}
@@ -375,7 +396,7 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
 
       {open !== null && items[open] ? (
         <Lightbox items={items} index={open} onIndex={setOpen} onClose={() => setOpen(null)} labels={lbLabels}
-          downloadUrl={(m) => m.originalUrl ?? null} onDownloadLocked={canDownload ? undefined : () => setLocked(true)}
+          onDownload={downloadOne} onDownloadLocked={canDownload ? undefined : () => setLocked(true)}
           actions={(m) => (
             <>
               {m.approved === false ? <button type="button" className={iconBtn} aria-label={t("album.approve")} onClick={() => act([m.id], "approve")}><BadgeCheck size={20} aria-hidden /></button> : null}

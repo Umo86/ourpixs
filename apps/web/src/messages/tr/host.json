@@ -261,7 +261,9 @@
    "nsfw": "Kontrol edin",
    "reported": "Bildirildi"
   },
-  "videoLocked": "Bu video, etkinliğin ödemesi yapıldıktan sonra burada oynatılır."
+  "processing": "Hazırlanıyor…",
+  "processingLong": "Bu video hâlâ hazırlanıyor. Birazdan oynatabilirsin.",
+  "unavailable": "Önizleme yok"
  },
  "qr": {
   "metaTitle": "QR kartlar",
@@ -423,7 +425,8 @@
   "lockedSetup": "İndirmeler, etkinliğin ödemesini yaptıktan sonra açılır. O zamana kadar albümdeki her şeyi görüntüleyebilirsiniz.",
   "lockedRefunded": "Bu etkinlik iade edildiği için indirmeler kapalı.",
   "lockedExpired": "Bu etkinliğin dosyaları silindi.",
-  "lockedSuspended": "Bu hesap askıya alındığı için indirmeler kapalı. Lütfen destekle iletişime geçin."
+  "lockedSuspended": "Bu hesap askıya alındığı için indirmeler kapalı. Lütfen destekle iletişime geçin.",
+  "bigHint": "Toplam {size}: en sorunsuz sonuç için aşağıdan günleri tek tek indir."
  },
  "support": {
   "metaTitle": "Destek",

@@ -10,6 +10,7 @@ import { Notice } from "@/components/app/Notice";
 import { accessForOccasion } from "@/lib/access";
 import { paymentsEnabled } from "@/lib/stripe";
 import { getSettings } from "@/lib/settings";
+import { SPLIT_ZIP_BYTES } from "@/lib/purchase-rules";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,7 @@ export default async function DownloadPage({ params }: { params: Promise<{ id: s
         {access.deleteAfter && !access.deleted ? <p className="m-0 text-sm font-semibold text-royal">{t("download.keptUntil", { date: formatDate(access.deleteAfter.toISOString(), locale) })}</p> : null}
       </div>
       {locked ? <Notice>{locked}</Notice> : null}
+      {!locked && stats.bytes > SPLIT_ZIP_BYTES && days.length > 1 ? <Notice>{t("download.bigHint", { size: formatBytes(stats.bytes, locale) })}</Notice> : null}
       <DownloadClient occasionId={m.occasion.id} title={m.occasion.title} days={days.map((d) => ({ id: d.id, name: d.name }))}
         canDownload={access.canDownload} isOwner={m.role === "owner"} payments={paymentsEnabled()} pricePence={settings.eventPricePence} canPay={access.canPay} />
     </Container>

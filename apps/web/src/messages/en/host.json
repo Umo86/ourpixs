@@ -261,7 +261,9 @@
    "nsfw": "Check",
    "reported": "Reported"
   },
-  "videoLocked": "This video will play here once the event is paid for."
+  "processing": "Processing…",
+  "processingLong": "This video is still being prepared. It will play in a moment.",
+  "unavailable": "No preview"
  },
  "qr": {
   "metaTitle": "QR cards",
@@ -423,7 +425,8 @@
   "lockedSetup": "Downloads open once you've paid for the event. Until then you can view everything in the album.",
   "lockedRefunded": "This event was refunded, so downloads are closed.",
   "lockedExpired": "This event's files have been deleted.",
-  "lockedSuspended": "This account is suspended, so downloads are closed. Please contact support."
+  "lockedSuspended": "This account is suspended, so downloads are closed. Please contact support.",
+  "bigHint": "That's {size}: download one day at a time below for the most reliable result."
  },
  "support": {
   "metaTitle": "Support",

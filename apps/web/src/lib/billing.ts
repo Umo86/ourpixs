@@ -9,6 +9,7 @@ import { getSettings } from "./settings";
 import { paymentsEnabled, stripe } from "./stripe";
 import { addMonths, windowError } from "./window";
 import { makeT } from "@/i18n/shared";
+import { handleGuestPurchaseRefund } from "./guest-purchase";
 
 /**
  * The £69 event package (Stripe Checkout, mode "payment", GBP, inline price from admin settings).
@@ -163,7 +164,12 @@ export async function handleChargeRefunded(chargeId: string): Promise<{ applied:
   const piId = idOf(charge.payment_intent);
   if (!piId) return { applied: false, reason: "no_payment_intent" };
   const [order] = await db.select().from(schema.orders).where(eq(schema.orders.stripePaymentIntentId, piId)).limit(1);
-  if (!order || order.kind !== EVENT_PACKAGE_KIND) return { applied: false, reason: "no_order" };
+  if (!order) {
+    // A guest's "download everything" purchase: a full refund ends their access (src/lib/guest-purchase.ts).
+    const g = await handleGuestPurchaseRefund(piId, charge);
+    return g.found ? { applied: g.applied, reason: g.applied ? "guest_download" : "partial" } : { applied: false, reason: "no_order" };
+  }
+  if (order.kind !== EVENT_PACKAGE_KIND) return { applied: false, reason: "no_order" };
   const full = charge.refunded || charge.amount_refunded >= charge.amount;
   if (!full) return { applied: false, reason: "partial" };
   const now = new Date();

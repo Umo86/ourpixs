@@ -20,7 +20,8 @@ export function integrationChecks(): Check[] {
     { key: "database", ok: set("DATABASE_URL"), required: true },
     { key: "authSecret", ok: set("AUTH_SECRET", 16), required: true },
     { key: "guestSecret", ok: set("GUEST_TOKEN_SECRET", 16), required: true },
-    { key: "storage", ok: !!driver, required: true, detail: driver ?? undefined },
+    // Blob works, but its URLs are public-but-unguessable: originals are NOT private (see storage.ts). Production needs R2.
+    { key: "storage", ok: !!driver, required: true, detail: driver ?? undefined, warn: driver === "blob" },
     { key: "resend", ok: set("RESEND_API_KEY"), required: true },
     { key: "emailFrom", ok: set("EMAIL_FROM_EN") && set("EMAIL_FROM_TR"), required: false },
     { key: "stripe", ok: !!stripeKey, required: true, detail: stripeMode },

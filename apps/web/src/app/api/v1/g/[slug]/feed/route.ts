@@ -35,7 +35,7 @@ export const GET = route<{ slug: string }>(async (req, { slug }) => {
   const { rows, nextCursor } = await mediaPage({ where, cursor: q.after ? undefined : q.cursor, sort: q.sort, guestIdForReaction: guest?.id, limit: q.after ? 100 : 30 });
   // `uploadsOpen` is false unless the gallery is live (and inside any per-event upload window).
   return json({
-    items: await toMediaItems(rows, "guest", { canDownload: access.canDownload }), nextCursor: q.after ? null : nextCursor,
+    items: await toMediaItems(rows, { kind: "guest", guestId: guest?.id ?? null }), nextCursor: q.after ? null : nextCursor,
     uploadsOpen: uploadOpen(o, access.guestsCanUpload),
   });
 });

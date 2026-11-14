@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq, ne, type SQL } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { deleteObjects } from "./storage";
+import { deleteObjects, mediaFileKeys } from "./storage";
 
 const { media } = schema;
 
@@ -14,11 +14,11 @@ export type MediaAction = "hide" | "show" | "delete" | "favourite" | "unfavourit
  */
 export async function applyMediaAction(scope: SQL, action: MediaAction) {
   if (action === "delete") {
-    const rows = await db.select({ a: media.keyOriginal, b: media.keyDisplay, c: media.keyThumb }).from(media).where(scope);
+    const rows = await db.select().from(media).where(scope);
     // Hide first so nothing is served while storage deletes; the cleanup cron retries if storage fails.
     await db.update(media).set({ visibility: "deleted" }).where(scope);
     try {
-      await deleteObjects(rows.flatMap((r) => [r.a, r.b, r.c]));
+      await deleteObjects(rows.flatMap(mediaFileKeys));
       await db.delete(media).where(scope);
     } catch (e) {
       console.error("[media] storage delete failed; cron will retry", e);

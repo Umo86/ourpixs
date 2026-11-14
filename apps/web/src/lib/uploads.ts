@@ -13,7 +13,9 @@ import { notifyHosts } from "./push";
 import { after } from "next/server";
 import { loadDays } from "./queries";
 import { limit } from "./rate-limit";
-import { deleteObjects, finalizeUpload, headObject, mediaKeys, presignPut, storageDriver, StorageNotConfigured, type PresignedPut } from "./storage";
+import { deleteObjects, finalizeUpload, headObject, mediaFileKeys, mediaKeys, presignPut, storageDriver, StorageNotConfigured, type PresignedPut } from "./storage";
+import { processMediaIds, triggerProcessing } from "./media-processing";
+import { trustedOrigin } from "./request";
 
 type OccasionRow = typeof schema.occasions.$inferSelect;
 type GuestRow = typeof schema.guests.$inferSelect;
@@ -180,6 +182,7 @@ export async function completeUploads(o: OccasionRow, mediaIds: string[], actor:
   assertActorCanUpload(o, access, "guest" in actor ? actor.guest : null);
   const videoCap = maxVideoBytes(settings.videoMaxSeconds);
   const missing: string[] = [];
+  const toProcess: { id: string; kind: "photo" | "video" | "voice" }[] = [];
   let pending = false;
   await Promise.all(rows.map(async (m) => {
     const orig = await finalizeUpload(m.keyOriginal);
@@ -192,7 +195,7 @@ export async function completeUploads(o: OccasionRow, mediaIds: string[], actor:
       ? orig.bytes > videoCap || m.durationS == null || m.durationS > settings.videoMaxSeconds + 1
       : orig.bytes > MAX_PHOTO_BYTES;
     if (tooBig) {
-      await deleteObjects([m.keyOriginal, m.keyDisplay, m.keyThumb]).catch(() => {});
+      await deleteObjects(mediaFileKeys(m)).catch(() => {});
       await db.update(schema.media).set({ status: "failed" }).where(eq(schema.media.id, m.id));
       missing.push(m.id);
       return;
@@ -212,12 +215,21 @@ export async function completeUploads(o: OccasionRow, mediaIds: string[], actor:
     await db.update(schema.media).set({
       status: "uploaded", bytes: orig.bytes || m.bytes, keyDisplay, keyThumb,
       moderationFlags: flags, ...(nsfw ? { approved: false } : {}),
+      // Guest previews / watermarks / transcodes are made next (src/lib/media-processing.ts); voice notes need none.
+      processingStatus: m.kind === "voice" ? "ready" : "pending", processingAttempts: 0, processingStartedAt: null, processingError: null,
       createdAt: new Date(),
     }).where(eq(schema.media.id, m.id));
+    if (m.kind !== "voice") toProcess.push({ id: m.id, kind: m.kind });
     if (nsfw || !m.approved) pending = true;
   }));
   if (rows.length > missing.length) {
+    const origin = await trustedOrigin();
     after(async () => {
+      // Server-side copies: hand them to the internal processing route; whatever can't be handed over is done here.
+      if (toProcess.length) {
+        const leftover = await triggerProcessing(toProcess, origin);
+        if (leftover.length) await processMediaIds(leftover, { budgetMs: 270_000 }).catch((e) => console.error("[uploads] inline processing failed", e));
+      }
       // Fair use: past the storage limit uploads keep working; admins get one alert.
       await checkFairUse(o).catch((e) => console.error("[uploads] fair-use check failed", e));
       // Push to hosts after the response is sent (guests' uploads only).

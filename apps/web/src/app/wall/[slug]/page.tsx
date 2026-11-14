@@ -32,7 +32,7 @@ export default async function WallPage({ params, searchParams }: { params: Promi
   return (
     <WallClient
       slug={slug} wallKey={k} title={o.title} qr={qr} shortUrl={url.replace(/^https?:\/\//, "")}
-      initial={await toMediaItems(rows, "guest", { canDownload: access.canDownload })} initialStats={{ photos: stats.photos + stats.videos, guests: stats.guests }}
+      initial={await toMediaItems(rows, { kind: "wall" })} initialStats={{ photos: stats.photos + stats.videos, guests: stats.guests }}
       brandName={BRANDS[o.brand].name} logoUrl={null} accent="#2347E0"
       labels={{
         shareYours: t("wall.shareYours"), shareYoursAccent: t("wall.shareYoursAccent"), scan: t("wall.scan"),

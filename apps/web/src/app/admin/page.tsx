@@ -1,16 +1,17 @@
 import { getT } from "@/i18n";
 import { requireAdmin } from "@/lib/admin";
-import { dailySeries, overviewStats } from "@/lib/admin-queries";
-import { formatBytes, formatDate, formatNumber } from "@/lib/client/format";
+import { dailySeries, overviewStats, recentPayments } from "@/lib/admin-queries";
+import { formatBytes, formatDate, formatDateTime, formatNumber } from "@/lib/client/format";
 import { formatGBP } from "@/components/marketing/format";
-import { Bars, Card, PageHeader, StatTile } from "@/components/admin/ui";
+import Link from "next/link";
+import { Bars, Card, Empty, linkCls, PageHeader, Pill, StatTile, TableWrap, td, th } from "@/components/admin/ui";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminOverviewPage() {
   await requireAdmin();
   const { t, locale } = await getT("admin");
-  const [s, series] = await Promise.all([overviewStats(), dailySeries(30)]);
+  const [s, series, payments] = await Promise.all([overviewStats(), dailySeries(30), recentPayments(15)]);
   const n = (v: number) => formatNumber(v, locale);
   const gbp = (pence: number) => formatGBP(Math.round(pence));
   const dayLabels = series.map((d) => formatDate(d.day, locale, { day: "numeric", month: "short" }));
@@ -31,6 +32,36 @@ export default async function AdminOverviewPage() {
           <StatTile label={t("overview.testPayments")} value={n(s.revenue.testCount)} hint={t("overview.testPaymentsHint")} />
           <StatTile label={t("overview.refunds")} value={n(s.revenue.refunded)} hint={s.revenue.duplicates ? t("overview.duplicates", { n: n(s.revenue.duplicates) }) : undefined} />
         </div>
+        <Card title={t("overview.recentPayments")} id="ov-payments">
+          {payments.length === 0 ? <Empty>{t("event.noPayments")}</Empty> : (
+            <TableWrap label={t("overview.recentPayments")}>
+              <thead>
+                <tr>
+                  <th scope="col" className={th}>{t("event.payments")}</th>
+                  <th scope="col" className={th}>{t("event.kind")}</th>
+                  <th scope="col" className={th}>{t("event.amount")}</th>
+                  <th scope="col" className={th}>{t("events.status")}</th>
+                  <th scope="col" className={th}>{t("event.mode")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payments.map((p) => (
+                  <tr key={`${p.kind}-${p.id}`}>
+                    <td className={td}>
+                      {formatDateTime((p.paidAt ?? p.createdAt).toISOString(), locale)}
+                      <Link href={`/admin/events/${p.occasionId}`} className={`${linkCls} block break-all text-xs`}>{p.title}</Link>
+                      {p.email ? <span className="block break-all text-xs text-muted">{p.email}</span> : null}
+                    </td>
+                    <td className={td}>{t(`event.kinds.${p.kind === "guest_download" ? "guest_download" : "event_package"}`)}</td>
+                    <td className={td}>{gbp(p.amountPence)}</td>
+                    <td className={td}><Pill tone={p.status === "paid" ? "green" : p.status === "refunded" ? "grey" : "red"}>{t(`event.orderStatus.${p.status}`)}</Pill></td>
+                    <td className={td}>{p.livemode ? t("event.live") : t("event.test")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </TableWrap>
+          )}
+        </Card>
       </section>
 
       <section aria-labelledby="ov-hosts" className="flex flex-col gap-3">

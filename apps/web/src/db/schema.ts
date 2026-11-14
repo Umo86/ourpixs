@@ -13,6 +13,8 @@ export const revealEnum = pgEnum("reveal_mode", ["live", "next_morning"]);
 export const memberRoleEnum = pgEnum("member_role", ["owner", "cohost"]);
 export const mediaKindEnum = pgEnum("media_kind", ["photo", "video", "voice"]);
 export const mediaStatusEnum = pgEnum("media_status", ["pending", "uploaded", "failed"]);
+/** Server-side copies (guest previews, watermarks, video transcodes): src/lib/media-processing.ts. */
+export const processingStatusEnum = pgEnum("media_processing_status", ["pending", "ready", "failed"]);
 export const visibilityEnum = pgEnum("visibility", ["visible", "hidden", "deleted"]);
 export const shareScopeEnum = pgEnum("share_scope", ["view", "view_upload"]);
 export const messageKindEnum = pgEnum("message_kind", ["text", "voice", "video"]);
@@ -193,6 +195,23 @@ export const media = pgTable("media", {
   keyOriginal: text("key_original").notNull(),
   keyDisplay: text("key_display"),
   keyThumb: text("key_thumb"),
+  /**
+   * Server-made copies (src/lib/media-processing.ts). Photos: key_display ≈2,000 px clean WebP (browser or server),
+   * key_thumb ≈400 px clean, key_guest ≈1,200 px WATERMARKED, key_guest_thumb ≈400 px WATERMARKED.
+   * Videos: key_display / key_thumb = clean poster, key_guest / key_guest_thumb = watermarked poster,
+   * key_video = clean 1080p H.264 MP4, key_guest_video = 720p WATERMARKED MP4.
+   * Guests only ever get the watermarked keys for other people's media; originals only via signed download links.
+   */
+  keyGuest: text("key_guest"),
+  keyGuestThumb: text("key_guest_thumb"),
+  keyVideo: text("key_video"),
+  keyGuestVideo: text("key_guest_video"),
+  processingStatus: processingStatusEnum("processing_status").notNull().default("pending"),
+  processedAt: timestamp("processed_at", { withTimezone: true }),
+  processingError: text("processing_error"),
+  processingAttempts: integer("processing_attempts").notNull().default(0),
+  /** Lease: set when a worker claims the item; another worker may take over after a few minutes. */
+  processingStartedAt: timestamp("processing_started_at", { withTimezone: true }),
   mime: text("mime").notNull(),
   bytes: bigint("bytes", { mode: "number" }).notNull(),
   width: integer("width"),
@@ -216,6 +235,7 @@ export const media = pgTable("media", {
   index("media_occasion_created_idx").on(t.occasionId, t.createdAt),
   index("media_occasion_day_idx").on(t.occasionId, t.dayId),
   index("media_created_idx").on(t.createdAt),
+  index("media_processing_idx").on(t.processingStatus, t.processingStartedAt),
 ]);
 
 export const reactions = pgTable("reactions", {
@@ -255,7 +275,7 @@ export const shareLinks = pgTable("share_links", {
 
 /**
  * Payments. kind "event_package" = the host's £69 package (one Stripe Checkout session per row);
- * "guest_download" is reserved for guests buying all photos (later stage). Old rows with a `plan` are legacy one-off orders.
+ * guests buying all photos are in `guest_purchases` (no host account). Old rows with a `plan` are legacy one-off orders.
  * status: "paid" | "refunded" | "duplicate" (paid for an event that was already paid: refund by hand).
  */
 export const orders = pgTable("orders", {
@@ -276,6 +296,39 @@ export const orders = pgTable("orders", {
   refundedAt: timestamp("refunded_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index("orders_payment_intent_idx").on(t.stripePaymentIntentId), index("orders_occasion_idx").on(t.occasionId)]);
+
+/**
+ * Guests buying "download everything" for an event (Stripe Checkout, mode payment, price = settings.guestDownloadPence).
+ * status: "pending" (checkout started) | "paid" | "refunded". Only a hash of the emailed download token is stored;
+ * the token (and the purchase) is valid until token_expires_at = paid_at + 30 days. Logic: src/lib/guest-purchase.ts.
+ */
+export const guestPurchases = pgTable("guest_purchases", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  occasionId: uuid("occasion_id").notNull().references(() => occasions.id, { onDelete: "cascade" }),
+  guestId: uuid("guest_id").references(() => guests.id, { onDelete: "set null" }),
+  /** Filled from Stripe Checkout once paid. */
+  email: text("email"),
+  amountPence: integer("amount_pence").notNull(),
+  currency: text("currency").notNull().default("gbp"),
+  stripeCheckoutSessionId: text("stripe_checkout_session_id").notNull().unique(),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  status: text("status").notNull().default("pending"),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  refundedAt: timestamp("refunded_at", { withTimezone: true }),
+  downloadTokenHash: text("download_token_hash"),
+  tokenExpiresAt: timestamp("token_expires_at", { withTimezone: true }),
+  /** When the download-link email went out (claimed before sending; cleared again if sending fails). */
+  emailedAt: timestamp("emailed_at", { withTimezone: true }),
+  locale: text("locale").notNull().default("en"),
+  brand: brandEnum("brand").notNull().default("bizimresimler"),
+  livemode: boolean("livemode").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("guest_purchases_occasion_idx").on(t.occasionId),
+  index("guest_purchases_guest_idx").on(t.guestId),
+  index("guest_purchases_pi_idx").on(t.stripePaymentIntentId),
+  uniqueIndex("guest_purchases_token_idx").on(t.downloadTokenHash),
+]);
 
 /** Admin-editable settings (/admin/settings). Missing keys fall back to PACKAGE_DEFAULTS in src/lib/config.ts. */
 export const settings = pgTable("settings", {

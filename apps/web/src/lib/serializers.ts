@@ -1,9 +1,10 @@
 import "server-only";
 import { schema } from "@/db";
-import type { Day, EventPackage, Host, Message, MediaItem, Mission, Occasion, OccasionSummary, PublicOccasion, ShareLink, Theme } from "./api-types";
+import type { Day, EventPackage, GuestDownload, Host, Message, MediaItem, Mission, Occasion, OccasionSummary, PublicOccasion, ShareLink, Theme } from "./api-types";
 import { FEATURES, type Locale, type OccasionType, type PackageSettings } from "./config";
 import { activeDays, dayGuestUrl, dayUploadOpen, effectiveRevealAt, guestUrl, momentLabels, shareUrl, uploadOpen, wallUrl } from "./occasion";
-import { presignGet, signMany, storageDriver } from "./storage";
+import { presignGet, privateGetUrl, signMany, storageDriver } from "./storage";
+import { planMediaKeys, type MediaAudience } from "./media-urls";
 import { occasionAccessOf, type Access } from "./access-rules";
 
 type HostRow = typeof schema.hosts.$inferSelect;
@@ -65,7 +66,7 @@ export function galleryState(a: Access): PublicOccasion["galleryState"] {
   return a.guestsCanUpload ? "live" : "ended";
 }
 
-export function toPublicOccasion(o: OccasionRow, days: DayRow[], locale: Locale, coverUrl: string | null, access: Access, videoMaxSeconds: number): PublicOccasion {
+export function toPublicOccasion(o: OccasionRow, days: DayRow[], locale: Locale, coverUrl: string | null, access: Access, videoMaxSeconds: number, guestDownload: GuestDownload): PublicOccasion {
   const f = FEATURES;
   const reveal = effectiveRevealAt(o);
   const open = uploadOpen(o, access.guestsCanUpload);
@@ -78,45 +79,45 @@ export function toPublicOccasion(o: OccasionRow, days: DayRow[], locale: Locale,
     revealAt: o.revealMode === "next_morning" || o.disposableShots ? iso(reveal) : null,
     coverUrl, hasPin: !!o.pinHash,
     galleryState: galleryState(access), opensAt: iso(o.opensAt), closesAt: iso(o.closesAt), timeZone: o.timeZone, videoMaxSeconds,
+    guestDownload,
   };
 }
 
 export type MediaJoinRow = { media: MediaRow; guestName: string | null; reactedByMe?: boolean };
 
 /**
- * `audience` controls which fields are exposed:
- *  host  → everything incl. originalUrl, favourite/visibility/approved, guestId
- *  guest → public fields (+ reactedByMe); `withOriginal` for a guest's own uploads
- * `canDownload` = the event's download access. When false, `originalUrl` is null on every item (download lock).
+ * Media for a list/feed/wall/share payload. Which copy each viewer gets is decided by planMediaKeys (src/lib/media-urls.ts):
+ *  host  → clean copies + favourite/visibility/approved/guestId/mime/flags
+ *  wall  → clean copies (the host's screen)
+ *  guest → clean copies of their own uploads (`mine: true`), WATERMARKED copies of everyone else's (+ reactedByMe)
+ *  share → watermarked copies
+ * `originalUrl` is always null here: originals only come from the download endpoints (signed, expiring links).
  */
-export async function toMediaItems(rows: MediaJoinRow[], audience: "host" | "guest", opts: { withOriginal?: boolean; canDownload: boolean }): Promise<MediaItem[]> {
-  const thumbs = await signMany(rows.map((r) => r.media.keyThumb));
-  const displays = await signMany(rows.map((r) => r.media.keyDisplay));
-  const wantOriginal = audience === "host" || opts.withOriginal;
-  // Guests get the original only for their own uploads, and for videos (needed to play them). Never while downloads are locked.
-  const originals = opts.canDownload
-    ? await signMany(rows.map((r) => (wantOriginal || r.media.kind === "video" ? r.media.keyOriginal : null)))
-    : rows.map(() => null);
-  // Viewing is always allowed, even while downloads are locked: videos need a playable URL, and photos
-  // without a generated display (e.g. undecodable HEIC) fall back to their original for display.
-  const viewing = await signMany(rows.map((r) => (r.media.kind === "video" || (r.media.kind === "photo" && !r.media.keyDisplay) ? r.media.keyOriginal : null)));
+export async function toMediaItems(rows: MediaJoinRow[], audience: MediaAudience): Promise<MediaItem[]> {
+  const plans = rows.map((r) => planMediaKeys(r.media, audience));
+  // The only original that can appear (hosts, a photo with no display copy) goes through the private signer too.
+  const isOriginal = (k: string | null, i: number) => !!k && k === rows[i]!.media.keyOriginal;
+  async function sign(keys: (string | null)[]) {
+    const copies = await signMany(keys.map((k, i) => (isOriginal(k, i) ? null : k)));
+    return Promise.all(keys.map((k, i) => (isOriginal(k, i) && storageDriver() ? privateGetUrl(k!, 3600) : Promise.resolve(copies[i] ?? null))));
+  }
+  const [thumbs, displays, playbacks] = await Promise.all([sign(plans.map((p) => p.thumb)), sign(plans.map((p) => p.display)), sign(plans.map((p) => p.playback))]);
   return rows.map((r, i) => {
     const m = r.media;
-    // Photos without a generated display (e.g. HEIC the browser couldn't decode) fall back to the original.
-    const fallback = m.kind === "photo" && !m.keyDisplay ? (viewing[i] ?? null) : null;
+    const p = plans[i]!;
     const item: MediaItem = {
-      id: m.id, kind: m.kind, thumbUrl: thumbs[i] ?? displays[i] ?? fallback, displayUrl: displays[i] ?? fallback,
+      id: m.id, kind: m.kind, thumbUrl: thumbs[i] ?? null, displayUrl: displays[i] ?? null, originalUrl: null,
       width: m.width, height: m.height, durationS: m.durationS, momentTag: m.momentTag, dayId: m.dayId,
       guestName: r.guestName, reactionCount: m.reactionCount, createdAt: m.createdAt.toISOString(), missionId: m.missionId,
+      processing: p.processing,
     };
-    if (m.kind === "video") item.playbackUrl = viewing[i] ?? null;
-    if (!opts.canDownload) item.originalUrl = null;
-    else if (originals[i]) item.originalUrl = originals[i]!;
-    if (audience === "host") {
+    if (m.kind === "video") item.playbackUrl = playbacks[i] ?? null;
+    if (audience.kind === "host") {
       item.favourite = m.favourite; item.visibility = m.visibility; item.approved = m.approved; item.guestId = m.guestId; item.mime = m.mime; item.moderationFlags = m.moderationFlags;
-    } else {
+    } else if (audience.kind === "guest") {
       item.reactedByMe = !!r.reactedByMe;
-      if (opts.withOriginal) item.approved = m.approved;
+      item.mine = p.mine;
+      if (p.mine) item.approved = m.approved;
     }
     return item;
   });

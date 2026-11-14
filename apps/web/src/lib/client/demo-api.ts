@@ -1,4 +1,5 @@
 "use client";
+import { ApiClientError } from "./api";
 import type { MediaItem, Message } from "@/lib/api-types";
 import type { Locale } from "@/lib/config";
 import { DEMO_COOKIE, demoMedia, demoMissions } from "@/lib/demo";
@@ -85,7 +86,8 @@ export async function demoApi<T>(path: string, opts: { method?: string; body?: u
       const original = state.blobs.get(`demo:${id}/original`) ?? null;
       const display = state.blobs.get(`demo:${id}/display`) ?? (p.kind === "photo" ? original : null);
       const item: MediaItem = {
-        id, kind: p.kind, thumbUrl: state.blobs.get(`demo:${id}/thumb`) ?? display, displayUrl: display, originalUrl: original ?? undefined,
+        id, kind: p.kind, thumbUrl: state.blobs.get(`demo:${id}/thumb`) ?? display, displayUrl: display, originalUrl: null,
+        playbackUrl: p.kind === "video" ? original : undefined, mine: true, processing: "ready",
         width: null, height: null, durationS: null, momentTag: p.momentTag, dayId: p.dayId, guestName: name() || null,
         reactionCount: 0, reactedByMe: false, createdAt: new Date().toISOString(), missionId: p.missionId,
       };
@@ -95,6 +97,14 @@ export async function demoApi<T>(path: string, opts: { method?: string; body?: u
       state.pending.delete(id);
     }
     return out({ ok: true, missing: [] });
+  }
+  const dl = /^\/media\/([^/]+)\/download$/.exec(route);
+  if (dl) {
+    // Demo: your own uploads download from this browser; everyone else's open the (demo) offer.
+    const mine = state.mine.find((i) => i.id === dl[1]);
+    const url = mine ? state.blobs.get(`demo:${mine.id}/original`) : null;
+    if (!url) throw new ApiClientError(402, "purchase_required", "Demo");
+    return out({ url });
   }
   if (route === "/messages/upload-url") return out({ mediaKey: "demo", upload: { url: "demo:message", method: "PUT", headers: {} } });
   if (route === "/messages") {

@@ -4,8 +4,8 @@ What is already done, and the steps that need an account owner. Every setting li
 
 ## Already set up
 - **GitHub:** `Umo86/ourpixs`, connected to the Vercel project `ourpixs` (root directory `apps/web`). Every push to `main` deploys to production.
-- **Neon Postgres:** project `fancy-hall-12485138` (London). Migrations 0000 to 0003 are applied; 0004 and 0005 are new (see step 3), and 0006 (see step 5).
-- **Vercel Blob:** media storage in London.
+- **Neon Postgres:** project `fancy-hall-12485138` (London). Migrations 0000 to 0003 are applied; 0004 and 0005 are new (see step 3), 0006 (see step 7), 0007 and 0008 (see step 3).
+- **Vercel Blob:** media storage in London (temporary: originals are not private on Blob; production needs R2, step 4).
 - **Vercel settings:** `DATABASE_URL`, `AUTH_SECRET`, `GUEST_TOKEN_SECRET`, `CRON_SECRET`, `DEFAULT_BRAND`, `PREVIEW_SHOW_CODE`, `BLOB_READ_WRITE_TOKEN`.
 
 ## 1. Domains (Vercel → Project → Settings → Domains)
@@ -32,7 +32,7 @@ One price per event, paid once by the host: **£69** by default (VAT included), 
 1. Activate the Stripe account (UK business details).
 2. Set `STRIPE_SECRET_KEY`. **Test key only** (`sk_test_…`) until Umit says yes to live payments; `/admin/system` shows which mode the key is in.
 3. Add a webhook at `https://bizimresimler.com/api/stripe/webhook` (one endpoint serves both domains; on the preview, use the preview URL) with these events, then set `STRIPE_WEBHOOK_SECRET`:
-   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`.
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded` (the same events serve guest downloads).
    (The old subscription events — `customer.subscription.*`, `invoice.*` — can be removed from the endpoint; they're ignored.)
 4. Apple Pay: verify both domains under Settings → Payment methods → Apple Pay (Stripe hosts the verification file for Checkout).
 5. Refunds are done by hand in the Stripe dashboard. Full refund any time before the gallery goes live (our promise); after it's live, within 14 days of paying, a pro-rata refund (Consumer Contracts Regulations). A **full** refund makes the event `refunded` (read-only, closed to guests) through the `charge.refunded` webhook; partial refunds only update the payment record. A second payment for an already-paid event is flagged "Duplicate: refund" on `/admin/events/:id`.
@@ -41,12 +41,35 @@ Until step 2 is done, Pay buttons show "Payments coming soon". The Customer Port
 
 **Database:** migrations `0004`–`0006` as before (`0005_drop_partner_plan` is intentionally left unapplied on some branches), then apply `0007_event_package` (additive: `occasions.package_status`, `paid_at`, `comped_at`, `opens_at`, `closes_at`, `time_zone`, `delete_after`, email markers, `fair_use_alerted_at`, `stripe_checkout_session_id`; `orders.kind`, `stripe_payment_intent_id`, `livemode`, `paid_at`, `refunded_at`; `orders.plan` becomes nullable; new `settings` table; legacy `orders` rows are marked `kind = 'legacy_plan'`). The old `hosts` subscription columns stay in the database, unused. Existing events start in `setup`.
 
-## 4. Optional
+**Guest downloads (£3, "download everything").** The same Stripe account and webhook also sell guests every photo and video of an event in full quality (price on `/admin/settings`, default £3; Checkout product "BizimResimler · Every photo and video"; metadata `kind = guest_download`). No extra Stripe setup. The guest gets a download page straight after paying and an email with a `/d/<token>` link valid 30 days (Resend must be configured for the email). A full refund in the Stripe dashboard ends that guest's access and kills the link; partial refunds don't. Guest purchases are listed on `/admin` (Recent payments) and on each event's admin page.
+
+**Database:** apply `0008_short_kitty_pryde` (additive: new enum `media_processing_status`; `media.key_guest`, `key_guest_thumb`, `key_video`, `key_guest_video`, `processing_status` (default `pending`), `processed_at`, `processing_error`, `processing_attempts`, `processing_started_at`; new table `guest_purchases`). Apply it **before** deploying this code. Existing media start as `pending`: guests see them as "getting ready" until the media sweep has made their watermarked copies (run "Photo and video processing" on `/admin/system` a few times to backfill right away; each run handles up to 60 items).
+
+## 4. Storage: Cloudflare R2 (required before going live)
+Originals must stay private: they are only ever handed out as signed links that expire within an hour, after the permission or payment check. **Vercel Blob can't do that** (its URLs are public and never expire, only unguessable), so Blob is a stop-gap for previews and `/admin/system` shows a red warning while it is in use. Newer Vercel Blob stores can be private; switching to one would need a code change, so R2 remains the plan.
+1. Cloudflare → R2 → create a bucket (e.g. `bizimresimler-media`, location hint Western Europe). Keep it **private**: no public access, no `r2.dev` subdomain, no custom public domain.
+2. R2 → Manage API tokens → create a token with **Object Read & Write** on that bucket only. Note the account id, access key id and secret.
+3. Bucket → Settings → CORS policy:
+   ```json
+   [{ "AllowedOrigins": ["https://bizimresimler.com", "https://www.bizimresimler.com", "https://ourpixs.com", "https://www.ourpixs.com"],
+      "AllowedMethods": ["PUT", "GET", "HEAD"], "AllowedHeaders": ["Content-Type"], "ExposeHeaders": ["ETag"], "MaxAgeSeconds": 3600 }]
+   ```
+   (Add the preview URL while testing on a preview.) Browsers upload straight to R2 and download ZIPs straight from it.
+4. Set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` in Vercel and redeploy. R2 wins over Blob as soon as all four are set. Files already in Blob are not moved: switch before real events.
+
+## 5. Media processing (previews, watermarks, videos)
+After an upload completes the server makes the copies guests see: a ≈1,200 px watermarked preview and thumb for photos (sharp), and for videos a clean 1080p MP4, a 720p watermarked MP4 and posters (ffmpeg, bundled through `ffmpeg-static`). The watermark is the brand wordmark ("BizimResimler", or "Our Pixs" for ourpixs.com events), pre-rendered as PNGs in `apps/web/assets/watermark/`.
+- How it runs: the upload completion request calls the internal route `POST /api/internal/media/process` (signed with a key derived from `CRON_SECRET`, or `GUEST_TOKEN_SECRET` if that's missing; not callable from outside). If that call fails, the completion request does the work itself. `/api/cron/media` retries anything still pending or failed after 10 minutes, at most 3 attempts per item.
+- **Function time:** video transcoding needs long functions. These routes ask for `maxDuration = 300` seconds. **Check your Vercel plan's maximum function duration**: if the plan allows less, long videos will time out and stay "processing" (the item is marked failed after 3 attempts; the host still has the original). A 60-second phone video normally takes well under a minute; 4K or HDR clips take longer.
+- **Cron frequency:** on Hobby, crons run once a day, so the retry sweep is daily (`52 5 * * *` in `apps/web/vercel.json`). On Pro, change it to every 10 minutes (`*/10 * * * *`).
+- **Preview deployments with Vercel Authentication:** turn on Settings → Deployment Protection → "Protection Bypass for Automation". Vercel then provides `VERCEL_AUTOMATION_BYPASS_SECRET`, which the internal call sends. Without it the internal call is refused and the completion request processes the files itself (slower uploads finish the same).
+- Bundle size: the processing functions carry ffmpeg (≈80 MB) and sharp (≈40 MB); about 125 MB in total, under Vercel's 250 MB limit. ffmpeg-static downloads its binary during `npm install` on Vercel.
+
+## 6. Optional
 - `OPENAI_API_KEY`: turns on the free automatic NSFW check for uploaded photos.
-- **Cloudflare R2 instead of Blob:** private bucket with presigned URLs. Set the four `R2_*` settings, and add a CORS rule that allows PUT and GET from both domains (bizimresimler.com and ourpixs.com, with www), the `Content-Type` header, and exposes `ETag`.
 - **Vercel Pro:** lets the jobs run hourly instead of daily (`apps/web/vercel.json`). On Hobby the "gallery ended — download everything" email can lag up to a day; it is also sent as soon as the host (or a guest) opens an ended event. Functions run in London (`regions: ["lhr1"]`), next to the database.
 
-## 5. Admin dashboard
+## 7. Admin dashboard
 A superadmin area at `/admin` on both domains (overview, users, events, moderation, enquiries, settings, audit log, system health).
 1. **Database first:** apply migration `0006_admin_dashboard` (additive: new columns `hosts.comp_until`, `hosts.suspended_at`, `hosts.suspended_reason`, `occasions.admin_locked_at`, `leads.handled_at`; new tables `admin_audit`, `media_reports`, `cron_runs`; a few indexes), **then** deploy. The new code reads these columns on every request.
 2. Set `ADMIN_EMAILS` in Vercel to a comma-separated list of admin emails (e.g. `you@bizimresimler.com`) and redeploy.
@@ -62,7 +85,7 @@ What the admin overrides do:
 - **Close guest uploads** on one event: read-only until reopened. Archive hides an event from guests; delete removes it with every file.
 - **Run now** on `/admin/system` runs the same expiry / cleanup job as the daily schedule.
 
-## 6. Mobile apps (Expo / EAS)
+## 8. Mobile apps (Expo / EAS)
 See `apps/mobile/README.md` and `apps/mobile/store/checklist.md`. In short:
 1. Run `npm i -g eas-cli`, then `eas login`, then `eas init` in `apps/mobile`.
 2. Replace the placeholder icon and splash in `apps/mobile/assets`.
@@ -72,7 +95,7 @@ See `apps/mobile/README.md` and `apps/mobile/store/checklist.md`. In short:
 6. Google Play: run a closed test with at least 12 testers for 14 days before production access.
 7. Run `eas submit --platform ios` and `eas submit --platform android`, using the metadata in `apps/mobile/store/`.
 
-## 7. Legal (before launch)
+## 9. Legal (before launch)
 - Fill in `[COMPANY NAME]`, `[COMPANY NUMBER]`, `[REGISTERED ADDRESS]` and `[ICO REGISTRATION NUMBER]` on the privacy and terms pages.
 - Register with the ICO (data protection fee).
 - Have a solicitor review the privacy policy and terms. Sections changed for the event package show an "Updated for the event package · to be checked" badge (the `review: true` flag in `messages/*/marketing.json`); remove the flag once approved.
@@ -82,4 +105,8 @@ See `apps/mobile/README.md` and `apps/mobile/store/checklist.md`. In short:
 cd apps/web && cp .env.example .env.local   # fill in values
 npm install && npm run dev
 npx tsc --noEmit && npm run build           # must pass before every push
+# paywall rules (who gets which copy, who may download originals) and the sharp/ffmpeg pipeline, no database needed:
+npx tsx --conditions=react-server --require ./scripts/server-only-shim.cjs scripts/paywall-check.ts
+npx tsx --conditions=react-server --require ./scripts/server-only-shim.cjs scripts/media-smoke.ts
 ```
+Watermark PNGs: `node scripts/make-watermarks.mjs` re-renders `assets/watermark/` (needs DejaVu Sans Bold; only when the wordmark changes).

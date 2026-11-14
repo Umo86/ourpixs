@@ -82,12 +82,27 @@ export type PublicOccasion = {
   opensAt: string | null; closesAt: string | null; timeZone: string;
   /** Additive: longest video in seconds (checked before upload and on the server). */
   videoMaxSeconds: number;
+  /** Additive: guests buying every photo and video in full quality ("download everything"). */
+  guestDownload: GuestDownload;
 };
+/**
+ * pricePence: the price (admin setting, default £3). available: the offer can be bought now (Stripe configured, event
+ * paid and live/ended). payments: Stripe is configured. purchased: this device has an active purchase (30 days).
+ */
+export type GuestDownload = { pricePence: number; available: boolean; payments: boolean; purchased: boolean; expiresAt: string | null };
 export type MediaItem = {
-  /** `originalUrl` is null when downloads are locked for the event (not paid / expired / refunded). */
+  /**
+   * `originalUrl` is always null in lists (feed, album, wall, share links): originals only come from the download
+   * endpoints as signed, expiring links. thumbUrl/displayUrl are compressed copies: clean for hosts, the wall and a
+   * guest's own uploads, watermarked for everyone else. They are null while the copies are being made (`processing`).
+   */
   id: string; kind: "photo" | "video" | "voice"; thumbUrl: string | null; displayUrl: string | null; originalUrl?: string | null;
-  /** Videos only: URL to play the video. Present even while downloads are locked (viewing is always allowed). */
+  /** Videos only: the transcoded MP4 (1080p clean or 720p watermarked). Null until processing is ready. */
   playbackUrl?: string | null;
+  /** Additive: server-side copies. "pending" with no URL → show "processing"; "failed" with no URL → placeholder. */
+  processing?: "pending" | "ready" | "failed";
+  /** Additive (guest feed only): uploaded by this guest (clean copies; original downloadable for free). */
+  mine?: boolean;
   width: number | null; height: number | null; durationS: number | null; momentTag: string | null; dayId: string | null;
   guestName: string | null; reactionCount: number; reactedByMe?: boolean; favourite?: boolean; visibility?: string;
   approved?: boolean; createdAt: string;

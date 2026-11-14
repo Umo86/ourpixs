@@ -42,7 +42,7 @@ export function middleware(req: NextRequest) {
 
   const current = req.cookies.get("lang")?.value;
   let pin = localeParam(req.nextUrl.searchParams.get("lang"));
-  if (!pin && !current && (pathname.startsWith("/g/") || pathname.startsWith("/s/"))) {
+  if (!pin && !current && (pathname.startsWith("/g/") || pathname.startsWith("/s/") || pathname.startsWith("/d/"))) {
     pin = localeFromAcceptLanguage(req.headers.get("accept-language"));
   }
   if (pin && pin !== current) {
