@@ -84,13 +84,24 @@ export async function withdrawConsent(email: string, brand: Brand | "all", via: 
   return rows.length;
 }
 
-/** Unsubscribe link / one-click POST: withdraws that consent (and every other current one for the same email + brand). */
+/** Unsubscribe page button (POST) / RFC 8058 one-click POST: withdraws that consent (and every other current one for the same email + brand). */
 export async function withdrawByToken(token: string, via: WithdrawVia): Promise<{ email: string; brand: Brand; locale: Locale } | null> {
   if (!TOKEN_RE.test(token)) return null;
   const [row] = await db.select().from(C).where(eq(C.unsubscribeTokenHash, sha256(token))).limit(1);
   if (!row) return null;
   await withdrawConsent(row.email, row.brand, via);
   return { email: row.email, brand: row.brand, locale: row.locale === "tr" ? "tr" : "en" };
+}
+
+/**
+ * Read-only lookup for the unsubscribe PAGE: who the link belongs to and whether a consent is still current.
+ * Never withdraws anything: mail scanners and link previews fetch the link (GET) before the person does.
+ */
+export async function consentByToken(token: string): Promise<{ email: string; brand: Brand; locale: Locale; current: boolean } | null> {
+  if (!TOKEN_RE.test(token)) return null;
+  const [row] = await db.select().from(C).where(eq(C.unsubscribeTokenHash, sha256(token))).limit(1);
+  if (!row) return null;
+  return { email: row.email, brand: row.brand, locale: row.locale === "tr" ? "tr" : "en", current: !!(await currentConsent(row.email, row.brand)) };
 }
 
 /** Unsubscribe URLs for one consent: the page (visible link) and the RFC 8058 one-click POST endpoint. */
@@ -134,9 +145,10 @@ const O = schema.occasions;
 /**
  * When a gallery has ended, emails each guest who asked (wants_event_photos) a link to the gallery and, when it can be
  * bought, the event's "download everything" offer. Claimed per row with a conditional UPDATE (photos_emailed_at), so the
- * cron and the lazy triggers never send twice; a failed send releases the claim for the next run.
+ * cron and the lazy triggers never send twice; a failed send releases the claim for the next run, and so does running
+ * out of time (`deadline`, epoch ms) before the batch is through.
  */
-export async function sendGuestGalleryEmails(opts: { occasionIds?: string[]; max?: number } = {}): Promise<number> {
+export async function sendGuestGalleryEmails(opts: { occasionIds?: string[]; max?: number; deadline?: number } = {}): Promise<number> {
   if (!emailConfigured()) return 0;
   const now = new Date();
   const due = db.select({ id: G.id }).from(G).innerJoin(O, eq(O.id, G.occasionId)).where(and(
@@ -152,7 +164,12 @@ export async function sendGuestGalleryEmails(opts: { occasionIds?: string[]; max
   const [access, s] = await Promise.all([accessForOccasions(events, now), getSettings()]);
   const byId = new Map(events.map((o) => [o.id, o]));
   let sent = 0;
-  for (const c of claimed) {
+  for (const [i, c] of claimed.entries()) {
+    // Out of time (the function would be killed mid-batch): hand the rest back so the next run sends them.
+    if (opts.deadline && Date.now() > opts.deadline) {
+      await db.update(G).set({ photosEmailedAt: null }).where(inArray(G.id, claimed.slice(i).map((x) => x.id))).catch(() => {});
+      break;
+    }
     const o = byId.get(c.occasionId);
     const a = access.get(c.occasionId);
     // Only for a gallery guests can still open (not refunded, expired or suspended).

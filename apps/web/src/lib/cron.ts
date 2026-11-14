@@ -54,9 +54,12 @@ const loc = (l: string) => (l === "tr" ? "tr" : "en") as "en" | "tr";
  */
 export async function runExpiry(): Promise<Record<string, number>> {
   const out: Record<string, number> = {};
-  out.endedEmails = await sendDueEndedEmails({ max: BATCH });
+  // Emails go out one at a time (and the provider rate-limits), so every step works to a deadline inside the function's
+  // maxDuration (300 s): rows it can't reach in time are released and picked up by the next run, never left "sent".
+  const started = Date.now();
+  out.endedEmails = await sendDueEndedEmails({ max: BATCH, deadline: started + 80_000 });
   // Guests who asked for the photos by email (transactional; they requested it).
-  out.guestPhotoEmails = await sendGuestGalleryEmails({ max: 500 });
+  out.guestPhotoEmails = await sendGuestGalleryEmails({ max: 300, deadline: started + 190_000 });
   out.reminders30 = 0;
   out.reminders7 = 0;
   if (!emailConfigured()) return out;
@@ -77,7 +80,12 @@ export async function runExpiry(): Promise<Record<string, number>> {
       .from(schema.hosts).where(inArray(schema.hosts.id, [...new Set(claimed.map((c) => c.ownerId))]));
     const byId = new Map(owners.map((h) => [h.id, h]));
     let n = 0;
-    for (const c of claimed) {
+    for (const [i, c] of claimed.entries()) {
+      if (Date.now() > started + 250_000) {
+        // Out of time: release the unsent reminders for the next run.
+        await db.update(O).set(days === 30 ? { reminder30SentAt: null } : { reminder7SentAt: null }).where(inArray(O.id, claimed.slice(i).map((x) => x.id))).catch(() => {});
+        break;
+      }
       const h = byId.get(c.ownerId);
       if (!h || !c.deleteAfter) continue;
       const left = Math.max(1, Math.ceil((c.deleteAfter.getTime() - now.getTime()) / DAY_MS));

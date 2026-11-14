@@ -257,7 +257,15 @@ export async function summariesFor(hostId: string) {
 /** Deletes an event with every file it holds (media, guestbook recordings, custom cover). Used by the owner and by admins. */
 export async function deleteOccasion(occasionId: string) {
   await deleteObjects(await keysForOccasion(occasionId));
-  await db.delete(schema.occasions).where(eq(schema.occasions.id, occasionId));
+  // Payment records survive the event in anonymised form (privacy policy: six years). Checkouts that were never paid
+  // aren't payments and go; paid / refunded guest purchases lose the buyer's email and the download token, and the
+  // delete below cuts their link to the event (and the orders' link) through ON DELETE SET NULL.
+  const P = schema.guestPurchases;
+  await db.batch([
+    db.delete(P).where(and(eq(P.occasionId, occasionId), eq(P.status, "pending"))),
+    db.update(P).set({ email: null, downloadTokenHash: null }).where(eq(P.occasionId, occasionId)),
+    db.delete(schema.occasions).where(eq(schema.occasions.id, occasionId)),
+  ]);
 }
 
 export async function keysForOccasion(occasionId: string) {

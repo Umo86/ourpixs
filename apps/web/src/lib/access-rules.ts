@@ -134,7 +134,8 @@ export function computeAccess(o: EventPackageRow, owner: OwnerRow, s: AccessSett
       a = { ...base, ...NONE, reason: "expired", daysLeft: 0 };
   }
   if (base.suspended) {
-    return { ...a, canUpload: false, guestsCanUpload: false, canDownload: false, readOnly: true, canEditWindow: false,
+    // Suspended: closed to guests as well (the guest page shows "unavailable"; feed, join and share links answer 410).
+    return { ...a, canUpload: false, guestsCanView: false, guestsCanUpload: false, canDownload: false, readOnly: true, canEditWindow: false,
       canEndEarly: false, canPay: false, testMode: false, reason: "suspended" };
   }
   if (base.locked) {

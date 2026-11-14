@@ -315,18 +315,21 @@ export async function eventDetail(id: string, opts: { mediaPage: number; mediaFi
 
 // ── Payments ───────────────────────────────────────────────────────────────────────────────────────
 
-/** Latest payments of both kinds (event packages and guests' "download everything"), all statuses, with the event. */
+/**
+ * Latest payments of both kinds (event packages and guests' "download everything"), all statuses, with the event.
+ * Payment records outlive deleted events and accounts (left joins): `occasionId`, `title` and `email` can be null.
+ */
 export async function recentPayments(n = 20) {
   const [pkg, guest] = await Promise.all([
     db.select({
       id: orders.id, kind: orders.kind, occasionId: orders.occasionId, title: occasions.title, email: hosts.email, amountPence: orders.amountPence,
       status: orders.status, livemode: orders.livemode, paidAt: orders.paidAt, createdAt: orders.createdAt,
-    }).from(orders).innerJoin(occasions, eq(occasions.id, orders.occasionId)).innerJoin(hosts, eq(hosts.id, orders.hostId))
+    }).from(orders).leftJoin(occasions, eq(occasions.id, orders.occasionId)).leftJoin(hosts, eq(hosts.id, orders.hostId))
       .where(eq(orders.kind, "event_package")).orderBy(desc(orders.createdAt)).limit(n),
     db.select({
       id: guestPurchases.id, kind: sql<string>`'guest_download'`, occasionId: guestPurchases.occasionId, title: occasions.title, email: guestPurchases.email,
       amountPence: guestPurchases.amountPence, status: guestPurchases.status, livemode: guestPurchases.livemode, paidAt: guestPurchases.paidAt, createdAt: guestPurchases.createdAt,
-    }).from(guestPurchases).innerJoin(occasions, eq(occasions.id, guestPurchases.occasionId))
+    }).from(guestPurchases).leftJoin(occasions, eq(occasions.id, guestPurchases.occasionId))
       .where(ne(guestPurchases.status, "pending")).orderBy(desc(guestPurchases.createdAt)).limit(n),
   ]);
   return [...pkg, ...guest].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, n);
@@ -436,12 +439,12 @@ export async function listPayments(f: PaymentFilters, page: number) {
     wantPkg ? db.select({
       id: orders.id, kind: sql<PaymentKind>`'event_package'`, occasionId: orders.occasionId, title: occasions.title, email: hosts.email,
       amountPence: orders.amountPence, status: orders.status, livemode: orders.livemode, paidAt: orders.paidAt, createdAt: orders.createdAt, ref: orders.stripeSessionId,
-    }).from(orders).innerJoin(occasions, eq(occasions.id, orders.occasionId)).innerJoin(hosts, eq(hosts.id, orders.hostId))
+    }).from(orders).leftJoin(occasions, eq(occasions.id, orders.occasionId)).leftJoin(hosts, eq(hosts.id, orders.hostId))
       .where(pkgWhere).orderBy(desc(sql`coalesce(${orders.paidAt}, ${orders.createdAt})`), desc(orders.id)).limit(take) : Promise.resolve([]),
     wantGuest ? db.select({
       id: gp.id, kind: sql<PaymentKind>`'guest_download'`, occasionId: gp.occasionId, title: occasions.title, email: gp.email,
       amountPence: gp.amountPence, status: gp.status, livemode: gp.livemode, paidAt: gp.paidAt, createdAt: gp.createdAt, ref: gp.stripeCheckoutSessionId,
-    }).from(gp).innerJoin(occasions, eq(occasions.id, gp.occasionId))
+    }).from(gp).leftJoin(occasions, eq(occasions.id, gp.occasionId))
       .where(gWhere).orderBy(desc(sql`coalesce(${gp.paidAt}, ${gp.createdAt})`), desc(gp.id)).limit(take) : Promise.resolve([]),
     wantPkg ? db.select(totalsOf(orders.amountPence, orders.status, orders.livemode)).from(orders).where(pkgWhere) : Promise.resolve([undefined]),
     wantGuest ? db.select(totalsOf(gp.amountPence, gp.status, gp.livemode)).from(gp).where(gWhere) : Promise.resolve([undefined]),

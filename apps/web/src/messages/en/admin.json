@@ -508,7 +508,8 @@
   "date": "Date",
   "event": "Event",
   "payer": "Payer",
-  "seeAll": "All payments"
+  "seeAll": "All payments",
+  "deletedEvent": "Deleted event"
  },
  "consents": {
   "title": "Marketing",

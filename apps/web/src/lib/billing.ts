@@ -79,6 +79,10 @@ export async function createEventCheckout(o: OccasionRow, host: HostRow, brand: 
     metadata: { kind: EVENT_PACKAGE_KIND, occasionId: o.id, hostId: host.id },
     payment_intent_data: { metadata: { kind: EVENT_PACKAGE_KIND, occasionId: o.id, hostId: host.id } },
     custom_text: { submit: { message: t("pay.checkoutNote") } },
+    // Stripe keeps a session open for 24 h by default; never let one be paid after the gallery has closed.
+    ...(o.closesAt && o.closesAt.getTime() < Date.now() + 24 * 3600_000
+      ? { expires_at: Math.floor(Math.max(o.closesAt.getTime(), Date.now() + 31 * 60_000) / 1000) }
+      : {}),
     success_url: `${base}/dashboard/${o.id}?paid=1`,
     cancel_url: `${base}/dashboard/${o.id}?checkout=cancelled`,
   });
@@ -176,6 +180,7 @@ export async function handleChargeRefunded(chargeId: string): Promise<{ applied:
   await db.update(schema.orders).set({ status: "refunded", refundedAt: order.refundedAt ?? now }).where(eq(schema.orders.id, order.id));
   // A duplicate payment being refunded must not close the event that the other payment paid for.
   if (order.status === "duplicate") return { applied: false, reason: "duplicate_refunded" };
-  await markRefunded(order.occasionId);
+  // The event may have been deleted since (the order is kept as an anonymised record).
+  if (order.occasionId) await markRefunded(order.occasionId);
   return { applied: true };
 }

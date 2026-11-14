@@ -493,7 +493,7 @@
         "h": "Kampanya ve haberler (pazarlama)",
         "p": [
           "Kampanya ve haberleri yalnızca evet dediyseniz e-postayla göndeririz. Bu kutu diğer her şeyden ayrıdır, sizin yerinize asla işaretlenmez ve hayır demek hizmeti kullanmanıza hiçbir zaman engel olmaz. Misafirler bu kutuyu galeri e-postası sorusunun yanında, ev sahipleri ise giriş yaparken ve panellerinde görür.",
-          "Almayı bırakmak için: bu e-postaların herhangi birindeki abonelikten çık bağlantısını kullanın (tek tık yeterlidir), e-posta uygulamanızdaki abonelikten çık seçeneğini kullanın, ev sahibiyseniz panelinizden kapatın ya da {email} adresine yazın. Hemen durdururuz. Giriş kodları, makbuzlar ve indirme bağlantıları gibi gerekli e-postalar gelmeye devam eder.",
+          "Almayı bırakmak için: bu e-postaların herhangi birindeki abonelikten çık bağlantısını kullanın ve açılan sayfada onaylayın, e-posta uygulamanızdaki abonelikten çık seçeneğini kullanın, ev sahibiyseniz panelinizden kapatın ya da {email} adresine yazın. Hemen durdururuz. Giriş kodları, makbuzlar ve indirme bağlantıları gibi gerekli e-postalar gelmeye devam eder.",
           "Her iznin kaydını (metin, ne zaman ve nerede verildiği) izin geçerli olduğu sürece ve geri alındıktan sonra 2 yıl boyunca, izninizin olduğunu gösterebilmek için saklarız. Sonra sileriz."
         ],
         "review": true

@@ -508,7 +508,8 @@
   "date": "Tarih",
   "event": "Etkinlik",
   "payer": "Ödeyen",
-  "seeAll": "Tüm ödemeler"
+  "seeAll": "Tüm ödemeler",
+  "deletedEvent": "Silinmiş etkinlik"
  },
  "consents": {
   "title": "Pazarlama",

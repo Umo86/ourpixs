@@ -22,6 +22,6 @@ export const GET = route<{ slug: string }>(async (req, { slug }) => {
   if (!safeEqual(q.k, wallKey(o))) throw new ApiError(403, "forbidden", "Invalid wall link");
   // The live wall shows whatever the album holds (also test uploads before paying), until the event is refunded or deleted.
   const [{ rows, cursor }, stats, access] = await Promise.all([wallMedia(o, revealedForGuests(o), q.since ?? q.after), occasionStats(o), accessForOccasion(o)]);
-  if (access.state === "expired" || access.state === "refunded") throw new ApiError(410, "event_unavailable", "This gallery is no longer available");
+  if (access.state === "expired" || access.state === "refunded" || access.reason === "suspended") throw new ApiError(410, "event_unavailable", "This gallery is no longer available");
   return json({ items: await toMediaItems(rows, { kind: "wall" }), cursor, stats: { photos: stats.photos + stats.videos, guests: stats.guests } });
 });

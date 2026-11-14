@@ -17,6 +17,7 @@ import { accessForOccasion } from "@/lib/access";
 import { toPackage } from "@/lib/serializers";
 import { getSettings } from "@/lib/settings";
 import { paymentsEnabled } from "@/lib/stripe";
+import { fulfilCheckout } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,14 @@ export default async function AlbumPage({ params, searchParams }: { params: Prom
   const sp = await searchParams;
   const m = await requireMemberPage(id);
   if (!m) notFound();
-  const o = m.occasion;
+  let o = m.occasion;
+  // Back from Stripe Checkout (?paid=1): confirm the payment with Stripe now (idempotent, the same call the webhook
+  // makes), so a slow or missing webhook never leaves a paid event in setup. The guest purchase page does the same.
+  if (sp.paid === "1" && o.packageStatus === "setup" && o.stripeCheckoutSessionId && paymentsEnabled()) {
+    await fulfilCheckout(o.stripeCheckoutSessionId).catch((e) => console.error("[album] confirm on return failed", e));
+    const [fresh] = await db.select().from(schema.occasions).where(eq(schema.occasions.id, o.id)).limit(1);
+    if (fresh) o = fresh;
+  }
   const { t, locale } = await getT("host");
   const [stats, days, guests, access, settings, testUsed] = await Promise.all([
     occasionStats(o),

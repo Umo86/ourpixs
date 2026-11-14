@@ -493,7 +493,7 @@
         "h": "Offers and news (marketing)",
         "p": [
           "We only send offers and news by email if you have said yes. The box is separate from everything else, it is never ticked for you, and saying no never stops you using the service. Guests see it next to the gallery email question; hosts see it when they sign in and on their dashboard.",
-          "To stop them: use the unsubscribe link in any of these emails (one click is enough), use the unsubscribe option in your email app, switch it off on your dashboard if you are a host, or email {email}. We stop straight away. Emails you need, such as sign-in codes, receipts and download links, still come.",
+          "To stop them: use the unsubscribe link in any of these emails and confirm on the page that opens, use the unsubscribe option in your email app, switch it off on your dashboard if you are a host, or email {email}. We stop straight away. Emails you need, such as sign-in codes, receipts and download links, still come.",
           "We keep a record of each consent (the wording, when and where) while it is valid and for 2 years after you withdraw it, so we can show we had your permission. Then we delete it."
         ],
         "review": true

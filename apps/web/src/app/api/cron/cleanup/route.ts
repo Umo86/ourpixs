@@ -4,7 +4,9 @@ import { runCron } from "@/lib/cron";
 import { cronAuthorized } from "../auth";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const runtime = "nodejs";
+/** Sequential emails / storage deletions: give the daily job the full window (docs/SETUP.md: plan maximum). */
+export const maxDuration = 300;
 
 /** Daily: deletes files of events past retention, purges abandoned uploads and stale rows. Logic in src/lib/cron.ts (runCleanup). */
 export async function GET(req: NextRequest) {

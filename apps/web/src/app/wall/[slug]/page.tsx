@@ -24,7 +24,7 @@ export default async function WallPage({ params, searchParams }: { params: Promi
   const t = makeT(locale, "guest");
   // Ready items only (clean display copies / 1080p videos); processing items join once they're finished.
   const [{ rows, cursor }, stats, access] = await Promise.all([wallMedia(o, revealedForGuests(o)), occasionStats(o), accessForOccasion(o)]);
-  if (access.state === "expired" || access.state === "refunded") notFound();
+  if (access.state === "expired" || access.state === "refunded" || access.reason === "suspended") notFound();
   const url = guestUrl(o);
   const qr = await QRCode.toDataURL(url, { margin: 1, width: 600, errorCorrectionLevel: "M", color: { dark: "#0A0A0A", light: "#FFFFFF" } });
   return (

@@ -65,7 +65,9 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
             {res.rows.map((p) => (
               <tr key={`${p.kind}-${p.id}`}>
                 <td className={td}>{formatDateTime((p.paidAt ?? p.createdAt).toISOString(), locale)}</td>
-                <td className={td}><Link href={`/admin/events/${p.occasionId}`} className={`${linkCls} break-all`}>{p.title}</Link></td>
+                <td className={td}>{p.occasionId && p.title
+                  ? <Link href={`/admin/events/${p.occasionId}`} className={`${linkCls} break-all`}>{p.title}</Link>
+                  : <span className="text-muted">{t("payments.deletedEvent")}</span>}</td>
                 <td className={td}><span className="break-all">{p.email ?? "–"}</span><span className="block break-all text-xs text-muted">{p.ref}</span></td>
                 <td className={td}>{t(`event.kinds.${p.kind}`)}</td>
                 <td className={td}>{formatGBP(p.amountPence)}</td>

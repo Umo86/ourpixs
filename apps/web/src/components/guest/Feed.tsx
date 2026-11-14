@@ -13,6 +13,7 @@ import { useGuest } from "./GuestContext";
 import { Title } from "./Title";
 import { PurchaseCard, PurchaseDialog } from "./PurchaseOffer";
 import { EmailOffer } from "./EmailOffer";
+import { DemoWatermark } from "./DemoWatermark";
 import { ProcessingTile } from "@/components/app/ProcessingTile";
 import { useProcessingRefresh } from "@/components/app/useProcessingRefresh";
 
@@ -22,7 +23,8 @@ const POLL_MS = 15000;
 export function Feed() {
   const t = useT("guest");
   const { locale } = useLocale();
-  const { occasion: o, guest, path, api: url, uploader } = useGuest();
+  const { slug, occasion: o, guest, path, api: url, uploader } = useGuest();
+  const demo = slug === "demo";
   const [f, setF] = useState<F>({});
   const [items, setItems] = useState<MediaItem[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -192,6 +194,7 @@ export function Feed() {
               {hero.momentTag ? <span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink">{hero.momentTag}</span> : <span />}
               <span className="rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold">{timeAgo(hero.createdAt, locale)}</span>
             </span>
+            {demo && hero.displayUrl && !hero.mine ? <DemoWatermark brand={o.brand} /> : null}
             {hero.kind === "video" ? <span className="absolute inset-0 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-black/55"><Play size={28} fill="currentColor" aria-hidden /></span> : null}
             {o.liveWall ? <span className="absolute bottom-3.5 left-3.5 rotate-[-3deg] rounded-full bg-royal px-3 py-1.5 text-xs font-bold">{t("feed.onWall")}</span> : null}
           </button>
@@ -215,6 +218,7 @@ export function Feed() {
               <button type="button" onClick={() => setOpen(i + 1)} aria-label={m.guestName ? t("feed.by", { name: m.guestName }) : t("feed.open")} className="block h-full w-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-sky">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {m.thumbUrl ? <img src={m.thumbUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <ProcessingTile failed={m.processing === "failed"} label={processingLabel(m)} />}
+                {demo && m.thumbUrl && !m.mine ? <DemoWatermark brand={o.brand} size="sm" /> : null}
                 {m.kind === "video" ? <span className="absolute right-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-black/65 px-1.5 py-0.5 text-[10px] font-bold"><Play size={9} fill="currentColor" aria-hidden />{formatDuration(m.durationS)}</span> : null}
                 <span className="absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-black/70 to-transparent p-1.5 text-[11px] font-bold">
                   <span className="truncate">{m.guestName}</span>

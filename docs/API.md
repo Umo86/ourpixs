@@ -8,7 +8,7 @@ Auth: `Authorization: Bearer <jwt>` (same JWT as the web `op_session` cookie, 30
 - `POST /api/v1/auth/verify` `{ email, code, marketingConsent?: boolean, locale?: "en"|"tr" }` → `{ token, host: Host }` (`marketingConsent: true` = the separate, unticked "Send me offers and news" box was ticked; recorded only after the code is verified, with the wording shown in `locale`) (also sets the `op_session` cookie for web). If env `REVIEW_EMAIL` and `REVIEW_CODE` are both set, that email signs in with that code (app-store review).
 - `GET /api/v1/me` → `{ host: Host, marketing: { consented: boolean } }` (no `subscription` any more: payments are per event — see "Event package" below). `marketing.consented` = a current opt-in to offers and news for the request host's brand.
 - `PATCH /api/v1/me` `{ name?, locale? }` → `{ host }` (same shape as GET)
-- `DELETE /api/v1/me` → `{ ok: true }` — deletes the account, events it owns (all files), memberships, push tokens. (Event packages are one-off payments; there is nothing to cancel.)
+- `DELETE /api/v1/me` → `{ ok: true }` — deletes the account, events it owns (all files), memberships, push tokens. (Event packages are one-off payments; there is nothing to cancel.) Payment records are kept in anonymised form (amount, dates, Stripe ids; no link to the account, event or a guest's email) for six years.
 - `POST /api/v1/auth/logout` → `{ ok: true }` (web: clears the cookie)
 - `POST /api/v1/push-tokens` `{ token, platform: "ios"|"android" }` → `{ ok: true }`
 
@@ -189,7 +189,7 @@ New error codes: `purchase_required` (402), `already_paid` / `cannot_pay` (409) 
 
 **Host marketing preference.** `GET /api/v1/me/marketing` → `{ consented }`; `PUT /api/v1/me/marketing` `{ consented: boolean, locale: "en"|"tr" }` → `{ consented }` (opt in records a consent with the wording shown; opt out withdraws every current consent for this email and the site's brand).
 
-**Unsubscribe.** Every marketing email has a visible link `/unsubscribe/<token>` (web page, EN/TR; opening it withdraws the consent) and the headers `List-Unsubscribe: <https://…/api/v1/unsubscribe/<token>>, <mailto:hello@bizimresimler.com?subject=unsubscribe>` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`. `POST /api/v1/unsubscribe/:token` (RFC 8058 one-click) → `{ ok: true }` always (unknown tokens do nothing). Withdrawal covers every current consent of that email + brand.
+**Unsubscribe.** Every marketing email has a visible link `/unsubscribe/<token>` (web page, EN/TR; opening it only shows a confirmation with one "Unsubscribe" button, because mail scanners pre-fetch links; the button POSTs to `/unsubscribe/<token>/confirm`, which withdraws the consent and redirects back) and the headers `List-Unsubscribe: <https://…/api/v1/unsubscribe/<token>>, <mailto:hello@bizimresimler.com?subject=unsubscribe>` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`. `POST /api/v1/unsubscribe/:token` (RFC 8058 one-click) → `{ ok: true }` always (unknown tokens do nothing). Withdrawal covers every current consent of that email + brand.
 
 **Live wall (CHANGED).** `GET /api/v1/wall/:slug?k=<key>&since=<cursor>` → `{ items, cursor, stats }`. Only items whose copies are ready (never "processing"): photos as the clean display copy, videos with the clean 1080p `playbackUrl` (the wall plays them muted). Pass the previous response's `cursor` as `since` to get items that became ready after it (new uploads and videos that finished transcoding). `after` (ISO) is still accepted and treated like `since`.
 

@@ -27,7 +27,7 @@ const loc = (l: string) => (l === "tr" ? "tr" : "en") as "en" | "tr";
  * cron and the lazy trigger can never both send it. It also records package_status = 'ended'.
  * When email isn't configured the state is still recorded but the email marker stays empty.
  */
-export async function sendDueEndedEmails(opts: { ids?: string[]; max?: number } = {}): Promise<number> {
+export async function sendDueEndedEmails(opts: { ids?: string[]; max?: number; deadline?: number } = {}): Promise<number> {
   const now = new Date();
   const due = and(
     inArray(O.packageStatus, ["paid", "live", "ended"]), isNull(O.endedEmailSentAt), lte(O.closesAt, now),
@@ -46,7 +46,12 @@ export async function sendDueEndedEmails(opts: { ids?: string[]; max?: number } 
     .from(schema.hosts).where(inArray(schema.hosts.id, [...new Set(claimed.map((c) => c.ownerId))]));
   const byId = new Map(owners.map((h) => [h.id, h]));
   let sent = 0;
-  for (const c of claimed) {
+  for (const [i, c] of claimed.entries()) {
+    // Out of time (`deadline`, epoch ms): release the rest of the claims so the next run sends them.
+    if (opts.deadline && Date.now() > opts.deadline) {
+      await db.update(O).set({ endedEmailSentAt: null }).where(inArray(O.id, claimed.slice(i).map((x) => x.id))).catch(() => {});
+      break;
+    }
     const h = byId.get(c.ownerId);
     if (!h) continue;
     try {

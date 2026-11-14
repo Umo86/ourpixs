@@ -4,7 +4,7 @@ What is already done, and the steps that need an account owner. Every setting li
 
 ## Already set up
 - **GitHub:** `Umo86/ourpixs`, connected to the Vercel project `ourpixs` (root directory `apps/web`). Every push to `main` deploys to production.
-- **Neon Postgres:** project `fancy-hall-12485138` (London). Migrations 0000 to 0003 are applied; 0004 and 0005 are new (see step 3), 0006 (see step 7), 0007, 0008 and 0009 (see step 3).
+- **Neon Postgres:** project `fancy-hall-12485138` (London). Migrations 0000 to 0003 are applied; 0004 and 0005 are new (see step 3), 0006 (see step 7), 0007, 0008, 0009 and 0010 (see step 3).
 - **Vercel Blob:** media storage in London (temporary: originals are not private on Blob; production needs R2, step 4).
 - **Vercel settings:** `DATABASE_URL`, `AUTH_SECRET`, `GUEST_TOKEN_SECRET`, `CRON_SECRET`, `DEFAULT_BRAND`, `PREVIEW_SHOW_CODE`, `BLOB_READ_WRITE_TOKEN`.
 
@@ -48,6 +48,8 @@ Until step 2 is done, Pay buttons show "Payments coming soon". The Customer Port
 **Database:** apply `0008_short_kitty_pryde` (additive: new enum `media_processing_status`; `media.key_guest`, `key_guest_thumb`, `key_video`, `key_guest_video`, `processing_status` (default `pending`), `processed_at`, `processing_error`, `processing_attempts`, `processing_started_at`; new table `guest_purchases`). Apply it **before** deploying this code. Existing media start as `pending`: guests see them as "getting ready" until the media sweep has made their watermarked copies (run "Photo and video processing" on `/admin/system` a few times to backfill right away; each run handles up to 60 items).
 
 **Database (consumer launch stage C):** apply `0009_illegal_sunset_bain` (additive: new tables `guest_contacts` and `marketing_consents`; `guest_purchases.waiver_accepted_at`, `waiver_wording`). Apply it **before** deploying this code: the guest purchase, guest email card, host sign-in and dashboard write to these.
+
+**Database (payment records kept, review fix):** apply `0010_short_energizer` (safe, no data change: `orders.occasion_id`, `orders.host_id` and `guest_purchases.occasion_id` become nullable and their foreign keys change to `ON DELETE SET NULL`). Apply it **before** deploying this code. Deleting an event or an account now keeps its payment rows in anonymised form (amount, dates, kind, live/test flag and Stripe ids stay; the links to the event and host are cut, a guest buyer's email and download token are cleared), as the privacy policy promises (six years). If the code runs before the migration, deleting an account that has payments fails safely with a database error instead of deleting the records.
 
 ## 4. Storage: Cloudflare R2 (required before going live)
 Originals must stay private: they are only ever handed out as signed links that expire within an hour, after the permission or payment check. **Vercel Blob can't do that** (its URLs are public and never expire, only unguessable), so Blob is a stop-gap for previews and `/admin/system` shows a red warning while it is in use. Newer Vercel Blob stores can be private; switching to one would need a code change, so R2 remains the plan.

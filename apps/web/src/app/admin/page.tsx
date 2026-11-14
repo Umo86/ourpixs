@@ -49,7 +49,9 @@ export default async function AdminOverviewPage() {
                   <tr key={`${p.kind}-${p.id}`}>
                     <td className={td}>
                       {formatDateTime((p.paidAt ?? p.createdAt).toISOString(), locale)}
-                      <Link href={`/admin/events/${p.occasionId}`} className={`${linkCls} block break-all text-xs`}>{p.title}</Link>
+                      {p.occasionId && p.title
+                        ? <Link href={`/admin/events/${p.occasionId}`} className={`${linkCls} block break-all text-xs`}>{p.title}</Link>
+                        : <span className="block text-xs text-muted">{t("payments.deletedEvent")}</span>}
                       {p.email ? <span className="block break-all text-xs text-muted">{p.email}</span> : null}
                     </td>
                     <td className={td}>{t(`event.kinds.${p.kind === "guest_download" ? "guest_download" : "event_package"}`)}</td>

@@ -71,6 +71,13 @@
       "when": 1794624686883,
       "tag": "0009_illegal_sunset_bain",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794625515339,
+      "tag": "0010_short_energizer",
+      "breakpoints": true
     }
   ]
 }

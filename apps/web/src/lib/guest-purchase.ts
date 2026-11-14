@@ -148,7 +148,7 @@ export async function fulfilGuestPurchase(sessionId: string): Promise<{ applied:
  * UPDATE, so concurrent webhook deliveries send one email. If sending fails the claim is released (Stripe retries).
  */
 async function sendDownloadLink(p: PurchaseRow) {
-  if (p.emailedAt || !p.email || !emailConfigured()) return;
+  if (p.emailedAt || !p.email || !p.occasionId || !emailConfigured()) return;
   const token = randomToken(32);
   const claimed = await db.update(P).set({ emailedAt: new Date(), downloadTokenHash: sha256(token) })
     .where(and(eq(P.id, p.id), eq(P.status, "paid"), sql`${P.emailedAt} is null`)).returning({ id: P.id });

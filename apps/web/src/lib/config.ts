@@ -158,7 +158,8 @@ export const TIME_ZONES = [
   "America/New_York", "America/Toronto", "Australia/Sydney",
 ] as const;
 /** Server-side byte cap per video, derived from the allowed length (a generous ~10 MB per second covers 4K). */
-export const VIDEO_BYTES_PER_SECOND = 10 * 1024 * 1024;
+/** Size cap per second of video (60 s → 360 MB). Keeps original + two transcodes inside a function's 500 MB /tmp. */
+export const VIDEO_BYTES_PER_SECOND = 6 * 1024 * 1024;
 
 /** What every event gets (fair use applies; see the terms). */
 export const FEATURES = {

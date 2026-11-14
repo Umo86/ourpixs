@@ -280,8 +280,12 @@ export const shareLinks = pgTable("share_links", {
  */
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
-  occasionId: uuid("occasion_id").notNull().references(() => occasions.id, { onDelete: "cascade" }),
-  hostId: uuid("host_id").notNull().references(() => hosts.id),
+  /**
+   * Payment records outlive the event and the account (privacy policy: 6 years). Deleting either only cuts the link
+   * (set null); the amount, dates, kind, livemode and Stripe ids stay.
+   */
+  occasionId: uuid("occasion_id").references(() => occasions.id, { onDelete: "set null" }),
+  hostId: uuid("host_id").references(() => hosts.id, { onDelete: "set null" }),
   stripeSessionId: text("stripe_session_id").notNull().unique(),
   /** Legacy (per-event plans before subscriptions); null for event packages. */
   plan: planEnum("plan"),
@@ -304,7 +308,8 @@ export const orders = pgTable("orders", {
  */
 export const guestPurchases = pgTable("guest_purchases", {
   id: uuid("id").primaryKey().defaultRandom(),
-  occasionId: uuid("occasion_id").notNull().references(() => occasions.id, { onDelete: "cascade" }),
+  /** Kept as an anonymised payment record when the event is deleted (link cut, email and token cleared: occasion-service.ts). */
+  occasionId: uuid("occasion_id").references(() => occasions.id, { onDelete: "set null" }),
   guestId: uuid("guest_id").references(() => guests.id, { onDelete: "set null" }),
   /** Filled from Stripe Checkout once paid. */
   email: text("email"),

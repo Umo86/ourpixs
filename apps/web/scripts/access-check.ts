@@ -49,6 +49,8 @@ const cases: { name: string; o: EventPackageRow; owner?: { suspendedAt: Date | n
     guard: { fn: assertCanUpload, code: "event_locked" } },
   { name: "owner suspended (live event)", o: paid(-1, 6), owner: { suspendedAt: at(-1) }, expect: { reason: "suspended", canUpload: false, guestsCanUpload: false, canDownload: false, readOnly: true, canPay: false },
     guard: { fn: assertCanDownload, code: "account_suspended" } },
+  { name: "owner suspended: closed to guests", o: paid(-1, 6), owner: { suspendedAt: at(-1) }, expect: { guestsCanView: false },
+    guard: { fn: assertGuestsCanView, code: "event_unavailable" } },
   { name: "comped by admin (paid, live)", o: paid(-1, 6, { compedAt: at(-2) }), expect: { state: "live", canDownload: true }, guard: { fn: assertCanPay, code: "already_paid" } },
 ];
 
