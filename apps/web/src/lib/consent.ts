@@ -9,15 +9,13 @@ import { hmac, requireEnv, sha256 } from "./crypto";
 import { normalizeEmail } from "./auth";
 import { emailConfigured, sendGuestGalleryEmail, sendMarketingRaw } from "./email";
 import { accessForOccasions } from "./access";
-import { getSettings } from "./settings";
-import { paymentsEnabled } from "./stripe";
-import { guestPurchaseOffered } from "./purchase-rules";
 import { publicSlug } from "./occasion";
 
 /**
  * Guest email (optional) and marketing consent (UK GDPR / PECR).
- *  - guest_contacts: a guest asked to get the event's photos when the gallery ends. That email is transactional
- *    (they requested it) and carries nothing but the gallery link and the event's own offer.
+ *  - guest_contacts: a guest asked to get the event's photos when the gallery ends. That email is purely transactional
+ *    (they requested it): "the gallery from <event> is ready", the gallery link and why they get it. No prices, no
+ *    offer, no marketing (PECR: selling content needs marketing consent); the gallery page shows the £3 offer itself.
  *  - marketing_consents: opt-in only, never pre-ticked, never bundled with anything else. Each row keeps the exact
  *    wording shown, the locale, the source and when; withdrawal sets withdrawn_at on every current consent of that
  *    email + brand. sendMarketingEmail() refuses to send without a current consent and always adds the unsubscribe
@@ -143,8 +141,8 @@ export async function recordGuestContact(input: { occasionId: string; guestId: s
 const O = schema.occasions;
 
 /**
- * When a gallery has ended, emails each guest who asked (wants_event_photos) a link to the gallery and, when it can be
- * bought, the event's "download everything" offer. Claimed per row with a conditional UPDATE (photos_emailed_at), so the
+ * When a gallery has ended, emails each guest who asked (wants_event_photos) a link to the gallery: nothing else (no
+ * price, no offer). Claimed per row with a conditional UPDATE (photos_emailed_at), so the
  * cron and the lazy triggers never send twice; a failed send releases the claim for the next run, and so does running
  * out of time (`deadline`, epoch ms) before the batch is through.
  */
@@ -154,6 +152,7 @@ export async function sendGuestGalleryEmails(opts: { occasionIds?: string[]; max
   const due = db.select({ id: G.id }).from(G).innerJoin(O, eq(O.id, G.occasionId)).where(and(
     eq(G.wantsEventPhotos, true), isNull(G.photosEmailedAt),
     inArray(O.packageStatus, ["paid", "live", "ended"]), isNotNull(O.closesAt), lte(O.closesAt, now), ne(O.status, "archived"), isNull(O.adminLockedAt),
+    isNull(O.deletedAt),
     opts.occasionIds ? inArray(G.occasionId, opts.occasionIds) : undefined,
   )).limit(opts.max ?? 200);
   const claimed = await db.update(G).set({ photosEmailedAt: now })
@@ -161,7 +160,7 @@ export async function sendGuestGalleryEmails(opts: { occasionIds?: string[]; max
     .returning({ id: G.id, occasionId: G.occasionId, email: G.email, locale: G.locale, brand: G.brand });
   if (!claimed.length) return 0;
   const events = await db.select().from(O).where(inArray(O.id, [...new Set(claimed.map((c) => c.occasionId))]));
-  const [access, s] = await Promise.all([accessForOccasions(events, now), getSettings()]);
+  const access = await accessForOccasions(events, now);
   const byId = new Map(events.map((o) => [o.id, o]));
   let sent = 0;
   for (const [i, c] of claimed.entries()) {
@@ -174,12 +173,9 @@ export async function sendGuestGalleryEmails(opts: { occasionIds?: string[]; max
     const a = access.get(c.occasionId);
     // Only for a gallery guests can still open (not refunded, expired or suspended).
     if (!o || !a || !a.guestsCanView) continue;
-    const offer = paymentsEnabled() && guestPurchaseOffered({ paid: a.paid, guestsCanView: a.guestsCanView, canDownload: a.canDownload });
     const locale: Locale = c.locale === "tr" ? "tr" : "en";
     try {
-      await sendGuestGalleryEmail(c.email, {
-        locale, brand: c.brand, title: o.title, url: `${brandBaseUrl(o.brand)}/g/${publicSlug(o)}?lang=${locale}`, offerPence: offer ? s.guestDownloadPence : null,
-      });
+      await sendGuestGalleryEmail(c.email, { locale, brand: c.brand, title: o.title, url: `${brandBaseUrl(o.brand)}/g/${publicSlug(o)}?lang=${locale}` });
       sent++;
     } catch (e) {
       console.error("[consent] guest gallery email failed", e);

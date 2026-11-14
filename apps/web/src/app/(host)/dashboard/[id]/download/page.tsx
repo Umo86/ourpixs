@@ -25,7 +25,9 @@ export default async function DownloadPage({ params }: { params: Promise<{ id: s
   if (!m) notFound();
   const { t, locale } = await getT("host");
   const [days, stats, access, settings] = await Promise.all([loadDays(m.occasion.id), occasionStats(m.occasion), accessForOccasion(m.occasion), getSettings()]);
-  const locked = access.canDownload ? null
+  // Before paying, hosts can download their own test uploads (never guests'); everything else opens with the package.
+  const testOnly = !access.canDownload && access.canDownloadTest;
+  const locked = access.canDownload || testOnly ? null
     : access.reason === "suspended" ? t("download.lockedSuspended")
     : access.state === "refunded" ? t("download.lockedRefunded")
     : access.state === "expired" ? t("download.lockedExpired")
@@ -35,12 +37,17 @@ export default async function DownloadPage({ params }: { params: Promise<{ id: s
       <div className="flex flex-col gap-2">
         <h2 className="m-0 text-3xl font-black tracking-[-0.03em]">{t("download.title")} <span className="font-serif text-royal">{t("download.titleAccent")}</span></h2>
         <p className="m-0 text-text-2">{t("download.lead", { size: formatBytes(stats.bytes, locale) })}</p>
-        {access.deleteAfter && !access.deleted ? <p className="m-0 text-sm font-semibold text-royal">{t("download.keptUntil", { date: formatDate(access.deleteAfter.toISOString(), locale) })}</p> : null}
+        {access.deleteAfter && !access.deleted ? (
+          <p className="m-0 text-sm font-semibold text-royal">
+            {t(access.unpaid ? "download.unpaidDelete" : "download.keptUntil", { date: formatDate(access.deleteAfter.toISOString(), locale) })}
+          </p>
+        ) : null}
       </div>
       {locked ? <Notice>{locked}</Notice> : null}
+      {testOnly ? <Notice>{t("download.testOnly")}</Notice> : null}
       {!locked && stats.bytes > SPLIT_ZIP_BYTES && days.length > 1 ? <Notice>{t("download.bigHint", { size: formatBytes(stats.bytes, locale) })}</Notice> : null}
       <DownloadClient occasionId={m.occasion.id} title={m.occasion.title} days={days.map((d) => ({ id: d.id, name: d.name }))}
-        canDownload={access.canDownload} isOwner={m.role === "owner"} payments={paymentsEnabled()} pricePence={settings.eventPricePence} canPay={access.canPay} />
+        canDownload={access.canDownload || testOnly} isOwner={m.role === "owner"} payments={paymentsEnabled()} pricePence={settings.eventPricePence} canPay={access.canPay} />
     </Container>
   );
 }

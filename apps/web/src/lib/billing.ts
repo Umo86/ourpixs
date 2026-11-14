@@ -1,6 +1,6 @@
 import "server-only";
 import type Stripe from "stripe";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { BRANDS, MAIN_BRAND, brandBaseUrl, type Brand, type Locale } from "./config";
 import { ApiError } from "./http";
@@ -141,11 +141,12 @@ export async function fulfilCheckout(sessionId: string): Promise<{ applied: bool
   const deleteAfter = o.closesAt ? addMonths(o.closesAt, s.retentionMonths) : null;
   const updated = await db.update(schema.occasions)
     .set({ packageStatus: "paid", paidAt, deleteAfter, stripeCheckoutSessionId: session.id })
-    .where(and(eq(schema.occasions.id, o.id), eq(schema.occasions.packageStatus, "setup")))
+    // A deleted event (by the host, or as an unpaid event: occasions.deleted_at) is never revived by a late payment.
+    .where(and(eq(schema.occasions.id, o.id), eq(schema.occasions.packageStatus, "setup"), isNull(schema.occasions.deletedAt)))
     .returning({ id: schema.occasions.id });
   if (!updated.length && order) {
     // A new payment that didn't open anything: the event was already paid (another session, or marked as paid by
-    // an admin), refunded or expired. Flag it for a manual refund.
+    // an admin), refunded, expired or deleted. Flag it for a manual refund.
     await db.update(schema.orders).set({ status: "duplicate" }).where(eq(schema.orders.id, order.id));
     console.error("[billing] duplicate payment for an event — refund by hand", { sessionId, occasionId });
     return { applied: false, reason: "duplicate", occasionId: o.id };

@@ -370,7 +370,11 @@
       },
       {
         "q": "Can I try it before paying?",
-        "a": "Yes. Creating an event is free. Set it up, print your QR cards and upload up to {testLimit} photos or videos yourself in test mode to see how it all works. Guests can join once you've paid and the gallery opens."
+        "a": "Yes. Creating an event is free. Set it up, print your QR cards and upload up to {testLimit} photos or videos yourself in test mode to see how it all works. Guests can join once you've paid and the gallery opens. Unpaid events are deleted after {unpaidDays} days."
+      },
+      {
+        "q": "What happens if I never pay?",
+        "a": "Nothing is charged. Unpaid events are deleted after {unpaidDays} days, together with their test uploads. Your dashboard shows the date on every unpaid event, we email you 7 days before, and you can download your test uploads until then. Pay before that date to keep it."
       },
       {
         "q": "What happens when the gallery ends?",
@@ -390,7 +394,7 @@
       },
       {
         "q": "Do guests pay anything?",
-        "a": "Not to take part. Guests scan, upload and look for free, with no app and no account. If a guest would like every photo and video from the event in full quality, they can buy them all for {guestPrice}."
+        "a": "Not to take part. Guests scan, upload and look for free, with no app and no account. If a guest would like every photo and video from the event in full quality, they can buy them all for {guestPrice}. Their download link works for 30 days, even if the event is later removed."
       }
     ],
     "priceLine": "{price} per event, paid once",
@@ -399,7 +403,8 @@
       "sticker": "Set up free · no card",
       "short": "free to set up",
       "body": "Create your event, print your QR cards and try everything with up to {testLimit} test uploads of your own. Pay when you're ready to open it to your guests.",
-      "cta": "Start free"
+      "cta": "Start free",
+      "unpaid": "Unpaid events are deleted after {unpaidDays} days."
     },
     "package": {
       "name": "Event package",
@@ -484,8 +489,8 @@
       {
         "h": "Your email address as a guest",
         "p": [
-          "After you have uploaded a few photos, we may ask whether you'd like the event's photos emailed to you afterwards. It's optional and you never need it to upload. If you give your email address, we use it for one thing: one email when the gallery closes, with a link to the gallery and, if the host's event offers it, the option to buy every photo and video in full quality. That email is something you asked for, not marketing.",
-          "We keep the address with the event and delete it when the event's files are deleted ({retentionMonths} months after the gallery ends), or sooner if you ask."
+          "After you have uploaded a few photos, we may ask whether you'd like the event's photos emailed to you afterwards. It's optional and you never need it to upload. If you give your email address, we use it for one thing: one email when the gallery closes, telling you the gallery is ready and linking to it, and why you're getting it. It contains no prices, offers or marketing: it is something you asked for.",
+          "We keep the address with the event and delete it when the event's files are deleted ({retentionMonths} months after the gallery ends, or earlier if the event is deleted), or sooner if you ask."
         ],
         "review": true
       },
@@ -508,7 +513,7 @@
       {
         "h": "Buying the photos as a guest",
         "p": [
-          "Guests can pay {guestPrice} to download every photo and video from an event in full quality. Stripe takes the payment and the email address for the receipt; we never see card details. We use that email address to send your download link, which works for 30 days. The purchase is linked to the phone or computer you bought it on, so the gallery there shows clean previews too."
+          "Guests can pay {guestPrice} to download every photo and video from an event in full quality. Stripe takes the payment and the email address for the receipt; we never see card details. We use that email address to send your download link. If you buy the full download, your link works for 30 days, even if the event is later removed: we keep the files you paid for until your link expires, then delete them. The purchase is linked to the phone or computer you bought it on, so the gallery there shows clean previews too."
         ],
         "review": true
       },
@@ -549,10 +554,11 @@
       {
         "h": "How long we keep it",
         "list": [
-          "Event photos, videos and messages: while the event's gallery is live and for {retentionMonths} months after it ends, then deleted. We email the host 30 days and 7 days before. Test uploads in an event that is never paid for are kept until the host deletes the event or the account. Hosts can delete an event or individual uploads at any time.",
-          "Guest email addresses given for the gallery email: deleted with the event's files ({retentionMonths} months after the gallery ends).",
+          "Event photos, videos and messages: while the event's gallery is live and for {retentionMonths} months after it ends, then deleted. We email the host 30 days and 7 days before. An event that is never paid for is deleted with its test uploads {unpaidDays} days after it was created (we email the host 7 days before). Hosts can delete an event or individual uploads at any time.",
+          "Photos and videos that guests have paid to download: kept until the last of those guests' download links expires (30 days after payment), even if the event is deleted, refunded or past its storage period. The event is hidden from the hosts and closed to everyone else straight away, and the files are deleted when the last link expires.",
+          "Guest email addresses given for the gallery email: deleted with the event's files ({retentionMonths} months after the gallery ends), or when the event is deleted.",
           "Guest download links: they stop working 30 days after payment, or straight away if the payment is refunded.",
-          "Account details: while your account is open, then deleted when you delete your account or on request.",
+          "Account details: while your account is open, then deleted when you delete your account or on request. If guests still hold paid download links for one of your events, your account is anonymised straight away (email address and name removed) and removed completely when the last link expires.",
           "Payment records (event packages and guest purchases): kept by us and by Stripe for six years, as UK tax and accounting rules require. Stripe also keeps its own records as an independent controller under its privacy policy.",
           "Marketing consent records: while your consent is valid and for 2 years after you withdraw it, then deleted.",
           "Enquiries: for as long as needed to deal with them."
@@ -655,7 +661,8 @@
         "h": "Guest downloads",
         "list": [
           "For {guestPrice}, paid once by card, Apple Pay or Google Pay through Stripe, a guest gets every photo and video of that event in full quality, without watermarks: as one ZIP (or one ZIP per day for big events) and through a link we email, which works for 30 days from payment.",
-          "It covers everything the hosts show in the gallery at the time you download, including photos added after you paid. Anything the hosts hide or remove is not included. Downloads end if the event's files are deleted or the purchase is refunded.",
+          "It covers everything the hosts show in the gallery at the time you download, including photos added after you paid. Anything the hosts hide or remove one by one is not included.",
+          "Your link works for its full 30 days, even if the event is later removed: if the hosts delete the event or their account, the hosts' package is refunded, or the event's storage period ends, we keep the files you paid for until your link expires. Your downloads end early only if your purchase is refunded, or if we suspend the event or the host's account for breaking these terms.",
           "This is digital content supplied straight away. Before paying, you tick a box to ask us to start the download immediately and to confirm you understand that you then lose your {cancelDays}-day right to cancel under the Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013.",
           "If the download doesn't work or isn't as described, tell us at {email}: you have rights under the Consumer Rights Act 2015, and we will fix it or refund you. A full refund ends access to the downloads."
         ],
@@ -664,7 +671,7 @@
       {
         "h": "Cancellations and refunds",
         "list": [
-          "Money-back promise: if you change your mind, email {email} from the address on your account any time before your gallery goes live, and we will refund the package in full, back to the original payment method through Stripe. The event then becomes read-only and guests can no longer open it.",
+          "Money-back promise: if you change your mind, email {email} from the address on your account any time before your gallery goes live, and we will refund the package in full, back to the original payment method through Stripe. The event then becomes read-only and guests can no longer open it. Guests who have bought the photos keep their download links until they expire.",
           "Your statutory cancellation right: under the Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013 you have {cancelDays} days from paying to cancel. By choosing the gallery dates you ask us to start the service when the gallery goes live, which may be within those {cancelDays} days. If you cancel after it has gone live but within the {cancelDays} days, we refund what you paid minus a proportionate amount for the service already provided. You acknowledge that once the gallery has ended the service has been fully provided and the right to cancel no longer applies.",
           "Guest downloads are digital content supplied straight after payment. Before paying, the guest asks for immediate access and confirms they lose the right to cancel once the download is available. This does not affect their rights if the download is faulty.",
           "Refunds are made by our support team. Nothing in this section affects your rights if the service is faulty."
@@ -676,7 +683,8 @@
         "list": [
           "We keep an event's photos, videos and messages while its gallery is live and for {retentionMonths} months after it ends, so you can download everything. Then they are deleted.",
           "When the gallery ends we email you a link to download everything, and we remind you 30 days and 7 days before the files are deleted.",
-          "Test uploads in an event that is never paid for are kept until you delete the event or your account.",
+          "An event that is never paid for is deleted, with its test uploads, {unpaidDays} days after you create it. Your dashboard shows the date on the event, we email you 7 days before, and until then you can download your test uploads.",
+          "Files that guests have paid for remain available to those guests until their download links expire (30 days after they paid), even if you delete the event or your account, the package is refunded, or the storage period ends. The event disappears from your dashboard and closes to everyone else straight away; those files are deleted when the last link expires.",
           "If a package is refunded, the event becomes read-only and guests can no longer open it. You can delete it at any time.",
           "We cannot guarantee uninterrupted service, so keep your own copies of anything important."
         ],
@@ -685,7 +693,7 @@
       {
         "h": "Emails to guests",
         "p": [
-          "If a guest gives us their email address on the event page, we send them one email when the gallery closes, with a link to it. We only send offers and news to people who have opted in, and every one of those emails has an unsubscribe link. See our privacy policy."
+          "If a guest gives us their email address on the event page, we send them one email when the gallery closes: it tells them the gallery is ready and links to it. It contains no prices, offers or marketing. We only send offers and news to people who have opted in, and every one of those emails has an unsubscribe link. See our privacy policy."
         ],
         "review": true
       },

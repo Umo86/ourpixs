@@ -22,13 +22,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("dashboard.metaTitle") };
 }
 
-/** Event card status: Setup / Paid · opens … / Live until … / Ended · download until … (dates in the event's zone). */
+/** Event card status: Not paid yet · deleted on … / Paid · opens … / Live until … / Ended · download until … (dates in the event's zone). */
 function statusOf(o: OccasionSummary, t: (k: string, v?: Record<string, string | number>) => string, locale: "en" | "tr") {
   const d = (iso: string | null) => (iso ? formatInZone(iso, o.timeZone, locale, { year: false }) : "");
   if (o.access.reason === "suspended") return { label: t("dashboard.status.suspended"), tone: "red" as const };
   if (o.access.reason === "locked") return { label: t("dashboard.status.locked"), tone: "red" as const };
   switch (o.packageStatus) {
-    case "setup": return { label: t("dashboard.status.setup"), tone: "amber" as const };
+    // Unpaid events are deleted unpaidDeleteDays after they were created (deleteAfter); say so on every card.
+    case "setup": return { label: o.deleteAfter ? t("dashboard.status.setupDelete", { date: formatInZone(o.deleteAfter, o.timeZone, locale) }) : t("dashboard.status.setup"), tone: "amber" as const };
     case "paid": return { label: o.opensAt ? t("dashboard.status.paid", { date: d(o.opensAt) }) : t("dashboard.status.paidNoDate"), tone: "blue" as const };
     case "live": return { label: t("dashboard.status.live", { date: d(o.closesAt) }), tone: "green" as const };
     case "ended": return { label: o.deleteAfter ? t("dashboard.status.ended", { date: d(o.deleteAfter) }) : t("dashboard.status.endedNoDate"), tone: "ink" as const };

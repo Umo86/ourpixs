@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { route, json, readJson, readQuery } from "@/lib/http";
 import { requireMember } from "@/lib/auth";
-import { accessForOccasion, assertCanDownload } from "@/lib/access";
+import { accessForOccasion, assertCanDownload, hostDownloadScope } from "@/lib/access";
 import { liveMedia } from "@/lib/queries";
 import { EXT_BY_MIME, privateGetUrl } from "@/lib/storage";
 
@@ -19,10 +19,12 @@ const safe = (s: string) => s.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, "_").replac
 type OccasionRow = typeof schema.occasions.$inferSelect;
 
 /** Manifest rows: visible originals (or a selection, hidden ones included), oldest first, with fresh signed links (1 h). */
-async function manifest(occasion: OccasionRow, filter: { dayId?: string; ids?: string[] }) {
+async function manifest(occasion: OccasionRow, filter: { dayId?: string; ids?: string[]; scope: "all" | "test" }) {
   const rows = await db.select({ media, guestName: guests.displayName }).from(media)
     .leftJoin(guests, eq(guests.id, media.guestId))
     .where(and(...liveMedia(occasion.id), inArray(media.kind, ["photo", "video"]),
+      // Before paying: only the hosts' own test uploads (hostDownloadScope).
+      filter.scope === "test" ? isNull(media.guestId) : undefined,
       filter.ids ? inArray(media.id, filter.ids) : eq(media.visibility, "visible"), filter.dayId ? eq(media.dayId, filter.dayId) : undefined))
     .orderBy(asc(media.createdAt), asc(media.id)).limit(MAX_FILES);
   const files = await Promise.all(rows.map(async (r, i) => {
@@ -36,20 +38,21 @@ async function manifest(occasion: OccasionRow, filter: { dayId?: string; ids?: s
 
 /**
  * ZIP manifest: every visible original (photos + videos), oldest first, with signed download URLs (1 h, minted now).
- * Hosts and co-hosts only (membership), and only once the event is paid: 402 `payment_required` before;
- * 410 `event_expired` after deletion. `?dayId=` limits it to one day.
+ * Hosts and co-hosts only (membership), and only once the event is paid; before paying, the manifest holds only the
+ * hosts' own test uploads (never a guest's: hostDownloadScope, assertCanDownload otherwise: 402 `payment_required`,
+ * 410 `event_expired` after deletion). `?dayId=` limits it to one day.
  */
 export const GET = route<{ id: string }>(async (req, { id }) => {
   const { occasion } = await requireMember(id);
-  assertCanDownload(await accessForOccasion(occasion));
+  const scope = hostDownloadScope(await accessForOccasion(occasion));
   const q = readQuery(req, z.object({ dayId: z.string().uuid().optional() }));
-  return json(await manifest(occasion, { dayId: q.dayId }));
+  return json(await manifest(occasion, { dayId: q.dayId, scope }));
 });
 
-/** Additive: same manifest for a selection from the host album, `{ ids }` (up to 500). */
+/** Additive: same manifest for a selection from the host album, `{ ids }` (up to 500). Paid events only. */
 export const POST = route<{ id: string }>(async (req, { id }) => {
   const { occasion } = await requireMember(id);
   assertCanDownload(await accessForOccasion(occasion));
   const { ids } = await readJson(req, z.object({ ids: z.array(z.string().uuid()).min(1).max(500) }));
-  return json(await manifest(occasion, { ids }));
+  return json(await manifest(occasion, { ids, scope: "all" }));
 });

@@ -87,7 +87,8 @@ export const getSession = cache(async (): Promise<{ host: HostRow; issuedAt: Dat
   const claims = await verifySessionClaims(token);
   if (!claims) return null;
   const [host] = await db.select().from(schema.hosts).where(eq(schema.hosts.id, claims.hostId)).limit(1);
-  return host ? { host, issuedAt: claims.issuedAt } : null;
+  // A deleted account kept anonymised for guests' paid links (src/lib/account.ts) is signed out everywhere.
+  return host && !host.deletedAt ? { host, issuedAt: claims.issuedAt } : null;
 });
 
 /** Current (non-suspended) host or null. Memoised per request. Suspension applies immediately, even to existing sessions. */
@@ -120,7 +121,7 @@ const loadMembership = cache(async (occasionId: string, hostId: string) => {
     .select({ occasion: schema.occasions, role: schema.occasionMembers.role })
     .from(schema.occasionMembers)
     .innerJoin(schema.occasions, eq(schema.occasions.id, schema.occasionMembers.occasionId))
-    .where(and(eq(schema.occasionMembers.occasionId, occasionId), eq(schema.occasionMembers.hostId, hostId)))
+    .where(and(eq(schema.occasionMembers.occasionId, occasionId), eq(schema.occasionMembers.hostId, hostId), isNull(schema.occasions.deletedAt)))
     .limit(1);
   return row ?? null;
 });

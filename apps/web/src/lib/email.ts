@@ -2,7 +2,6 @@ import "server-only";
 import { BRANDS, CONTACT_EMAIL, MAIN_BRAND, brandBaseUrl, type Brand, type Locale } from "./config";
 import { makeT } from "@/i18n/shared";
 import { ApiError } from "./http";
-import { formatGBP } from "@/components/marketing/format";
 
 export function emailConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
@@ -105,6 +104,21 @@ export async function sendDeletionReminder(to: string, opts: { locale: Locale; b
   await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${url}`);
 }
 
+/**
+ * The one reminder before an UNPAID (setup) event is deleted with its test uploads (created_at + unpaidDeleteDays,
+ * sent UNPAID_REMINDER_DAYS before). Links to the event page, where the host can pay or download their test uploads.
+ */
+export async function sendUnpaidDeletionReminder(to: string, opts: { locale: Locale; brand: Brand; title: string; occasionId: string; date: Date; days: number; limitDays: number }) {
+  const t = makeT(opts.locale, "host");
+  const url = `${brandBaseUrl(opts.brand)}/dashboard/${opts.occasionId}`;
+  const downloadUrl = `${brandBaseUrl(opts.brand)}/dashboard/${opts.occasionId}/download`;
+  const vars = { brand: BRANDS[opts.brand].name, title: opts.title, date: formatEmailDate(opts.date, opts.locale), days: opts.days, limit: opts.limitDays };
+  const subject = t("email.unpaidDeletion.subject", vars);
+  const body = [t("email.unpaidDeletion.body", vars), t("email.unpaidDeletion.body2", vars), t("email.unpaidDeletion.body3", { ...vars, url: downloadUrl })];
+  const html = layout(opts.brand, { heading: t("email.unpaidDeletion.heading", vars), body, cta: { href: url, label: t("email.unpaidDeletion.cta") }, footer: t("email.unpaidDeletion.footer", vars) });
+  await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${url}\n\n${t("email.unpaidDeletion.footer", vars)}`);
+}
+
 /** Internal alert to admins (ADMIN_EMAILS): an event passed the fair-use storage limit. English only. */
 export async function sendFairUseAlert(to: string[], opts: { title: string; occasionId: string; ownerEmail: string; gb: number; limitGb: number }) {
   if (!to.length) return;
@@ -141,15 +155,15 @@ export async function sendGuestDownloadEmail(to: string, opts: { locale: Locale;
 }
 
 /**
- * "The gallery has closed, here are the photos": one email to a guest who asked for it on the event page (guest_contacts).
- * Transactional (requested by the guest): the gallery link and, when it can be bought, the event's own £3 offer. Nothing else.
+ * "The gallery from <event> is ready": one email to a guest who asked for it on the event page (guest_contacts).
+ * Purely transactional (UK PECR: the guest requested it; selling anything would need marketing consent): the gallery
+ * link and why they are getting it. No prices, no offer, no marketing. The £3 offer is shown on the gallery page itself.
  */
-export async function sendGuestGalleryEmail(to: string, opts: { locale: Locale; brand: Brand; title: string; url: string; offerPence: number | null }) {
+export async function sendGuestGalleryEmail(to: string, opts: { locale: Locale; brand: Brand; title: string; url: string }) {
   const t = makeT(opts.locale, "guest");
-  const price = opts.offerPence != null ? formatGBP(opts.offerPence) : "";
-  const vars = { brand: BRANDS[opts.brand].name, title: opts.title, price };
+  const vars = { brand: BRANDS[opts.brand].name, title: opts.title };
   const subject = t("email.gallery.subject", vars);
-  const body = [t("email.gallery.body", vars), ...(opts.offerPence != null ? [t("email.gallery.offer", vars)] : []), t("email.gallery.body2", vars)];
+  const body = [t("email.gallery.body", vars), t("email.gallery.body2", vars)];
   const html = layout(opts.brand, { heading: t("email.gallery.heading", vars), body, cta: { href: opts.url, label: t("email.gallery.cta") }, footer: t("email.gallery.footer", vars) });
   await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${opts.url}\n\n${t("email.gallery.footer", vars)}`);
 }

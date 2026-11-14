@@ -46,7 +46,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
                 <td className={td}><Link href={`/admin/users/${u.id}`} className={`${linkCls} break-all`}>{u.email}</Link></td>
                 <td className={td}>{u.name || <span className="text-muted">–</span>}</td>
                 <td className={td}>{BRANDS[u.brand].name} · {u.locale.toUpperCase()}</td>
-                <td className={td}><UserPill suspended={!!u.suspendedAt} paidEvents={u.paidEvents} t={t} /></td>
+                <td className={td}><UserPill suspended={!!u.suspendedAt} deleted={!!u.deletedAt} paidEvents={u.paidEvents} t={t} /></td>
                 <td className={td}>{formatNumber(u.events, locale)}</td>
                 <td className={td}>{formatBytes(u.bytes, locale)}</td>
                 <td className={td}>{formatDate(u.createdAt.toISOString(), locale, { day: "numeric", month: "short", year: "numeric" })}</td>

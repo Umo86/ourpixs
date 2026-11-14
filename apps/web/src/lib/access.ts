@@ -89,6 +89,17 @@ export function assertCanDownload(a: Access) {
   throw new ApiError(403, "download_closed", "Downloads aren't available for this event");
 }
 
+/**
+ * Host downloads: "all" once the package is paid (assertCanDownload), "test" before paying (only media a host added,
+ * never a guest's: access.canDownloadTest). Throws like assertCanDownload otherwise.
+ */
+export function hostDownloadScope(a: Access): "all" | "test" {
+  if (a.canDownload) return "all";
+  if (a.canDownloadTest) return "test";
+  assertCanDownload(a);
+  return "all";
+}
+
 export function assertCanEditWindow(a: Access) {
   if (a.canEditWindow) return;
   assertWritable(a);
@@ -108,11 +119,15 @@ const o0 = schema.occasions;
 
 /**
  * Effective package state as SQL text ('setup' | 'paid' | 'live' | 'ended' | 'expired' | 'refunded').
- * `retentionMonths` is only used for events without a stored delete_after.
+ * `retentionMonths` is only used for events without a stored delete_after; `unpaidDeleteDays` turns a setup event
+ * older than that into 'expired'. A deleted event kept for guests' paid links (deleted_at) counts as 'expired'
+ * (or 'refunded').
  */
-export function packageStateSql(retentionMonths: number, o: typeof o0 = o0): SQL<string> {
-  const del = sql`coalesce(${o.deleteAfter}, ${o.closesAt} + make_interval(months => ${retentionMonths}::int))`;
+export function packageStateSql(s: { retentionMonths: number; unpaidDeleteDays: number }, o: typeof o0 = o0): SQL<string> {
+  const del = sql`coalesce(${o.deleteAfter}, ${o.closesAt} + make_interval(months => ${s.retentionMonths}::int))`;
   return sql<string>`(case
+    when ${o.deletedAt} is not null then (case when ${o.packageStatus} = 'refunded' then 'refunded' else 'expired' end)
+    when ${o.packageStatus} = 'setup' and ${o.createdAt} + make_interval(days => ${s.unpaidDeleteDays}::int) <= now() then 'expired'
     when ${o.packageStatus} in ('refunded', 'expired', 'setup') then ${o.packageStatus}::text
     when ${del} is not null and ${del} <= now() then 'expired'
     when ${o.packageStatus} = 'ended' then 'ended'

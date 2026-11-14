@@ -116,7 +116,8 @@
    "expired": "Files deleted",
    "refunded": "Refunded",
    "locked": "Locked",
-   "suspended": "Suspended"
+   "suspended": "Suspended",
+   "setupDelete": "Not paid yet · deleted on {date} unless you pay"
   },
   "statusLabel": "Status"
  },
@@ -366,7 +367,7 @@
  },
  "danger": {
   "title": "Delete event",
-  "body": "Deletes the event, every photo, video and message for good. Download anything you want to keep first.",
+  "body": "Deletes the event, every photo, video and message for good. Download anything you want to keep first. Guests who bought the photos keep their download link until it expires (30 days after they paid); their files are deleted then.",
   "delete": "Delete this event",
   "confirmPrompt": "Type the event title to confirm: {title}",
   "mismatch": "The title didn't match, so nothing was deleted."
@@ -426,7 +427,9 @@
   "lockedRefunded": "This event was refunded, so downloads are closed.",
   "lockedExpired": "This event's files have been deleted.",
   "lockedSuspended": "This account is suspended, so downloads are closed. Please contact support.",
-  "bigHint": "That's {size}: download one day at a time below for the most reliable result."
+  "bigHint": "That's {size}: download one day at a time below for the most reliable result.",
+  "unpaidDelete": "Not paid yet · deleted on {date} unless you pay.",
+  "testOnly": "Not paid yet, so this downloads only the photos and videos you and your co-hosts added in test mode. Everything from your guests opens once you've paid."
  },
  "support": {
   "metaTitle": "Support",
@@ -445,7 +448,7 @@
   "metaTitle": "Delete your account",
   "title": "Delete your account",
   "lead": "You can delete your account and its data at any time.",
-  "points": "Events you own are deleted, with every photo, video and message|You're removed from events where you are a co-host|Your sign-in email and app notification tokens are deleted|Payment records are kept by Stripe as the law requires",
+  "points": "Events you own are deleted, with every photo, video and message|Guests who bought an event's photos keep their download link until it expires (30 days after they paid)|You're removed from events where you are a co-host|Your sign-in email and app notification tokens are deleted|Payment records are kept by Stripe as the law requires",
   "guests": "Guests don't have accounts. To remove photos you uploaded as a guest, open the event and use \"My uploads\", or ask the hosts.",
   "signedInAs": "Signed in as {email}",
   "button": "Delete my account",
@@ -494,6 +497,15 @@
    "body": "The photos, videos and messages from {title} will be deleted on {date}, in {days} days.",
    "body2": "Download everything now if you haven't already. After that date they can't be recovered.",
    "cta": "Download everything"
+  },
+  "unpaidDeletion": {
+   "subject": "{title}: not paid yet, deleted on {date}",
+   "heading": "Your event will be deleted soon",
+   "body": "{title} hasn't been paid for yet. Unpaid events are deleted {limit} days after they're created, so it will be deleted on {date}, in {days} days, together with its test uploads.",
+   "body2": "To keep it, pay for the event before then. Your guests can join once the gallery opens.",
+   "body3": "Want to keep your test photos and videos? Download them here: {url}",
+   "cta": "Open your event",
+   "footer": "You're getting this because you created {title} on {brand}. If you don't need it any more, you don't have to do anything."
   }
  },
  "billing": {
@@ -568,7 +580,9 @@
   "changeDates": "Change dates",
   "download": "Download everything",
   "testBanner": "Test mode: only you and your co-hosts can upload ({used} of {limit}). Guests see “opens soon” until you pay and the gallery opens.",
-  "cohostPay": "The event owner can pay to open the gallery."
+  "cohostPay": "The event owner can pay to open the gallery.",
+  "unpaidDelete": "Not paid yet · deleted on {date} unless you pay.",
+  "downloadTest": "Download test uploads"
  },
  "cards": {
   "instruction": "Scan to add your photos and videos",

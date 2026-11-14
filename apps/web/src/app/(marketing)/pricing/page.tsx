@@ -35,6 +35,7 @@ export default async function PricingPage() {
             <div className="flex flex-col gap-2">
               <Sticker rotate={-3} className="self-start">{fill(t("pricing.freeSetup.sticker"), vars)}</Sticker>
               <p className="m-0 max-w-[560px] text-[17px] leading-relaxed text-muted-dark">{fill(t("pricing.freeSetup.body"), vars)}</p>
+              <p className="m-0 max-w-[560px] text-[15px] font-bold text-white">{fill(t("pricing.freeSetup.unpaid"), vars)}</p>
             </div>
             <Button href={START_HREF} variant="light" size="lg">{t("pricing.freeSetup.cta")}</Button>
           </div>

@@ -22,7 +22,7 @@ const int = (v: unknown) => Number(v ?? 0);
 export const USER_FILTERS = ["paying", "suspended"] as const;
 export type UserFilter = (typeof USER_FILTERS)[number];
 /** Event list filters: effective package states, plus admin overrides and the fair-use flag. */
-export const EVENT_FILTERS = ["setup", "paid", "live", "ended", "expired", "refunded", "locked", "fair_use", "archived"] as const;
+export const EVENT_FILTERS = ["setup", "paid", "live", "ended", "expired", "refunded", "locked", "fair_use", "archived", "deleted"] as const;
 export type EventFilter = (typeof EVENT_FILTERS)[number];
 export const PACKAGE_STATES = ["setup", "paid", "live", "ended", "expired", "refunded"] as const;
 export const MEDIA_FILTERS = ["all", "visible", "hidden", "pending", "flagged"] as const;
@@ -34,7 +34,10 @@ export type EnquiryFilter = (typeof ENQUIRY_FILTERS)[number];
 const packageCols = {
   packageStatus: occasions.packageStatus, opensAt: occasions.opensAt, closesAt: occasions.closesAt, deleteAfter: occasions.deleteAfter,
   adminLockedAt: occasions.adminLockedAt, compedAt: occasions.compedAt, paidAt: occasions.paidAt,
+  createdAt: occasions.createdAt, deletedAt: occasions.deletedAt, deletedBy: occasions.deletedBy, filesDeleteAfter: occasions.filesDeleteAfter,
 };
+/** Guests' paid, unrefunded "download everything" purchases whose 30 days haven't run out (they keep the files alive). */
+const occActivePurchases = sql<number>`(select count(*)::int from guest_purchases p where p.occasion_id = ${occasions.id} and p.status = 'paid' and p.token_expires_at > now())`;
 /** Paid event-package orders (refunds and duplicates excluded). */
 const paidOrder = and(eq(orders.kind, "event_package"), eq(orders.status, "paid"));
 
@@ -60,7 +63,7 @@ export const moderationWhere = and(
 
 export async function overviewStats() {
   const settings = await getSettings();
-  const state = packageStateSql(settings.retentionMonths);
+  const state = packageStateSql(settings);
   const [[h], [e], [m], [mod], [enq], [pay]] = await Promise.all([
     db.select({
       total: sql<number>`count(*)::int`,
@@ -153,7 +156,7 @@ export async function listUsers(opts: { q: string; filter: UserFilter | null; pa
   if (opts.filter) where.push(userFilterSql(opts.filter));
   const rows = await db.select({
     id: hosts.id, email: hosts.email, name: hosts.name, brand: hosts.brand, locale: hosts.locale, createdAt: hosts.createdAt,
-    suspendedAt: hosts.suspendedAt, events: hostEventCount, paidEvents: hostPaidEvents, bytes: hostStorage,
+    suspendedAt: hosts.suspendedAt, deletedAt: hosts.deletedAt, events: hostEventCount, paidEvents: hostPaidEvents, bytes: hostStorage,
   }).from(hosts).where(where.length ? and(...where) : undefined)
     .orderBy(desc(hosts.createdAt), desc(hosts.id)).limit(PAGE + 1).offset(offsetOf(opts.page));
   return paged(rows.map((r) => ({ ...r, events: int(r.events), paidEvents: int(r.paidEvents), bytes: int(r.bytes) })), opts.page);
@@ -165,7 +168,7 @@ export async function userDetail(id: string) {
   const [owned, cohosted, auditRows] = await Promise.all([
     db.select({
       id: occasions.id, title: occasions.title, type: occasions.type, slug: occasions.slug, status: occasions.status,
-      startsOn: occasions.startsOn, createdAt: occasions.createdAt, ...packageCols, fairUseAlertedAt: occasions.fairUseAlertedAt,
+      startsOn: occasions.startsOn, ...packageCols, fairUseAlertedAt: occasions.fairUseAlertedAt, keptPurchases: occActivePurchases,
       mediaCount: sql<number>`(select count(*)::int from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`,
       bytes: sql<number>`(select coalesce(sum(m.bytes), 0)::bigint from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`,
       guestCount: sql<number>`(select count(*)::int from guests g where g.occasion_id = ${occasions.id})`,
@@ -179,7 +182,7 @@ export async function userDetail(id: string) {
   const now = new Date();
   return {
     host,
-    owned: owned.map((o) => ({ ...o, mediaCount: int(o.mediaCount), bytes: int(o.bytes), guestCount: int(o.guestCount), access: computeAccess(o, host, settings, now) })),
+    owned: owned.map((o) => ({ ...o, mediaCount: int(o.mediaCount), bytes: int(o.bytes), guestCount: int(o.guestCount), keptPurchases: int(o.keptPurchases), access: computeAccess(o, host, settings, now) })),
     cohosted, audit: auditRows,
   };
 }
@@ -190,11 +193,12 @@ const occMediaCount = sql<number>`(select count(*)::int from media m where m.occ
 const occStorage = sql<number>`(select coalesce(sum(m.bytes), 0)::bigint from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`;
 const occGuests = sql<number>`(select count(*)::int from guests g where g.occasion_id = ${occasions.id})`;
 
-function eventFilterSql(f: EventFilter, retentionMonths: number): SQL {
+function eventFilterSql(f: EventFilter, settings: { retentionMonths: number; unpaidDeleteDays: number }): SQL {
   if (f === "archived") return eq(occasions.status, "archived");
   if (f === "locked") return and(ne(occasions.status, "archived"), isNotNull(occasions.adminLockedAt))!;
   if (f === "fair_use") return isNotNull(occasions.fairUseAlertedAt);
-  return sql`${packageStateSql(retentionMonths)} = ${f}`;
+  if (f === "deleted") return isNotNull(occasions.deletedAt);
+  return sql`${packageStateSql(settings)} = ${f}`;
 }
 
 export async function listEvents(opts: { q: string; filter: EventFilter | null; page: number; ownerId?: string | null }) {
@@ -204,11 +208,11 @@ export async function listEvents(opts: { q: string; filter: EventFilter | null; 
     const p = likePattern(opts.q);
     where.push(or(ilike(occasions.title, p), ilike(occasions.slug, p), ilike(occasions.vanitySlug, p), ilike(hosts.email, p))!);
   }
-  if (opts.filter) where.push(eventFilterSql(opts.filter, settings.retentionMonths));
+  if (opts.filter) where.push(eventFilterSql(opts.filter, settings));
   if (opts.ownerId) where.push(eq(occasions.ownerId, opts.ownerId));
   const rows = await db.select({
     id: occasions.id, title: occasions.title, type: occasions.type, slug: occasions.slug, status: occasions.status,
-    startsOn: occasions.startsOn, createdAt: occasions.createdAt, ...packageCols, fairUseAlertedAt: occasions.fairUseAlertedAt,
+    startsOn: occasions.startsOn, ...packageCols, fairUseAlertedAt: occasions.fairUseAlertedAt, keptPurchases: occActivePurchases,
     ownerId: occasions.ownerId, ownerEmail: hosts.email, ownerSuspendedAt: hosts.suspendedAt,
     guestCount: occGuests, mediaCount: occMediaCount, bytes: occStorage,
   }).from(occasions).innerJoin(hosts, eq(hosts.id, occasions.ownerId))
@@ -216,7 +220,7 @@ export async function listEvents(opts: { q: string; filter: EventFilter | null; 
     .orderBy(desc(occasions.createdAt), desc(occasions.id)).limit(PAGE + 1).offset(offsetOf(opts.page));
   const now = new Date();
   return paged(rows.map((r) => ({
-    ...r, guestCount: int(r.guestCount), mediaCount: int(r.mediaCount), bytes: int(r.bytes),
+    ...r, guestCount: int(r.guestCount), mediaCount: int(r.mediaCount), bytes: int(r.bytes), keptPurchases: int(r.keptPurchases),
     access: computeAccess(r, { suspendedAt: r.ownerSuspendedAt }, settings, now),
   })), opts.page);
 }
@@ -274,6 +278,7 @@ export async function eventDetail(id: string, opts: { mediaPage: number; mediaFi
       pending: sql<number>`(select count(*)::int from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility = 'visible' and m.approved = false)`,
       messages: sql<number>`(select count(*)::int from messages x where x.occasion_id = ${occasions.id})`,
       openReports: sql<number>`(select count(*)::int from media_reports r where r.occasion_id = ${occasions.id} and r.resolved_at is null)`,
+      keptPurchases: occActivePurchases,
     }).from(occasions).where(eq(occasions.id, id)),
     db.select({ m: media, guestName: guests.displayName }).from(media).leftJoin(guests, eq(guests.id, media.guestId))
       .where(and(eq(media.occasionId, id), eq(media.status, "uploaded"), ne(media.visibility, "deleted"), ...mediaFilterSql(opts.mediaFilter)))
@@ -306,6 +311,7 @@ export async function eventDetail(id: string, opts: { mediaPage: number; mediaFi
     stats: {
       guests: int(s?.guests), media: int(s?.media), bytes: int(s?.bytes), photos: int(s?.photos), videos: int(s?.videos),
       hidden: int(s?.hidden), pending: int(s?.pending), messages: int(s?.messages), openReports: int(s?.openReports),
+      keptPurchases: int(s?.keptPurchases),
     },
     media: { items, page: mPage.page, hasNext: mPage.hasNext },
     guests: { ...paged(guestRows.map((g) => ({ ...g, uploads: int(g.uploads) })), opts.guestPage) },

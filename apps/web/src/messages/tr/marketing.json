@@ -370,7 +370,11 @@
       },
       {
         "q": "Ödemeden önce deneyebilir miyim?",
-        "a": "Evet. Etkinlik oluşturmak ücretsiz. Etkinliğinizi hazırlayın, QR kartlarınızı yazdırın ve nasıl çalıştığını görmek için deneme modunda {testLimit} fotoğraf ya da videoya kadar kendiniz yükleyin. Misafirler, ödemeyi yaptıktan sonra galeri açıldığında katılabilir."
+        "a": "Evet. Etkinlik oluşturmak ücretsiz. Etkinliğinizi hazırlayın, QR kartlarınızı yazdırın ve nasıl çalıştığını görmek için deneme modunda {testLimit} fotoğraf ya da videoya kadar kendiniz yükleyin. Misafirler, ödemeyi yaptıktan sonra galeri açıldığında katılabilir. Ödenmeyen etkinlikler {unpaidDays} gün sonra silinir."
+      },
+      {
+        "q": "Hiç ödeme yapmazsam ne olur?",
+        "a": "Sizden hiçbir ücret alınmaz. Ödenmeyen etkinlikler, deneme yüklemeleriyle birlikte {unpaidDays} gün sonra silinir. Panelinizde ödenmemiş her etkinliğin silinme tarihi yazar, 7 gün önce size e-posta göndeririz ve o zamana kadar deneme yüklemelerinizi indirebilirsiniz. Etkinliği saklamak için bu tarihten önce ödeme yapın."
       },
       {
         "q": "Galeri kapandığında ne olur?",
@@ -390,7 +394,7 @@
       },
       {
         "q": "Misafirler bir şey ödüyor mu?",
-        "a": "Katılmak için hayır. Misafirler QR kodu okutur, ücretsiz yükler ve bakar; uygulama ya da hesap gerekmez. Etkinliğin tüm fotoğraf ve videolarını tam kalitede isteyen bir misafir hepsini {guestPrice} karşılığında satın alabilir."
+        "a": "Katılmak için hayır. Misafirler QR kodu okutur, ücretsiz yükler ve bakar; uygulama ya da hesap gerekmez. Etkinliğin tüm fotoğraf ve videolarını tam kalitede isteyen bir misafir hepsini {guestPrice} karşılığında satın alabilir. İndirme bağlantısı, etkinlik sonradan kaldırılsa bile 30 gün çalışır."
       }
     ],
     "priceLine": "etkinlik başına {price}, tek ödeme",
@@ -399,7 +403,8 @@
       "sticker": "Kurulum ücretsiz · kart gerekmez",
       "short": "kurulum ücretsiz",
       "body": "Etkinliğinizi oluşturun, QR kartlarınızı yazdırın ve {testLimit} deneme yüklemesiyle her şeyi kendiniz deneyin. Misafirlerinize açmaya hazır olduğunuzda ödeyin.",
-      "cta": "Ücretsiz başlayın"
+      "cta": "Ücretsiz başlayın",
+      "unpaid": "Ödenmeyen etkinlikler {unpaidDays} gün sonra silinir."
     },
     "package": {
       "name": "Etkinlik paketi",
@@ -484,8 +489,8 @@
       {
         "h": "Misafir olarak e-posta adresiniz",
         "p": [
-          "Birkaç fotoğraf yükledikten sonra, etkinliğin fotoğraflarının sonradan size e-postayla gönderilmesini isteyip istemediğinizi sorabiliriz. Bu isteğe bağlıdır ve yükleme yapmak için hiçbir zaman gerekmez. E-posta adresinizi verirseniz onu tek bir iş için kullanırız: galeri kapandığında, galeri bağlantısını ve etkinlikte sunuluyorsa tüm fotoğraf ve videoları tam kalitede satın alma seçeneğini içeren tek bir e-posta. Bu e-postayı siz istediğiniz için gönderiyoruz; pazarlama değildir.",
-          "Adresi etkinlikle birlikte saklar, etkinliğin dosyaları silindiğinde (galeri kapandıktan {retentionMonths} ay sonra) ya da siz isterseniz daha önce sileriz."
+          "Birkaç fotoğraf yükledikten sonra, etkinliğin fotoğraflarının sonradan size e-postayla gönderilmesini isteyip istemediğinizi sorabiliriz. Bu isteğe bağlıdır ve yükleme yapmak için hiçbir zaman gerekmez. E-posta adresinizi verirseniz onu tek bir iş için kullanırız: galeri kapandığında, galerinin hazır olduğunu söyleyen, bağlantısını ve bu e-postayı neden aldığınızı içeren tek bir e-posta. Bu e-postada fiyat, teklif ya da pazarlama yoktur; siz istediğiniz için gönderilir.",
+          "Adresi etkinlikle birlikte saklar, etkinliğin dosyaları silindiğinde (galeri kapandıktan {retentionMonths} ay sonra ya da etkinlik daha önce silinirse o zaman) ya da siz isterseniz daha önce sileriz."
         ],
         "review": true
       },
@@ -508,7 +513,7 @@
       {
         "h": "Misafir olarak fotoğrafları satın almak",
         "p": [
-          "Misafirler bir etkinliğin tüm fotoğraf ve videolarını tam kalitede indirmek için {guestPrice} ödeyebilir. Ödemeyi ve makbuz için e-posta adresini Stripe alır; kart bilgilerini hiçbir zaman görmeyiz. Bu e-posta adresini, 30 gün geçerli indirme bağlantınızı göndermek için kullanırız. Satın alma, satın aldığınız telefon ya da bilgisayara bağlıdır; orada galeri de temiz önizlemelerle görünür."
+          "Misafirler bir etkinliğin tüm fotoğraf ve videolarını tam kalitede indirmek için {guestPrice} ödeyebilir. Ödemeyi ve makbuz için e-posta adresini Stripe alır; kart bilgilerini hiçbir zaman görmeyiz. Bu e-posta adresini indirme bağlantınızı göndermek için kullanırız. Tam indirmeyi satın alırsanız bağlantınız, etkinlik sonradan kaldırılsa bile 30 gün çalışır: satın aldığınız dosyaları bağlantınızın süresi dolana kadar saklar, sonra sileriz. Satın alma, satın aldığınız telefon ya da bilgisayara bağlıdır; orada galeri de temiz önizlemelerle görünür."
         ],
         "review": true
       },
@@ -549,10 +554,11 @@
       {
         "h": "Ne kadar süre saklıyoruz",
         "list": [
-          "Etkinlik fotoğrafları, videoları ve mesajları: etkinliğin galerisi açıkken ve kapandıktan sonraki {retentionMonths} ay boyunca saklanır, sonra silinir. Ev sahibine 30 gün ve 7 gün önce e-posta göndeririz. Ödemesi hiç yapılmayan bir etkinlikteki deneme yüklemeleri, ev sahibi etkinliği ya da hesabı silene kadar saklanır. Ev sahipleri bir etkinliği ya da tek tek yüklemeleri dilediği zaman silebilir.",
-          "Galeri e-postası için verilen misafir e-posta adresleri: etkinliğin dosyalarıyla birlikte (galeri kapandıktan {retentionMonths} ay sonra) silinir.",
+          "Etkinlik fotoğrafları, videoları ve mesajları: etkinliğin galerisi açıkken ve kapandıktan sonraki {retentionMonths} ay boyunca saklanır, sonra silinir. Ev sahibine 30 gün ve 7 gün önce e-posta göndeririz. Ödemesi hiç yapılmayan bir etkinlik, oluşturulduktan {unpaidDays} gün sonra deneme yüklemeleriyle birlikte silinir (ev sahibine 7 gün önce e-posta göndeririz). Ev sahipleri bir etkinliği ya da tek tek yüklemeleri dilediği zaman silebilir.",
+          "Misafirlerin indirmek için ücret ödediği fotoğraf ve videolar: etkinlik silinse, iade edilse ya da saklama süresi dolsa bile, bu misafirlerin son indirme bağlantısının süresi dolana kadar (ödemeden 30 gün sonra) saklanır. Etkinlik ev sahiplerinden hemen gizlenir ve diğer herkese kapanır; dosyalar son bağlantının süresi dolunca silinir.",
+          "Galeri e-postası için verilen misafir e-posta adresleri: etkinliğin dosyalarıyla birlikte (galeri kapandıktan {retentionMonths} ay sonra) ya da etkinlik silindiğinde silinir.",
           "Misafir indirme bağlantıları: ödemeden 30 gün sonra, ödeme iade edilirse hemen çalışmaz olur.",
-          "Hesap bilgileri: hesabınız açık olduğu sürece; hesabınızı sildiğinizde ya da talep üzerine silinir.",
+          "Hesap bilgileri: hesabınız açık olduğu sürece; hesabınızı sildiğinizde ya da talep üzerine silinir. Etkinliklerinizden biri için misafirlerin hâlâ ödenmiş indirme bağlantıları varsa hesabınız hemen anonimleştirilir (e-posta adresi ve ad silinir) ve son bağlantının süresi dolunca tamamen silinir.",
           "Ödeme kayıtları (etkinlik paketleri ve misafir satın almaları): Birleşik Krallık vergi ve muhasebe kuralları gereği bizim ve Stripe tarafından altı yıl saklanır. Stripe ayrıca kendi gizlilik politikası kapsamında bağımsız veri sorumlusu olarak kendi kayıtlarını tutar.",
           "Pazarlama izni kayıtları: izniniz geçerli olduğu sürece ve geri aldıktan sonra 2 yıl boyunca saklanır, sonra silinir.",
           "Talepler: ilgili talebi sonuçlandırmak için gereken süre boyunca."
@@ -655,7 +661,8 @@
         "h": "Misafir indirmeleri",
         "list": [
           "Misafir, Stripe aracılığıyla kart, Apple Pay ya da Google Pay ile bir kez {guestPrice} ödeyerek o etkinliğin tüm fotoğraf ve videolarını filigransız, tam kalitede alır: tek bir ZIP olarak (büyük etkinliklerde her gün için ayrı ZIP) ve ödemeden itibaren 30 gün çalışan, e-postayla gönderdiğimiz bir bağlantıyla.",
-          "İndirdiğiniz anda ev sahiplerinin galeride gösterdiği her şeyi kapsar; ödemeden sonra eklenen fotoğraflar da dahildir. Ev sahiplerinin gizlediği ya da kaldırdığı içerikler dahil değildir. Etkinliğin dosyaları silinirse ya da satın alma iade edilirse indirmeler sona erer.",
+          "İndirdiğiniz anda ev sahiplerinin galeride gösterdiği her şeyi kapsar; ödemeden sonra eklenen fotoğraflar da dahildir. Ev sahiplerinin tek tek gizlediği ya da kaldırdığı içerikler dahil değildir.",
+          "Bağlantınız, etkinlik sonradan kaldırılsa bile 30 günün tamamı boyunca çalışır: ev sahipleri etkinliği ya da hesabını silse, ev sahiplerinin paketi iade edilse ya da etkinliğin saklama süresi dolsa bile, satın aldığınız dosyaları bağlantınızın süresi dolana kadar saklarız. İndirmeleriniz yalnızca satın almanız iade edilirse ya da bu koşulları ihlal ettiği için etkinliği veya ev sahibinin hesabını askıya alırsak erken sona erer.",
           "Bu, hemen sunulan dijital içeriktir. Ödemeden önce, indirmenin hemen başlamasını istediğinizi ve bu durumda 2013 tarihli Tüketici Sözleşmeleri (Bilgilendirme, İptal ve Ek Ücretler) Yönetmeliği kapsamındaki {cancelDays} günlük cayma hakkınızı kaybettiğinizi anladığınızı bir kutuyu işaretleyerek onaylarsınız.",
           "İndirme çalışmazsa ya da anlatıldığı gibi değilse {email} adresinden bize bildirin: 2015 tarihli Tüketici Hakları Yasası kapsamında haklarınız vardır; sorunu gideririz ya da ücretinizi iade ederiz. Tam iade, indirmelere erişimi sona erdirir."
         ],
@@ -664,7 +671,7 @@
       {
         "h": "İptal ve iadeler",
         "list": [
-          "Para iade sözümüz: fikrinizi değiştirirseniz galeriniz açılmadan önce istediğiniz zaman hesabınızdaki e-posta adresinden {email} adresine yazın; paketin tamamını Stripe aracılığıyla ilk ödeme yönteminize iade ederiz. Etkinlik bundan sonra salt okunur olur ve misafirler artık açamaz.",
+          "Para iade sözümüz: fikrinizi değiştirirseniz galeriniz açılmadan önce istediğiniz zaman hesabınızdaki e-posta adresinden {email} adresine yazın; paketin tamamını Stripe aracılığıyla ilk ödeme yönteminize iade ederiz. Etkinlik bundan sonra salt okunur olur ve misafirler artık açamaz. Fotoğrafları satın almış misafirlerin indirme bağlantıları süreleri dolana kadar çalışır.",
           "Yasal cayma hakkınız: Birleşik Krallık'ta 2013 tarihli Tüketici Sözleşmeleri (Bilgilendirme, İptal ve Ek Ücretler) Yönetmeliği uyarınca ödemeden itibaren {cancelDays} gün içinde cayma hakkınız vardır. Galeri tarihlerini seçerek hizmetin galeri açıldığında başlamasını talep etmiş olursunuz; bu tarih o {cancelDays} günün içinde olabilir. Galeri açıldıktan sonra ama {cancelDays} gün dolmadan iptal ederseniz, ödediğiniz tutardan o ana kadar sunulan hizmetin orantılı bedeli düşülerek iade yapılır. Galeri kapandığında hizmetin tamamen sunulmuş olacağını ve cayma hakkının artık geçerli olmayacağını kabul edersiniz.",
           "Misafir indirmeleri, ödemenin hemen ardından sunulan dijital içeriktir. Misafir, ödemeden önce içeriğe hemen erişmek istediğini ve indirme açıldığında cayma hakkını kaybedeceğini onaylar. Bu, indirmenin kusurlu olması durumundaki haklarını etkilemez.",
           "İadeleri destek ekibimiz yapar. Bu bölüm, hizmetin kusurlu olması durumundaki haklarınızı etkilemez."
@@ -676,7 +683,8 @@
         "list": [
           "Bir etkinliğin fotoğraf, video ve mesajlarını galeri açıkken ve kapandıktan sonraki {retentionMonths} ay boyunca, her şeyi indirebilmeniz için saklarız. Ardından silinirler.",
           "Galeri kapandığında size her şeyi indirebileceğiniz bir bağlantıyı e-postayla göndeririz; dosyalar silinmeden 30 gün ve 7 gün önce de hatırlatırız.",
-          "Ödemesi hiç yapılmayan bir etkinlikteki deneme yüklemeleri, etkinliği ya da hesabınızı silene kadar saklanır.",
+          "Ödemesi hiç yapılmayan bir etkinlik, oluşturduğunuzdan {unpaidDays} gün sonra deneme yüklemeleriyle birlikte silinir. Silinme tarihi panelinizde etkinliğin üzerinde yazar, 7 gün önce size e-posta göndeririz ve o zamana kadar deneme yüklemelerinizi indirebilirsiniz.",
+          "Misafirlerin ücretini ödediği dosyalar, etkinliği ya da hesabınızı silseniz, paket iade edilse ya da saklama süresi dolsa bile, bu misafirlerin indirme bağlantılarının süresi dolana kadar (ödemeden 30 gün sonra) onlar için erişilebilir kalır. Etkinlik panelinizden hemen kaybolur ve diğer herkese kapanır; bu dosyalar son bağlantının süresi dolunca silinir.",
           "Bir paket iade edilirse etkinlik salt okunur olur ve misafirler artık açamaz. Etkinliği dilediğiniz zaman silebilirsiniz.",
           "Kesintisiz hizmet garantisi veremeyiz; bu yüzden önemli içeriklerin kendi kopyalarını saklayın."
         ],
@@ -685,7 +693,7 @@
       {
         "h": "Misafirlere gönderilen e-postalar",
         "p": [
-          "Bir misafir etkinlik sayfasında bize e-posta adresini verirse, galeri kapandığında ona galerinin bağlantısını içeren tek bir e-posta göndeririz. Kampanya ve haberleri yalnızca bunu kabul edenlere göndeririz ve bu e-postaların her birinde abonelikten çık bağlantısı bulunur. Ayrıntılar gizlilik politikamızdadır."
+          "Bir misafir etkinlik sayfasında bize e-posta adresini verirse, galeri kapandığında ona tek bir e-posta göndeririz: galerinin hazır olduğunu söyler ve bağlantısını verir. Bu e-postada fiyat, teklif ya da pazarlama yoktur. Kampanya ve haberleri yalnızca bunu kabul edenlere göndeririz ve bu e-postaların her birinde abonelikten çık bağlantısı bulunur. Ayrıntılar gizlilik politikamızdadır."
         ],
         "review": true
       },

@@ -85,7 +85,8 @@ Anyone who isn't on the list (or isn't signed in) gets a 404 on `/admin` and `/a
 
 What the admin overrides do:
 - **Mark as paid (free)** on one event: a complimentary package (no payment); it opens on its gallery dates and follows the usual retention. "Back to setup" undoes it (only when there is no real payment).
-- **Settings** (`/admin/settings`): event price, guest download price, longest gallery window, fair-use GB, longest video, retention months and the test-upload limit.
+- **Settings** (`/admin/settings`): event price, guest download price, longest gallery window, fair-use GB, longest video, retention months, the test-upload limit and after how many days unpaid events are deleted (default 90).
+- **Deleted events kept for guests**: when an event is deleted (by its host, with the host's account, by an admin or as unpaid) or passes retention while guests still hold paid download links, its photos and videos are kept for those guests only until the last link expires; the event page in admin says so ("Deleted by host · files kept until <date> for N guest purchases"; filter **Deleted · kept for guests** on `/admin/events`). The daily cleanup cron deletes the files and the event afterwards. Such an event can still be locked (which ends those links), but not restored.
 - **Fair use**: events past the limit are flagged on `/admin/events` (and admins in `ADMIN_EMAILS` get one email each); "Clear fair-use flag" resets it.
 - **Suspend**: the host can't sign in or use the app (a neutral "account suspended, contact support" message); their events stay viewable for guests but read-only, downloads locked.
 - **Close guest uploads** on one event: read-only until reopened. Archive hides an event from guests; delete removes it with every file.
@@ -106,7 +107,7 @@ See `apps/mobile/README.md` and `apps/mobile/store/checklist.md`. In short:
 ## 9. Legal (before launch)
 - Fill in `[COMPANY NAME]`, `[COMPANY NUMBER]`, `[REGISTERED ADDRESS]` and `[ICO REGISTRATION NUMBER]` on the privacy and terms pages.
 - Register with the ICO (data protection fee).
-- Have a solicitor review the privacy policy and terms. Sections changed for the event package and for the consumer launch (guest email, marketing consent and unsubscribe, the £3 guest download with the immediate-supply / cancellation-right checkbox, watermarked previews, processors, retention) show an "Updated · to be checked" badge (the `review: true` flag in `messages/*/marketing.json`); remove the flag once approved.
+- Have a solicitor review the privacy policy and terms. Sections changed for the event package and for the consumer launch (guest email, marketing consent and unsubscribe, the £3 guest download with the immediate-supply / cancellation-right checkbox and its 30-day link surviving event removal, watermarked previews, processors, retention, unpaid events deleted after 90 days) show an "Updated · to be checked" badge (the `review: true` flag in `messages/*/marketing.json`); remove the flag once approved.
 
 ## Local development
 ```bash

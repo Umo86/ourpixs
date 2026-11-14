@@ -27,6 +27,8 @@ export const POST = adminRoute<{ id: string }>(async (req, { id }, admin) => {
   const O = schema.occasions;
   const [o] = await db.select().from(O).where(eq(O.id, id)).limit(1);
   if (!o) throw notFound("Unknown event");
+  // A deleted event kept only for guests' paid links can be locked (abuse) but never brought back.
+  if (o.deletedAt && !["lock", "unlock"].includes(b.action)) throw new ApiError(409, "event_deleted", "This event has been deleted. Its files are only kept for guests' paid download links.");
   const now = new Date();
   let set: Partial<typeof O.$inferInsert>;
   let where = eq(O.id, id);
@@ -61,7 +63,11 @@ export const POST = adminRoute<{ id: string }>(async (req, { id }, admin) => {
 
 const del = z.object({ confirmSlug: z.string().trim().max(80), reason: reasonSchema });
 
-/** Deletes the event and every file it holds (the same deletion the owner uses). Type the event's link code to confirm. */
+/**
+ * Deletes the event and every file it holds (the same deletion the owner uses). Type the event's link code to confirm.
+ * If guests still have paid download links, the event is hidden and closed now and its photo/video files are kept until
+ * the last link expires (occasion-service.ts → deleteOccasion); the response says until when.
+ */
 export const DELETE = adminRoute<{ id: string }>(async (req, { id }, admin) => {
   assertUuid(id, "event");
   const b = await readJson(req, del);
@@ -69,7 +75,9 @@ export const DELETE = adminRoute<{ id: string }>(async (req, { id }, admin) => {
   const [o] = await db.select({ id: O.id, title: O.title, slug: O.slug, ownerId: O.ownerId }).from(O).where(eq(O.id, id)).limit(1);
   if (!o) throw notFound("Unknown event");
   if (b.confirmSlug !== o.slug) throw new ApiError(400, "confirm_mismatch", "The link code doesn't match");
-  await deleteOccasion(o.id);
-  await audit(admin, "occasion.delete", "occasion", id, { title: o.title, slug: o.slug, ownerId: o.ownerId, reason: b.reason });
-  return json({ ok: true });
+  const r = await deleteOccasion(o.id, "admin");
+  await audit(admin, "occasion.delete", "occasion", id, {
+    title: o.title, slug: o.slug, ownerId: o.ownerId, reason: b.reason, filesKeptUntil: r.keptUntil?.toISOString() ?? null, guestPurchases: r.purchases,
+  });
+  return json({ ok: true, filesKeptUntil: r.keptUntil?.toISOString() ?? null });
 });

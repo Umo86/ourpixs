@@ -279,10 +279,9 @@
    "footer": "You bought this on {brand}. Keep this email: the link is only sent once."
   },
   "gallery": {
-   "subject": "The photos from {title} are ready to see",
-   "heading": "{title}: the gallery has closed",
-   "body": "You asked us to let you know when the gallery for {title} closed. Everyone's photos and videos are in one place: have a look.",
-   "offer": "Want them all in full quality, without the watermark? Get every photo and video for {price}, ready to download for 30 days.",
+   "subject": "The gallery from {title} is ready",
+   "heading": "The gallery from {title} is ready",
+   "body": "The gallery for {title} has closed, and everyone's photos and videos are together in one place. Here is the link to see them.",
    "body2": "On a new phone or computer, just type your first name to open the gallery again.",
    "cta": "See the photos",
    "footer": "You're getting this one email because you asked for it on the event page on {brand}. We won't email you about this event again."

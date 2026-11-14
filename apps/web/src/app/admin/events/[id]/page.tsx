@@ -10,7 +10,7 @@ import { guestUrl, wallUrl } from "@/lib/occasion";
 import { formatBytes, formatDate, formatDateTime, formatNumber } from "@/lib/client/format";
 import { Notice } from "@/components/app/Notice";
 import { Card, Empty, Facts, linkCls, PageHeader, Pagination, Pill, StatTile, TableWrap, td, th } from "@/components/admin/ui";
-import { EventPill, FairUsePill } from "@/components/admin/plan";
+import { EventPill, FairUsePill, keptForBuyersNote } from "@/components/admin/plan";
 import { formatGBP } from "@/components/marketing/format";
 import { formatInZone } from "@/lib/tz";
 import { AuditList } from "@/components/admin/AuditList";
@@ -52,6 +52,7 @@ export default async function AdminEventPage({ params, searchParams }: { params:
       </PageHeader>
       {o.fairUseAlertedAt ? <Notice tone="error">{t("event.fairUseNotice", { date: dt(o.fairUseAlertedAt), gb: settings.fairUseGb })}</Notice> : null}
 
+      {keptForBuyersNote(o, stats.keptPurchases, t, (x) => dt(x)) ? <Notice>{keptForBuyersNote(o, stats.keptPurchases, t, (x) => dt(x))}</Notice> : null}
       {o.adminLockedAt ? <Notice tone="error">{t("event.lockedNotice", { date: dt(o.adminLockedAt) })}</Notice> : null}
       {access.suspended ? <Notice tone="error">{t("event.ownerSuspended")}</Notice> : null}
 
@@ -79,7 +80,8 @@ export default async function AdminEventPage({ params, searchParams }: { params:
             { label: t("event.paidAt"), value: `${dt(o.paidAt)}${o.compedAt ? ` · ${t("status.comped")}` : ""}` },
             { label: t("event.window"), value: o.opensAt || o.closesAt ? `${zdt(o.opensAt)} → ${zdt(o.closesAt)}` : t("event.noWindow") },
             { label: t("event.timeZone"), value: o.timeZone },
-            { label: t("event.deleteAfter"), value: dt(access.deleteAfter) },
+            { label: access.unpaid ? t("event.unpaidDeleteAt") : t("event.deleteAfter"), value: dt(access.deleteAfter) },
+            ...(o.filesDeleteAfter ? [{ label: t("event.filesDeleteAfter"), value: `${dt(o.filesDeleteAfter)} · ${t("event.guestPurchasesActive", { n: stats.keptPurchases })}` }] : []),
             { label: t("event.endedEmail"), value: dt(o.endedEmailSentAt) },
             { label: t("event.fairUse"), value: `${formatBytes(stats.bytes, locale)} / ${settings.fairUseGb} GB${overFairUse ? ` · ${t("status.fair_use")}` : ""}` },
           ]} />
@@ -144,11 +146,11 @@ export default async function AdminEventPage({ params, searchParams }: { params:
 
       <Card title={t("event.actions")} id="e-actions">
         <div className="flex flex-wrap gap-3">
-          {o.packageStatus === "setup" ? (
+          {o.packageStatus === "setup" && !o.deletedAt ? (
             <AdminAction label={t("event.markPaid")} title={t("event.markPaidTitle")} body={t("event.markPaidBody")} confirmLabel={t("event.markPaidConfirm")}
               endpoint={endpoint} method="POST" payload={{ action: "mark_paid" }} tone="primary" />
           ) : null}
-          {o.compedAt && ["paid", "live", "ended"].includes(o.packageStatus) ? (
+          {o.compedAt && !o.deletedAt && ["paid", "live", "ended"].includes(o.packageStatus) ? (
             <AdminAction label={t("event.resetSetup")} title={t("event.resetSetupTitle")} body={t("event.resetSetupBody")} confirmLabel={t("event.resetSetupConfirm")}
               endpoint={endpoint} method="POST" payload={{ action: "reset_setup" }} />
           ) : null}
@@ -163,7 +165,7 @@ export default async function AdminEventPage({ params, searchParams }: { params:
             <AdminAction label={t("event.lock")} title={t("event.lockTitle")} body={t("event.lockBody")} confirmLabel={t("event.lockConfirm")}
               endpoint={endpoint} method="POST" payload={{ action: "lock" }} tone="danger" />
           )}
-          {o.status === "archived" ? (
+          {o.deletedAt ? null : o.status === "archived" ? (
             <AdminAction label={t("event.unarchive")} title={t("event.unarchiveTitle")} body={t("event.unarchiveBody")} confirmLabel={t("event.unarchiveConfirm")}
               endpoint={endpoint} method="POST" payload={{ action: "unarchive" }} />
           ) : (

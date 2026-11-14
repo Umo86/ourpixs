@@ -30,7 +30,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
   return (
     <>
       <PageHeader eyebrow={t("user.eyebrow")} title={<span className="break-all">{h.email}</span>}>
-        <UserPill suspended={!!h.suspendedAt} paidEvents={paidEvents} t={t} />
+        <UserPill suspended={!!h.suspendedAt} deleted={!!h.deletedAt} paidEvents={paidEvents} t={t} />
       </PageHeader>
 
       {h.suspendedAt ? <Notice tone="error">{t("user.suspendedNotice", { date: dt(h.suspendedAt), reason: h.suspendedReason || "–" })}</Notice> : null}

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { CalendarClock } from "lucide-react";
 import { useLocale, useT } from "@/i18n/client";
 import { OCCASIONS, THEMES } from "@/lib/config";
@@ -8,12 +9,14 @@ import { Title } from "./Title";
 
 /**
  * What guests see before the gallery opens (event not paid yet, or paid and before opensAt),
- * and after it is refunded or deleted. No join form: there's nothing to do here yet.
+ * and after it is refunded or deleted. No join form: there's nothing to do here yet. A device that bought "download
+ * everything" keeps its downloads for the purchase's 30 days, so it gets a link to them here.
  */
 export function NotOpen() {
   const t = useT("guest");
   const { locale } = useLocale();
-  const { occasion: o } = useGuest();
+  const { occasion: o, path } = useGuest();
+  const bought = o.guestDownload.purchased && o.guestDownload.expiresAt ? formatInZone(o.guestDownload.expiresAt, o.timeZone, locale) : null;
   const c = THEMES[o.theme];
   const unavailable = o.galleryState === "unavailable";
   // A date is only promised when it's in the future (an unpaid event's date can pass before the hosts pay).
@@ -41,6 +44,13 @@ export function NotOpen() {
         <h2 id="not-open-h" className="m-0 text-[28px] font-black leading-tight tracking-[-0.03em]">{title}</h2>
         <p className="m-0 text-lg leading-relaxed text-muted-dark">{body}</p>
         {!unavailable ? <p className="m-0 text-[15px] text-muted-dark">{t("notOpen.keepLink")}</p> : null}
+        {bought ? (
+          <div className="flex flex-col gap-3 rounded-[28px] bg-surface p-5">
+            <p className="m-0 font-bold">{t("purchase.haveTitle")}</p>
+            <p className="m-0 text-muted-dark">{t("purchase.until", { date: bought })}</p>
+            <Link href={`${path}/download`} className="inline-flex min-h-12 items-center self-start rounded-full bg-royal px-6 font-extrabold text-white no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky">{t("purchase.open")}</Link>
+          </div>
+        ) : null}
       </section>
     </main>
   );

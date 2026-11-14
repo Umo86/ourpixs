@@ -52,7 +52,9 @@
   "hidden": "Gizli",
   "pending": "Onay bekliyor",
   "handled": "İlgilenildi",
-  "open": "Açık"
+  "open": "Açık",
+  "deleted": "Silindi · misafirler için saklanıyor",
+  "deletedAccount": "Silinmiş hesap"
  },
  "flags": {
   "duplicate": "Benzer kare",
@@ -230,7 +232,7 @@
   "unarchiveConfirm": "Arşivden çıkar",
   "delete": "Etkinliği sil",
   "deleteTitle": "Bu etkinliği silin",
-  "deleteBody": "Etkinlik ve içindeki tüm dosyalar silinir. Bu işlem geri alınamaz.",
+  "deleteBody": "Etkinliği ve içindeki bütün dosyaları siler. Geri alınamaz. Misafirlerin ödenmiş indirme bağlantıları varsa etkinlik hemen kaybolur, ama fotoğraf ve videoları son bağlantının süresi dolana kadar saklanır, sonra silinir.",
   "deleteConfirm": "Kalıcı olarak sil",
   "typeSlug": "Onaylamak için bağlantı kodunu ({slug}) yazın",
   "media": "Medya",
@@ -287,7 +289,19 @@
    "event_package": "Etkinlik paketi",
    "guest_download": "Misafir indirmesi",
    "legacy": "Eski sipariş"
-  }
+  },
+  "deletedBy": {
+   "host": "Ev sahibi sildi",
+   "account": "Ev sahibinin hesabıyla silindi",
+   "admin": "Yönetici sildi",
+   "unpaid": "Ödenmediği için silindi"
+  },
+  "deletedKept": "{by} · dosyalar {n} misafir satın alması için {date} tarihine kadar saklanıyor",
+  "retentionKept": "Saklama süresi doldu · dosyalar {n} misafir satın alması için {date} tarihine kadar saklanıyor",
+  "deletingNow": "{by} · silme sürüyor (bir sonraki temizlik çalışması bitirir)",
+  "unpaidDeleteAt": "Ödenmezse silinme tarihi",
+  "filesDeleteAfter": "Dosyalar misafirler için şu tarihe kadar saklanıyor",
+  "guestPurchasesActive": "{n} geçerli misafir satın alması"
  },
  "guests": {
   "name": "Ad",
@@ -479,6 +493,10 @@
    "hostTestUploadLimit": {
     "label": "Ödemeden önceki deneme yüklemeleri",
     "hint": "Ev sahiplerinin deneme modunda ekleyebileceği fotoğraf ya da video sayısı."
+   },
+   "unpaidDeleteDays": {
+    "label": "Ödenmeyen etkinliklerin silinmesi",
+    "hint": "Hiç ödemesi yapılmayan (hâlâ hazırlıkta olan) bir etkinlik, oluşturulduktan bu kadar gün sonra deneme yüklemeleriyle birlikte silinir. Ev sahibine 7 gün önce e-posta gider. Eskiler dahil ödenmeyen bütün etkinliklere hemen uygulanır."
    }
   }
  },

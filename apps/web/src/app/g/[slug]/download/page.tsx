@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getT } from "@/i18n";
 import { requireJoined } from "@/lib/guest-guard";
+import { loadGuestContext } from "@/lib/guest-page";
+import { purchaseUsable } from "@/lib/purchase-rules";
 import { getGuest, occasionBySlug } from "@/lib/guest";
 import { activePurchase, fulfilGuestPurchase, purchaseItems, purchaseSummary } from "@/lib/guest-purchase";
 import { accessForOccasion } from "@/lib/access";
@@ -16,13 +18,16 @@ export const dynamic = "force-dynamic";
 /**
  * After Stripe Checkout (…/download?session_id=…) and from the feed: what this device bought with "download everything".
  * The success redirect confirms the payment with Stripe itself (idempotent, same as the webhook), so a slow webhook
- * never leaves the guest waiting.
+ * never leaves the guest waiting. A device with a usable purchase keeps this page for the purchase's 30 days even after
+ * the gallery has closed, been refunded to the host or been deleted (purchase-rules.ts → purchaseUsable).
  */
 export default async function GuestDownloadPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ session_id?: string }> }) {
   const { slug } = await params;
   const { session_id: sessionId } = await searchParams;
-  const ctx = await requireJoined(slug);
-  if (ctx.demo) notFound();
+  // The gallery itself may be closed (refunded, expired, deleted): a device that paid still gets its downloads here.
+  const pre = await loadGuestContext(slug);
+  const ctx = pre.publicOccasion.guestDownload.purchased || sessionId ? pre : await requireJoined(slug);
+  if (ctx.demo || !ctx.guest) notFound();
   const { t } = await getT("guest", { preferBrowser: true });
   const o = await occasionBySlug(slug);
   const guest = await getGuest(o);
@@ -33,7 +38,7 @@ export default async function GuestDownloadPage({ params, searchParams }: { para
   const [purchase, access] = await Promise.all([activePurchase(o.id, guest.id), accessForOccasion(o)]);
   const path = `/g/${slug}`;
 
-  if (!purchase || !access.canDownload) {
+  if (!purchase || !purchaseUsable(purchase, access)) {
     return (
       <main id="main" className="mx-auto flex w-full max-w-xl flex-col gap-5 px-5">
         <ScreenHeader title={t("download.title")} accent={t("download.titleAccent")} close={path} closeLabel={t("common.close")} />

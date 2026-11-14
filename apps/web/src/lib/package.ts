@@ -30,7 +30,7 @@ const loc = (l: string) => (l === "tr" ? "tr" : "en") as "en" | "tr";
 export async function sendDueEndedEmails(opts: { ids?: string[]; max?: number; deadline?: number } = {}): Promise<number> {
   const now = new Date();
   const due = and(
-    inArray(O.packageStatus, ["paid", "live", "ended"]), isNull(O.endedEmailSentAt), lte(O.closesAt, now),
+    inArray(O.packageStatus, ["paid", "live", "ended"]), isNull(O.endedEmailSentAt), lte(O.closesAt, now), isNull(O.deletedAt),
     opts.ids ? inArray(O.id, opts.ids) : undefined,
   );
   if (!emailConfigured()) {

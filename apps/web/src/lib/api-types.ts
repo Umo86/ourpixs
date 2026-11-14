@@ -19,7 +19,7 @@ export type EventPackage = {
   /** Marked as paid by our team (no payment). */
   comped: boolean;
   opensAt: string | null; closesAt: string | null; timeZone: string;
-  /** When files will be deleted (paid events); null before paying. */
+  /** When files will be deleted: paid events, closesAt + retention; before paying, the unpaid-event deletion date (createdAt + unpaidDeleteDays). */
   deleteAfter: string | null;
   /** Test mode (before paying): host/co-host uploads only, up to testUploadLimit items. */
   testMode: boolean; testUploadLimit: number;
@@ -55,7 +55,7 @@ export type Occasion = OccasionSummary & {
   honorees: string[]; venueName: string | null; city: string | null; theme: Theme; brand: Brand;
   approvalMode: boolean; revealMode: "live" | "next_morning"; revealAt: string | null;
   uploadOpensAt: string | null; uploadClosesAt: string | null; hasPin: boolean; disposableShots: number | null;
-  /** When the event's files will be deleted (same as deleteAfter); null before paying. */
+  /** When the event's files will be deleted (same as deleteAfter; before paying, the unpaid-event deletion date). */
   storageExpiresAt: string | null; days: Day[]; guestUrl: string; wallUrl: string;
   /** Additive: custom link name (null = random slug only). */
   vanitySlug: string | null;

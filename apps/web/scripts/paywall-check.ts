@@ -13,6 +13,10 @@
  *     copies of everything; the buyer's emailed /d page too). Hosts and the wall get clean copies.
  *  4. Guests can't download others' originals without an active paid purchase (refunded / expired / pending fail),
  *     and only permission-checked modules can mint links to originals.
+ *  5. A paid, unrefunded guest purchase inside its 30 days keeps working whatever happens to the event (host refund,
+ *     deletion, retention expiry, setup reset); only suspension and an admin lock block it. Unpaid guests stay blocked.
+ *  6. Before paying, hosts can download only their own test uploads (never a guest's).
+ *  7. The "gallery is ready" email to guests carries no price or offer (PECR).
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
@@ -82,7 +86,8 @@ const isClean = (k: string | null) => !!k && /\/(display|thumb)\.webp$|\/video\.
 
 async function main() {
   const { toMediaItems } = await import("../src/lib/serializers");
-  const { guestMayDownloadOriginal, guestPurchaseOffered, guestSeesClean, purchaseActive } = await import("../src/lib/purchase-rules");
+  const { filesKeptUntil, guestMayDownloadOriginal, guestPurchaseOffered, guestSeesClean, purchaseActive, purchaseUsable } = await import("../src/lib/purchase-rules");
+  const { computeAccess } = await import("../src/lib/access-rules");
 
   const audiences = {
     guest: await toMediaItems(rows, { kind: "guest", guestId: ME }),
@@ -155,7 +160,7 @@ async function main() {
 
   // 4. Guest downloads of originals.
   const now = new Date("2027-06-12T12:00:00Z");
-  const live = { guestsCanView: true, canDownload: true };
+  const live = { guestsCanView: true, canDownload: true, suspended: false, locked: false };
   const later = new Date(now.getTime() + 86400_000);
   const earlier = new Date(now.getTime() - 1000);
   const cases: { name: string; ok: boolean; expect: boolean }[] = [
@@ -167,7 +172,9 @@ async function main() {
     { name: "other's media, refunded purchase", ok: guestMayDownloadOriginal({ mediaGuestId: OTHER, viewerGuestId: ME, purchase: { status: "refunded", tokenExpiresAt: later }, event: live, now }), expect: false },
     { name: "other's media, expired purchase", ok: guestMayDownloadOriginal({ mediaGuestId: OTHER, viewerGuestId: ME, purchase: { status: "paid", tokenExpiresAt: earlier }, event: live, now }), expect: false },
     { name: "other's media, paid purchase", ok: guestMayDownloadOriginal({ mediaGuestId: OTHER, viewerGuestId: ME, purchase: { status: "paid", tokenExpiresAt: later }, event: live, now }), expect: true },
-    { name: "paid purchase but event downloads closed (expired/refunded/suspended)", ok: guestMayDownloadOriginal({ mediaGuestId: OTHER, viewerGuestId: ME, purchase: { status: "paid", tokenExpiresAt: later }, event: { guestsCanView: false, canDownload: false }, now }), expect: false },
+    { name: "paid purchase, event downloads closed but not suspended/locked", ok: guestMayDownloadOriginal({ mediaGuestId: OTHER, viewerGuestId: ME, purchase: { status: "paid", tokenExpiresAt: later }, event: { guestsCanView: false, canDownload: false, suspended: false, locked: false }, now }), expect: true },
+    { name: "paid purchase, owner suspended", ok: guestMayDownloadOriginal({ mediaGuestId: OTHER, viewerGuestId: ME, purchase: { status: "paid", tokenExpiresAt: later }, event: { ...live, suspended: true }, now }), expect: false },
+    { name: "own media, no purchase, gallery closed", ok: guestMayDownloadOriginal({ mediaGuestId: ME, viewerGuestId: ME, purchase: null, event: { guestsCanView: false, canDownload: false, suspended: false, locked: false }, now }), expect: false },
     { name: "purchaseActive(paid, future)", ok: purchaseActive({ status: "paid", tokenExpiresAt: later }, now), expect: true },
     { name: "purchaseActive(paid, no expiry)", ok: purchaseActive({ status: "paid", tokenExpiresAt: null }, now), expect: false },
     { name: "clean previews: paid purchase, downloads open", ok: guestSeesClean({ status: "paid", tokenExpiresAt: later }, live, now), expect: true },
@@ -175,12 +182,59 @@ async function main() {
     { name: "clean previews: pending purchase", ok: guestSeesClean({ status: "pending", tokenExpiresAt: later }, live, now), expect: false },
     { name: "clean previews: refunded purchase", ok: guestSeesClean({ status: "refunded", tokenExpiresAt: later }, live, now), expect: false },
     { name: "clean previews: purchase past 30 days", ok: guestSeesClean({ status: "paid", tokenExpiresAt: earlier }, live, now), expect: false },
-    { name: "clean previews: event downloads closed", ok: guestSeesClean({ status: "paid", tokenExpiresAt: later }, { guestsCanView: true, canDownload: false }, now), expect: false },
-    { name: "offer: unpaid event", ok: guestPurchaseOffered({ paid: false, guestsCanView: false, canDownload: false }), expect: false },
-    { name: "offer: paid + live", ok: guestPurchaseOffered({ paid: true, guestsCanView: true, canDownload: true }), expect: true },
-    { name: "offer: paid but not open yet", ok: guestPurchaseOffered({ paid: true, guestsCanView: false, canDownload: true }), expect: false },
+    { name: "clean previews: event locked by an admin", ok: guestSeesClean({ status: "paid", tokenExpiresAt: later }, { suspended: false, locked: true }, now), expect: false },
+    { name: "clean previews: event ended/refunded (not locked)", ok: guestSeesClean({ status: "paid", tokenExpiresAt: later }, { suspended: false, locked: false }, now), expect: true },
+    { name: "offer: unpaid event", ok: guestPurchaseOffered({ paid: false, guestsCanView: false, canDownload: false, suspended: false, locked: false }), expect: false },
+    { name: "offer: paid + live", ok: guestPurchaseOffered({ paid: true, guestsCanView: true, canDownload: true, suspended: false, locked: false }), expect: true },
+    { name: "offer: paid but not open yet", ok: guestPurchaseOffered({ paid: true, guestsCanView: false, canDownload: true, suspended: false, locked: false }), expect: false },
   ];
   for (const c of cases) check(`guest download: ${c.name}`, c.ok === c.expect, `got ${c.ok}`);
+
+  // 5. A paid guest link survives whatever happens to the event; only suspension / an admin lock end it early.
+  //    Event states come from the real access rules (access-rules.ts → computeAccess), not hand-written flags.
+  const DAY = 86400_000;
+  const at = (d: number) => new Date(now.getTime() + d * DAY);
+  const S = { retentionMonths: 12, hostTestUploadLimit: 20, unpaidDeleteDays: 90 };
+  const base = { opensAt: at(-3), closesAt: at(2), deleteAfter: at(360), adminLockedAt: null, compedAt: null, paidAt: at(-10), createdAt: at(-20), deletedAt: null };
+  const ok = { suspendedAt: null };
+  const events: { name: string; o: Parameters<typeof computeAccess>[0]; owner?: { suspendedAt: Date | null }; works: boolean }[] = [
+    { name: "live event", o: { ...base, packageStatus: "paid" }, works: true },
+    { name: "host refunded", o: { ...base, packageStatus: "refunded" }, works: true },
+    { name: "event deleted by host (files kept)", o: { ...base, packageStatus: "paid", deletedAt: at(-1) }, works: true },
+    { name: "event expired (past retention)", o: { ...base, packageStatus: "paid", closesAt: at(-400), deleteAfter: at(-35) }, works: true },
+    { name: "event stored as expired", o: { ...base, packageStatus: "expired" }, works: true },
+    { name: "admin reset to setup", o: { ...base, packageStatus: "setup", paidAt: null }, works: true },
+    { name: "reset to setup and past the unpaid limit", o: { ...base, packageStatus: "setup", paidAt: null, createdAt: at(-200) }, works: true },
+    { name: "deleted as unpaid after a reset", o: { ...base, packageStatus: "setup", paidAt: null, deletedAt: at(-1) }, works: true },
+    { name: "owner suspended", o: { ...base, packageStatus: "paid" }, owner: { suspendedAt: at(-1) }, works: false },
+    { name: "event locked by an admin", o: { ...base, packageStatus: "paid", adminLockedAt: at(-1) }, works: false },
+    { name: "deleted and locked", o: { ...base, packageStatus: "paid", deletedAt: at(-2), adminLockedAt: at(-1) }, works: false },
+  ];
+  const paidP = { status: "paid", tokenExpiresAt: later };
+  const unpaid: { name: string; p: { status: string; tokenExpiresAt: Date | null } | null }[] = [
+    { name: "no purchase", p: null }, { name: "pending", p: { status: "pending", tokenExpiresAt: later } },
+    { name: "refunded", p: { status: "refunded", tokenExpiresAt: later } }, { name: "past 30 days", p: { status: "paid", tokenExpiresAt: earlier } },
+  ];
+  for (const e of events) {
+    const a = computeAccess(e.o, e.owner ?? ok, S, now);
+    const ev = { guestsCanView: a.guestsCanView, canDownload: a.canDownload, suspended: a.suspended, locked: a.locked };
+    check(`paid link / ${e.name}: purchaseUsable (/d/<token>, download page)`, purchaseUsable(paidP, a, now) === e.works, `state ${a.state}`);
+    check(`paid link / ${e.name}: others' originals`, guestMayDownloadOriginal({ mediaGuestId: OTHER, viewerGuestId: ME, purchase: paidP, event: ev, now }) === e.works);
+    check(`paid link / ${e.name}: clean previews`, guestSeesClean(paidP, a, now) === e.works);
+    for (const u of unpaid) {
+      check(`unpaid guest (${u.name}) / ${e.name}: blocked`, !purchaseUsable(u.p, a, now)
+        && !guestMayDownloadOriginal({ mediaGuestId: OTHER, viewerGuestId: ME, purchase: u.p, event: ev, now }) && !guestSeesClean(u.p, a, now));
+    }
+    // New purchases are only sold for a paid event guests can open.
+    if (e.name !== "live event") check(`no new purchase offered / ${e.name}`, !guestPurchaseOffered(a));
+  }
+  // Files are kept until the latest ACTIVE purchase expires; refunded / pending / expired purchases don't keep them.
+  const kept = filesKeptUntil([
+    { status: "paid", tokenExpiresAt: at(10) }, { status: "paid", tokenExpiresAt: at(25) }, { status: "refunded", tokenExpiresAt: at(29) },
+    { status: "pending", tokenExpiresAt: at(30) }, { status: "paid", tokenExpiresAt: at(-1) },
+  ], now);
+  check("files kept until the latest active purchase", kept?.getTime() === at(25).getTime(), String(kept));
+  check("no active purchase: files deleted now", filesKeptUntil([{ status: "refunded", tokenExpiresAt: at(5) }, { status: "paid", tokenExpiresAt: at(-1) }], now) === null);
 
   // Static: only permission-checked modules can mint links to originals, and nothing else signs keyOriginal.
   const src = path.join(__dirname, "..", "src");
@@ -216,6 +270,28 @@ async function main() {
   }
   const feed = readFileSync(path.join(src, "app/api/v1/g/[slug]/feed/route.ts"), "utf8");
   check("guest feed decides clean previews with guestSeesClean", /guestSeesClean\(/.test(feed) && /activePurchase\(/.test(feed));
+  // 5. Purchase access never depends on the event's package state.
+  const gpLib = readFileSync(path.join(src, "lib/guest-purchase.ts"), "utf8");
+  const tokenFn = gpLib.slice(gpLib.indexOf("export async function purchaseFromToken"), gpLib.indexOf("/** What a purchase covers"));
+  check("/d/<token> uses purchaseUsable, not the event's downloads", /purchaseUsable\(/.test(tokenFn) && !/canDownload|status === "archived"/.test(tokenFn));
+  check("guest manifest uses purchaseUsable", /purchaseUsable\(/.test(gp) && !/access\.canDownload/.test(gp));
+  const dlPage = readFileSync(path.join(src, "app/g/[slug]/download/page.tsx"), "utf8");
+  check("post-checkout download page uses purchaseUsable", /purchaseUsable\(/.test(dlPage) && !/access\.canDownload/.test(dlPage));
+  // 6. Before paying, the host download routes only hand out hosts' own uploads.
+  for (const rel of ["app/api/v1/occasions/[id]/download/route.ts", "app/api/v1/occasions/[id]/media/[mediaId]/download/route.ts"]) {
+    const text = readFileSync(path.join(src, rel), "utf8");
+    check(`${rel}: test scope only covers hosts' uploads`, /hostDownloadScope\(/.test(text) && /scope === "test" \? isNull\((schema\.)?media\.guestId\)/.test(text));
+  }
+  // 7. The guest gallery email is transactional: no price, no offer.
+  const emailLib = readFileSync(path.join(src, "lib/email.ts"), "utf8");
+  const galleryFn = emailLib.slice(emailLib.indexOf("export async function sendGuestGalleryEmail"), emailLib.indexOf("/**", emailLib.indexOf("export async function sendGuestGalleryEmail")));
+  check("gallery email has no price or offer", !/offer|price|Pence|formatGBP/i.test(galleryFn));
+  for (const l of ["en", "tr"]) {
+    const g = JSON.parse(readFileSync(path.join(src, `messages/${l}/guest.json`), "utf8")) as { email: { gallery: Record<string, string> } };
+    check(`${l} gallery email copy has no price or offer`, !("offer" in g.email.gallery) && Object.values(g.email.gallery).every((v) => !/\{price\}|£/.test(v)));
+  }
+  const consentLib = readFileSync(path.join(src, "lib/consent.ts"), "utf8");
+  check("sendGuestGalleryEmails passes no offer", !/offerPence|guestDownloadPence|guestPurchaseOffered/.test(consentLib));
 
   console.log(`\n${passes} passed, ${failures} failed`);
   process.exit(failures ? 1 : 0);

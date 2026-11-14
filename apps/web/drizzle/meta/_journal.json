@@ -78,6 +78,13 @@
       "when": 1794625515339,
       "tag": "0010_short_energizer",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794627433387,
+      "tag": "0011_omniscient_landau",
+      "breakpoints": true
     }
   ]
 }

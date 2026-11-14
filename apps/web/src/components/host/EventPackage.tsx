@@ -89,6 +89,11 @@ export function PackageCard({ occasionId, pkg, isOwner, payments, testUsed }: {
         {title} <span className={`font-serif ${dark ? "text-sky-soft" : "text-royal"}`}>{accent}</span>
       </h2>
       <p className={`m-0 max-w-2xl text-[17px] ${dark ? "text-muted-dark" : "text-text-2"}`}>{body}</p>
+      {pkg.status === "setup" && pkg.deleteAfter ? (
+        <p role="note" className="m-0 self-start rounded-2xl bg-[#FFF3D6] px-4 py-3 text-[15px] font-bold leading-snug text-[#7A4B00]">
+          {t("package.unpaidDelete", { date: formatInZone(pkg.deleteAfter, pkg.timeZone, locale) })}
+        </p>
+      ) : null}
       {pkg.status === "setup" ? (
         <p className="m-0 flex items-center gap-2 text-[15px] font-semibold text-white">
           <CalendarClock size={18} aria-hidden />{range ? t("package.setupDates", { range }) : t("package.setupNoDates")}
@@ -105,6 +110,7 @@ export function PackageCard({ occasionId, pkg, isOwner, payments, testUsed }: {
         ) : null}
         {pkg.canEditWindow ? <Button href={settingsHref} variant={dark ? "ghost" : "secondary"} size={dark && !range ? "lg" : "md"}>{t("package.changeDates")}</Button> : null}
         {pkg.status === "ended" || pkg.status === "live" ? <Button href={downloadHref} variant="secondary"><Download size={18} aria-hidden />{t("package.download")}</Button> : null}
+        {pkg.status === "setup" && testUsed > 0 ? <Button href={downloadHref} variant="ghost"><Download size={18} aria-hidden />{t("package.downloadTest")}</Button> : null}
       </div>
       {pkg.canPay && isOwner && payments ? <p className={`m-0 text-xs ${dark ? "text-[#A8ACB8]" : "text-muted"}`}>{t("pay.fine")}</p> : null}
     </section>

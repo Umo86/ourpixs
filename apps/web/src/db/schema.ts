@@ -66,6 +66,11 @@ export const hosts = pgTable("hosts", {
   /** Suspended accounts can't sign in or use the API; their events are read-only for guests. */
   suspendedAt: timestamp("suspended_at", { withTimezone: true }),
   suspendedReason: text("suspended_reason"),
+  /**
+   * Account deleted while some of its events still hold files that guests paid for (src/lib/account.ts): the row is
+   * anonymised (email replaced, name cleared), can't sign in, and is removed by the cleanup cron once those events are gone.
+   */
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index("hosts_plan_status_idx").on(t.planStatus), index("hosts_stripe_customer_idx").on(t.stripeCustomerId),
@@ -140,11 +145,28 @@ export const occasions = pgTable("occasions", {
   fairUseAlertedAt: timestamp("fair_use_alerted_at", { withTimezone: true }),
   /** Latest Checkout session started for this event (an older open one is expired when a new one starts). */
   stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+  /** Once-only marker (claimed before sending) for the reminder sent before an unpaid event is deleted. */
+  unpaidReminderSentAt: timestamp("unpaid_reminder_sent_at", { withTimezone: true }),
+  /**
+   * Deleted (by the host, with the host's account, by an admin, or as an unpaid event) while guests still had paid
+   * "download everything" links: hidden from hosts and closed to guests at once, but the media files and this row stay
+   * until files_delete_after (the latest active token_expires_at), then the cleanup cron deletes both
+   * (src/lib/occasion-service.ts → deleteOccasion). deleted_by: "host" | "account" | "admin" | "unpaid".
+   */
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  deletedBy: text("deleted_by"),
+  /**
+   * Files kept past a deletion (host / account / admin / unpaid) or past retention (delete_after) until this time,
+   * because guests' paid download links are still valid. Null = nothing deferred.
+   */
+  filesDeleteAfter: timestamp("files_delete_after", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index("occasions_owner_idx").on(t.ownerId),
   index("occasions_package_idx").on(t.packageStatus, t.closesAt),
   index("occasions_delete_after_idx").on(t.deleteAfter),
+  index("occasions_files_delete_after_idx").on(t.filesDeleteAfter),
+  index("occasions_setup_created_idx").on(t.packageStatus, t.createdAt),
 ]);
 
 export const occasionMembers = pgTable("occasion_members", {
@@ -304,11 +326,17 @@ export const orders = pgTable("orders", {
 /**
  * Guests buying "download everything" for an event (Stripe Checkout, mode payment, price = settings.guestDownloadPence).
  * status: "pending" (checkout started) | "paid" | "refunded". Only a hash of the emailed download token is stored;
- * the token (and the purchase) is valid until token_expires_at = paid_at + 30 days. Logic: src/lib/guest-purchase.ts.
+ * the token (and the purchase) is valid until token_expires_at = paid_at + 30 days, whatever happens to the event
+ * afterwards (host refund, deletion, retention expiry, setup reset): the event's files are kept until the latest active
+ * token_expires_at (occasions.files_delete_after). Only suspension, an admin lock or a refund of this purchase end it.
+ * Logic: src/lib/guest-purchase.ts, rules in purchase-rules.ts.
  */
 export const guestPurchases = pgTable("guest_purchases", {
   id: uuid("id").primaryKey().defaultRandom(),
-  /** Kept as an anonymised payment record when the event is deleted (link cut, email and token cleared: occasion-service.ts). */
+  /**
+   * Kept as an anonymised payment record when the event's row is finally deleted (link cut, email and token cleared:
+   * occasion-service.ts). While the purchase is active the event row and files are kept (occasions.files_delete_after).
+   */
   occasionId: uuid("occasion_id").references(() => occasions.id, { onDelete: "set null" }),
   guestId: uuid("guest_id").references(() => guests.id, { onDelete: "set null" }),
   /** Filled from Stripe Checkout once paid. */
@@ -343,8 +371,9 @@ export const guestPurchases = pgTable("guest_purchases", {
 
 /**
  * Guests who asked (optionally, after a few uploads) to get the event's photos emailed when the gallery ends.
- * Email is never needed to upload. One row per event + email (a second submit updates it). The "gallery has ended"
- * email (src/lib/consent.ts → sendGuestGalleryEmails) is a transactional message the guest requested: no marketing in it.
+ * Email is never needed to upload. One row per event + email (a second submit updates it). The "gallery is ready"
+ * email (src/lib/consent.ts → sendGuestGalleryEmails) is a purely transactional message the guest requested: the gallery
+ * link and why they get it. No prices, no offer, no marketing (PECR: selling needs marketing consent).
  * Marketing consent is recorded separately, in `marketing_consents`.
  */
 export const guestContacts = pgTable("guest_contacts", {

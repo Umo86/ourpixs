@@ -6,7 +6,7 @@ import { isUuid } from "@/lib/http";
 import { OCCASIONS } from "@/lib/config";
 import { formatBytes, formatDate, formatNumber } from "@/lib/client/format";
 import { Empty, FilterBar, linkCls, PageHeader, Pagination, TableWrap, td, th } from "@/components/admin/ui";
-import { EventPill, FairUsePill } from "@/components/admin/plan";
+import { EventPill, FairUsePill, keptForBuyersNote } from "@/components/admin/plan";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +61,10 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
                 <td className={td}>{formatNumber(o.guestCount, locale)}</td>
                 <td className={td}>{formatNumber(o.mediaCount, locale)}</td>
                 <td className={td}>{formatBytes(o.bytes, locale)}</td>
-                <td className={td}><div className="flex flex-wrap gap-1"><EventPill status={o.status} access={o.access} t={t} />{o.fairUseAlertedAt ? <FairUsePill t={t} /> : null}</div></td>
+                <td className={td}>
+                  <div className="flex flex-wrap gap-1"><EventPill status={o.status} access={o.access} t={t} />{o.fairUseAlertedAt ? <FairUsePill t={t} /> : null}</div>
+                  {keptForBuyersNote(o, o.keptPurchases, t, (x) => d(x.toISOString())) ? <span className="mt-1 block text-xs text-muted">{keptForBuyersNote(o, o.keptPurchases, t, (x) => d(x.toISOString()))}</span> : null}
+                </td>
               </tr>
             ))}
           </tbody>

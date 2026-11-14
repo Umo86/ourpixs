@@ -17,16 +17,17 @@ import { addMonths, windowError } from "../src/lib/window";
 const DAY = 86400_000;
 const now = new Date("2027-06-12T12:00:00Z");
 const at = (days: number) => new Date(now.getTime() + days * DAY);
-const settings = { retentionMonths: PACKAGE_DEFAULTS.retentionMonths, hostTestUploadLimit: PACKAGE_DEFAULTS.hostTestUploadLimit };
+const settings = { retentionMonths: PACKAGE_DEFAULTS.retentionMonths, hostTestUploadLimit: PACKAGE_DEFAULTS.hostTestUploadLimit, unpaidDeleteDays: PACKAGE_DEFAULTS.unpaidDeleteDays };
+const U = settings.unpaidDeleteDays;
 const ok = { suspendedAt: null };
 
 function row(p: Partial<EventPackageRow>): EventPackageRow {
-  return { packageStatus: "setup", opensAt: at(3), closesAt: at(10), deleteAfter: null, adminLockedAt: null, compedAt: null, paidAt: null, ...p };
+  return { packageStatus: "setup", opensAt: at(3), closesAt: at(10), deleteAfter: null, adminLockedAt: null, compedAt: null, paidAt: null, createdAt: at(-5), deletedAt: null, ...p };
 }
 const paid = (opens: number, closes: number, extra: Partial<EventPackageRow> = {}) =>
   row({ packageStatus: "paid", paidAt: at(-20), opensAt: at(opens), closesAt: at(closes), deleteAfter: addMonths(at(closes), settings.retentionMonths), ...extra });
 
-type Expect = Partial<Pick<Access, "state" | "reason" | "testMode" | "canUpload" | "guestsCanView" | "guestsCanUpload" | "canDownload" | "readOnly" | "canEditWindow" | "canEndEarly" | "canPay" | "deleted">>;
+type Expect = Partial<Pick<Access, "state" | "reason" | "testMode" | "canUpload" | "guestsCanView" | "guestsCanUpload" | "canDownload" | "readOnly" | "canEditWindow" | "canEndEarly" | "canPay" | "deleted" | "paid" | "unpaid" | "removed" | "canDownloadTest">> & { deleteAfter?: Date | null };
 const cases: { name: string; o: EventPackageRow; owner?: { suspendedAt: Date | null }; expect: Expect; guard?: { fn: (a: Access) => void; code: string | null } }[] = [
   { name: "setup (unpaid, test mode)", o: row({}), expect: { state: "setup", reason: "setup", testMode: true, canUpload: true, guestsCanView: false, guestsCanUpload: false, canDownload: false, readOnly: false, canEditWindow: true, canPay: true },
     guard: { fn: assertGuestsCanView, code: "not_open" } },
@@ -52,6 +53,25 @@ const cases: { name: string; o: EventPackageRow; owner?: { suspendedAt: Date | n
   { name: "owner suspended: closed to guests", o: paid(-1, 6), owner: { suspendedAt: at(-1) }, expect: { guestsCanView: false },
     guard: { fn: assertGuestsCanView, code: "event_unavailable" } },
   { name: "comped by admin (paid, live)", o: paid(-1, 6, { compedAt: at(-2) }), expect: { state: "live", canDownload: true }, guard: { fn: assertCanPay, code: "already_paid" } },
+  // Unpaid events: deleted unpaidDeleteDays (90) after creation unless paid; the date is shown everywhere (deleteAfter).
+  { name: `setup: deleted after ${U} days unless paid`, o: row({ createdAt: at(-5) }),
+    expect: { state: "setup", unpaid: true, deleteAfter: at(U - 5), canPay: true, canDownload: false, canDownloadTest: true, paid: false } },
+  { name: "setup: test uploads downloadable before paying", o: row({}), expect: { canDownloadTest: true, canDownload: false } },
+  { name: `setup: one day before the ${U}-day limit`, o: row({ createdAt: at(-(U - 1)) }), expect: { state: "setup", canPay: true, deleted: false } },
+  { name: `setup past the ${U}-day limit → expired`, o: row({ createdAt: at(-(U + 1)) }),
+    expect: { state: "expired", reason: "expired", deleted: true, paid: false, canPay: false, canUpload: false, guestsCanView: false, canDownload: false, canDownloadTest: false, readOnly: true },
+    guard: { fn: assertCanPay, code: "event_expired" } },
+  { name: "setup past the limit: guests see unavailable", o: row({ createdAt: at(-(U + 1)) }), expect: { guestsCanView: false }, guard: { fn: assertGuestsCanView, code: "event_unavailable" } },
+  { name: "paid long ago: unpaid limit doesn't apply", o: paid(-1, 6, { createdAt: at(-400) }), expect: { state: "live", unpaid: false, guestsCanView: true } },
+  { name: "reset to setup, created 200 days ago → expired", o: row({ createdAt: at(-200), compedAt: null }), expect: { state: "expired", canPay: false } },
+  { name: "setup, owner suspended: no test downloads", o: row({}), owner: { suspendedAt: at(-1) }, expect: { canDownloadTest: false, canDownload: false } },
+  // Deleted while guests hold paid links (deleted_at): closed to everyone (guests' downloads follow purchase-rules.ts).
+  { name: "deleted by host, files kept for buyers (live)", o: paid(-1, 6, { deletedAt: at(-0.1) }),
+    expect: { state: "expired", removed: true, deleted: true, guestsCanView: false, canDownload: false, canUpload: false, readOnly: true },
+    guard: { fn: assertGuestsCanView, code: "event_unavailable" } },
+  { name: "deleted, refunded event stays refunded", o: paid(-1, 6, { packageStatus: "refunded", deletedAt: at(-0.1) }), expect: { state: "refunded", removed: true, guestsCanView: false } },
+  { name: "deleted as unpaid (setup)", o: row({ deletedAt: at(-0.1) }), expect: { state: "expired", removed: true, paid: false, canPay: false, canDownloadTest: false },
+    guard: { fn: assertCanDownload, code: "event_expired" } },
 ];
 
 let failures = 0;
@@ -64,7 +84,8 @@ for (const c of cases) {
     ` ${yn(a.canUpload)}     ${yn(a.guestsCanView)}       ${yn(a.guestsCanUpload)}     ${yn(a.canDownload)}      ${yn(a.readOnly)}     ${yn(a.canEditWindow)}   ${yn(a.canPay)}`);
   for (const [k, v] of Object.entries(c.expect)) {
     const got = (a as Record<string, unknown>)[k];
-    if (got !== v) { failures++; console.log(`   FAIL ${k}: expected ${String(v)}, got ${String(got)}`); }
+    const same = v instanceof Date ? got instanceof Date && got.getTime() === v.getTime() : got === v;
+    if (!same) { failures++; console.log(`   FAIL ${k}: expected ${v instanceof Date ? v.toISOString() : String(v)}, got ${got instanceof Date ? got.toISOString() : String(got)}`); }
   }
   if (c.guard) {
     let code: string | null = null;

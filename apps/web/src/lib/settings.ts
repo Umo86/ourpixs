@@ -23,6 +23,7 @@ export const SETTING_RULES: Record<SettingKey, { min: number; max: number; step:
   videoMaxSeconds: { min: 10, max: 1800, step: 1, unit: "seconds" },
   retentionMonths: { min: 1, max: 60, step: 1, unit: "months" },
   hostTestUploadLimit: { min: 0, max: 500, step: 1, unit: "items" },
+  unpaidDeleteDays: { min: 14, max: 730, step: 1, unit: "days" },
 };
 
 const valueSchema = (k: SettingKey) => z.number().int().min(SETTING_RULES[k].min).max(SETTING_RULES[k].max);
@@ -66,6 +67,7 @@ export const fairUseGb = async () => (await getSettings()).fairUseGb;
 export const videoMaxSeconds = async () => (await getSettings()).videoMaxSeconds;
 export const retentionMonths = async () => (await getSettings()).retentionMonths;
 export const hostTestUploadLimit = async () => (await getSettings()).hostTestUploadLimit;
+export const unpaidDeleteDays = async () => (await getSettings()).unpaidDeleteDays;
 
 /** Stored rows with who changed them and when (admin page). */
 export async function settingsRows() {

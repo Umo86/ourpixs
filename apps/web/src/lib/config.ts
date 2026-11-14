@@ -142,11 +142,15 @@ export const PACKAGE_DEFAULTS = {
   retentionMonths: 12,
   /** Test mode (before paying): the host and co-hosts can upload this many items to try it out. */
   hostTestUploadLimit: 20,
+  /** An event still in setup (never paid, not marked as paid) is deleted with its test uploads this many days after it was created. */
+  unpaidDeleteDays: 90,
 } as const;
 export type PackageSettings = { -readonly [K in keyof typeof PACKAGE_DEFAULTS]: number };
 
 /** Reminder emails before an event's files are deleted, in days before delete_after. */
 export const DELETION_REMINDER_DAYS = [30, 7] as const;
+/** The one reminder before an unpaid (setup) event is deleted, in days before created_at + unpaidDeleteDays. */
+export const UNPAID_REMINDER_DAYS = 7;
 /** Default gallery window start (local time in the event's time zone) on the event date. */
 export const DEFAULT_WINDOW_START_HOUR = 10;
 /** Time zone the gallery window is entered in unless the host picks another. */

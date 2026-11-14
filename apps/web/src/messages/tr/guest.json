@@ -279,10 +279,9 @@
    "footer": "Bunu {brand} üzerinden aldın. Bu e-postayı sakla: link yalnızca bir kez gönderilir."
   },
   "gallery": {
-   "subject": "{title} fotoğrafları seni bekliyor",
-   "heading": "{title}: galeri kapandı",
-   "body": "Galeri kapanınca haber vermemizi istemiştin. {title} için herkesin fotoğraf ve videoları tek yerde, bir göz at.",
-   "offer": "Hepsini filigransız, tam kalitede ister misin? Tüm fotoğraf ve videoları {price} karşılığında al, 30 gün boyunca indir.",
+   "subject": "{title} galerisi hazır",
+   "heading": "{title} galerisi hazır",
+   "body": "{title} galerisi kapandı; herkesin fotoğraf ve videoları artık tek yerde. Onlara bakmak için bağlantı aşağıda.",
    "body2": "Yeni bir telefon ya da bilgisayardan açarsan galeriye girmek için adını yazman yeterli.",
    "cta": "Fotoğraflara bak",
    "footer": "Bu e-postayı {brand} etkinlik sayfasında istediğin için bir kez gönderiyoruz. Bu etkinlikle ilgili sana tekrar e-posta göndermeyeceğiz."

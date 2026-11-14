@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { and, eq, ne, notInArray, or, sql } from "drizzle-orm";
+import { and, eq, gt, isNull, ne, notInArray, or, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { DEFAULT_TIME_ZONE, FEATURES, OCCASIONS, type Brand, type Locale, type OccasionType } from "./config";
 import { ApiError, badRequest, planLimit } from "./http";
@@ -15,6 +15,8 @@ import { getSettings } from "./settings";
 import { addMonths, defaultWindow, windowError } from "./window";
 import { isTimeZone } from "./tz";
 import { touchEnded } from "./package";
+import { filesKeptUntil } from "./purchase-rules";
+import { paymentsEnabled, stripe } from "./stripe";
 
 type OccasionRow = typeof schema.occasions.$inferSelect;
 
@@ -232,7 +234,8 @@ export async function memberships(hostId: string) {
   return db.select({ occasion: schema.occasions, role: schema.occasionMembers.role })
     .from(schema.occasionMembers)
     .innerJoin(schema.occasions, eq(schema.occasions.id, schema.occasionMembers.occasionId))
-    .where(eq(schema.occasionMembers.hostId, hostId));
+    // Deleted events kept only for guests' paid links are gone for hosts (their memberships are removed too).
+    .where(and(eq(schema.occasionMembers.hostId, hostId), isNull(schema.occasions.deletedAt)));
 }
 
 export async function summariesFor(hostId: string) {
@@ -254,8 +257,36 @@ export async function summariesFor(hostId: string) {
   return list.map((l) => l.summary);
 }
 
-/** Deletes an event with every file it holds (media, guestbook recordings, custom cover). Used by the owner and by admins. */
-export async function deleteOccasion(occasionId: string) {
+/** Who deleted an event (occasions.deleted_by). */
+export type DeletedBy = "host" | "account" | "admin" | "unpaid";
+
+/**
+ * Until when the event's files must be kept for guests' paid "download everything" links: the latest token_expires_at
+ * of its active purchases (paid, not refunded, not expired), or null when there are none. `count` = active purchases.
+ */
+export async function guestPurchaseHold(occasionId: string, now = new Date()): Promise<{ until: Date | null; count: number }> {
+  const P = schema.guestPurchases;
+  const rows = await db.select({ status: P.status, tokenExpiresAt: P.tokenExpiresAt }).from(P)
+    .where(and(eq(P.occasionId, occasionId), eq(P.status, "paid"), gt(P.tokenExpiresAt, now)));
+  return { until: filesKeptUntil(rows, now), count: rows.length };
+}
+
+/**
+ * Deletes an event: used by the owner, account deletion, admins and the unpaid-event limit.
+ *  - No active guest purchase: every file (media, guestbook recordings, custom cover) and the row go now.
+ *  - Guests still have paid links (purchase-rules.ts): the event disappears for hosts at once (memberships, invites and
+ *    share links go, deleted_at set) and closes to guests, guestbook messages, the custom cover and guests' emails go now,
+ *    but the photo/video files and the row stay until files_delete_after (the latest active token_expires_at); the cleanup
+ *    cron then calls this again and the files and row go (src/lib/cron.ts → purgeDeferredEvents).
+ * Returns the date files are kept until, or null when everything was deleted now.
+ */
+export async function deleteOccasion(occasionId: string, by: DeletedBy = "host"): Promise<{ keptUntil: Date | null; purchases: number }> {
+  const hold = await guestPurchaseHold(occasionId);
+  if (hold.until) {
+    await softDeleteOccasion(occasionId, by, hold.until);
+    return { keptUntil: hold.until, purchases: hold.count };
+  }
+  await expireOpenCheckout(occasionId);
   await deleteObjects(await keysForOccasion(occasionId));
   // Payment records survive the event in anonymised form (privacy policy: six years). Checkouts that were never paid
   // aren't payments and go; paid / refunded guest purchases lose the buyer's email and the download token, and the
@@ -266,6 +297,63 @@ export async function deleteOccasion(occasionId: string) {
     db.update(P).set({ email: null, downloadTokenHash: null }).where(eq(P.occasionId, occasionId)),
     db.delete(schema.occasions).where(eq(schema.occasions.id, occasionId)),
   ]);
+  return { keptUntil: null, purchases: 0 };
+}
+
+/** The deferred half of deleteOccasion: hide now, keep only what paid guests need. Idempotent. */
+async function softDeleteOccasion(occasionId: string, by: DeletedBy, until: Date) {
+  await expireOpenCheckout(occasionId);
+  await holdFilesForBuyers(occasionId, until, { hide: by });
+}
+
+/**
+ * Keeps an event's photo/video files (and its row) until `until` for guests' paid links, and removes now what those
+ * guests don't need: guestbook messages and recordings, the custom cover, share links, guests' emails for the gallery
+ * email and unpaid checkouts. `hide`: the event was deleted (by host, account, admin or the unpaid limit), so it also
+ * disappears for hosts (memberships and invites go, deleted_at set). Without `hide` (retention expiry) the host keeps
+ * seeing the event as expired. files_delete_after only ever moves later. Idempotent.
+ */
+export async function holdFilesForBuyers(occasionId: string, until: Date, opts: { hide?: DeletedBy; expire?: boolean } = {}) {
+  const O = schema.occasions;
+  const [o] = await db.select({ coverKey: O.coverKey, deletedAt: O.deletedAt }).from(O).where(eq(O.id, occasionId)).limit(1);
+  if (!o) return;
+  const msgs = await db.select({ k: schema.messages.mediaKey }).from(schema.messages).where(eq(schema.messages.occasionId, occasionId));
+  const cover = o.coverKey?.startsWith(`o/${occasionId}/cover/`) ? o.coverKey : null;
+  await deleteObjects([...msgs.map((m) => m.k), cover].filter((k): k is string => !!k));
+  const P = schema.guestPurchases;
+  const hide = opts.hide
+    ? [
+      db.delete(schema.occasionMembers).where(eq(schema.occasionMembers.occasionId, occasionId)),
+      db.delete(schema.cohostInvites).where(eq(schema.cohostInvites.occasionId, occasionId)),
+    ] as const
+    : [] as const;
+  await db.batch([
+    db.update(O).set({
+      ...(opts.hide ? { deletedAt: o.deletedAt ?? new Date(), deletedBy: opts.hide } : {}),
+      ...(opts.expire ? { packageStatus: "expired" as const } : {}),
+      coverKey: null,
+      filesDeleteAfter: sql`greatest(${O.filesDeleteAfter}, ${until.toISOString()}::timestamptz)`,
+    }).where(eq(O.id, occasionId)),
+    ...hide,
+    db.delete(schema.shareLinks).where(eq(schema.shareLinks.occasionId, occasionId)),
+    db.delete(schema.messages).where(eq(schema.messages.occasionId, occasionId)),
+    db.delete(schema.guestContacts).where(eq(schema.guestContacts.occasionId, occasionId)),
+    db.delete(P).where(and(eq(P.occasionId, occasionId), eq(P.status, "pending"))),
+  ]);
+}
+
+/** A host's open Checkout for this event would charge for an event that no longer exists: expire it (best effort). */
+async function expireOpenCheckout(occasionId: string) {
+  if (!paymentsEnabled()) return;
+  const [o] = await db.select({ sid: schema.occasions.stripeCheckoutSessionId, status: schema.occasions.packageStatus })
+    .from(schema.occasions).where(eq(schema.occasions.id, occasionId)).limit(1);
+  if (!o?.sid || o.status !== "setup") return;
+  try {
+    const session = await stripe().checkout.sessions.retrieve(o.sid);
+    if (session.status === "open") await stripe().checkout.sessions.expire(o.sid);
+  } catch (e) {
+    console.warn("[occasion] could not expire open checkout", e);
+  }
 }
 
 export async function keysForOccasion(occasionId: string) {

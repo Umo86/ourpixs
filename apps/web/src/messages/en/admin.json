@@ -52,7 +52,9 @@
   "hidden": "Hidden",
   "pending": "Awaiting approval",
   "handled": "Handled",
-  "open": "Open"
+  "open": "Open",
+  "deleted": "Deleted · kept for guests",
+  "deletedAccount": "Deleted account"
  },
  "flags": {
   "duplicate": "Duplicate",
@@ -230,7 +232,7 @@
   "unarchiveConfirm": "Restore",
   "delete": "Delete event",
   "deleteTitle": "Delete this event",
-  "deleteBody": "Deletes the event and every file in it. This can't be undone.",
+  "deleteBody": "Deletes the event and every file in it. This can't be undone. If guests have paid download links, the event disappears now but its photos and videos are kept until the last link expires, then deleted.",
   "deleteConfirm": "Delete for good",
   "typeSlug": "Type the link code {slug} to confirm",
   "media": "Media",
@@ -287,7 +289,19 @@
    "event_package": "Event package",
    "guest_download": "Guest download",
    "legacy": "Legacy order"
-  }
+  },
+  "deletedBy": {
+   "host": "Deleted by host",
+   "account": "Deleted with the host's account",
+   "admin": "Deleted by an admin",
+   "unpaid": "Deleted as unpaid"
+  },
+  "deletedKept": "{by} · files kept until {date} for {n} guest purchase(s)",
+  "retentionKept": "Past retention · files kept until {date} for {n} guest purchase(s)",
+  "deletingNow": "{by} · deletion in progress (the next cleanup run finishes it)",
+  "unpaidDeleteAt": "Deleted if unpaid on",
+  "filesDeleteAfter": "Files kept for guests until",
+  "guestPurchasesActive": "{n} active guest purchase(s)"
  },
  "guests": {
   "name": "Name",
@@ -479,6 +493,10 @@
    "hostTestUploadLimit": {
     "label": "Test uploads before paying",
     "hint": "How many photos or videos hosts can add in test mode."
+   },
+   "unpaidDeleteDays": {
+    "label": "Unpaid events deleted after",
+    "hint": "An event that is never paid for (still in setup) is deleted with its test uploads this many days after it was created. The host is emailed 7 days before. Applies to every unpaid event straight away, including older ones."
    }
   }
  },

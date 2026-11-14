@@ -1,13 +1,14 @@
 import "server-only";
 import { and, eq, gt, inArray, isNotNull, isNull, lt, lte, ne, or, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { DELETION_REMINDER_DAYS } from "./config";
-import { emailConfigured, sendDeletionReminder } from "./email";
+import { DELETION_REMINDER_DAYS, UNPAID_REMINDER_DAYS } from "./config";
+import { emailConfigured, sendDeletionReminder, sendUnpaidDeletionReminder } from "./email";
 import { sendDueEndedEmails } from "./package";
 import { sendGuestGalleryEmails } from "./consent";
 import { abortUpload, deleteObjects, mediaFileKeys } from "./storage";
 import { sweepMedia } from "./media-processing";
-import { keysForOccasion } from "./occasion-service";
+import { deleteOccasion, guestPurchaseHold, holdFilesForBuyers, keysForOccasion, type DeletedBy } from "./occasion-service";
+import { getSettings } from "./settings";
 
 /**
  * The jobs called by /api/cron/* (Vercel Cron) and by "Run now" on /admin/system: expiry and cleanup (daily) and the
@@ -50,6 +51,8 @@ const loc = (l: string) => (l === "tr" ? "tr" : "en") as "en" | "tr";
  *     an ended event is opened (src/lib/package.ts → touchEnded).
  *  2. Guests who asked on the event page get one "the gallery has closed, here are the photos" email.
  *  3. Deletion reminders 30 and 7 days before delete_after (one marker column each).
+ *  4. Unpaid events: one reminder UNPAID_REMINDER_DAYS (7) before created_at + settings.unpaidDeleteDays
+ *     (unpaid_reminder_sent_at), with a link to pay or download the test uploads.
  * The deletions themselves run in the cleanup job.
  */
 export async function runExpiry(): Promise<Record<string, number>> {
@@ -69,7 +72,7 @@ export async function runExpiry(): Promise<Record<string, number>> {
     // The 30-day reminder is skipped once the 7-day window has started (no two emails in one run).
     const lowerBound = days === 30 ? new Date(now.getTime() + 7 * DAY_MS) : now;
     const batch = db.select({ id: O.id }).from(O).where(and(
-      inArray(O.packageStatus, ["paid", "live", "ended"]), isNull(col), isNotNull(O.deleteAfter),
+      inArray(O.packageStatus, ["paid", "live", "ended"]), isNull(col), isNotNull(O.deleteAfter), isNull(O.deletedAt),
       gt(O.deleteAfter, lowerBound), lte(O.deleteAfter, new Date(now.getTime() + days * DAY_MS)),
     )).limit(BATCH);
     const claimed = await db.update(O).set(days === 30 ? { reminder30SentAt: now } : { reminder7SentAt: now })
@@ -94,7 +97,50 @@ export async function runExpiry(): Promise<Record<string, number>> {
     }
     out[days === 30 ? "reminders30" : "reminders7"] = n;
   }
+  out.unpaidReminders = await sendUnpaidReminders(started + 280_000);
   return out;
+}
+
+/**
+ * One email per unpaid (setup) event, UNPAID_REMINDER_DAYS before it is deleted (created_at + settings.unpaidDeleteDays):
+ * pay to keep it, or download the test uploads. Claimed with a conditional UPDATE on unpaid_reminder_sent_at, released
+ * again if sending fails or the run is out of time. Events already past the date are not reminded (they are deleted).
+ */
+async function sendUnpaidReminders(deadline: number): Promise<number> {
+  if (!emailConfigured()) return 0;
+  const s = await getSettings();
+  const now = new Date();
+  const deleteAt = sql`(${O.createdAt} + make_interval(days => ${s.unpaidDeleteDays}::int))`;
+  const batch = db.select({ id: O.id }).from(O).where(and(
+    eq(O.packageStatus, "setup"), isNull(O.deletedAt), isNull(O.unpaidReminderSentAt),
+    sql`${deleteAt} > now()`, sql`${deleteAt} <= now() + make_interval(days => ${UNPAID_REMINDER_DAYS}::int)`,
+  )).limit(BATCH);
+  const claimed = await db.update(O).set({ unpaidReminderSentAt: now })
+    .where(and(inArray(O.id, batch), isNull(O.unpaidReminderSentAt), eq(O.packageStatus, "setup")))
+    .returning({ id: O.id, title: O.title, ownerId: O.ownerId, createdAt: O.createdAt });
+  if (!claimed.length) return 0;
+  const owners = await db.select({ id: schema.hosts.id, email: schema.hosts.email, locale: schema.hosts.locale, brand: schema.hosts.brand, deletedAt: schema.hosts.deletedAt })
+    .from(schema.hosts).where(inArray(schema.hosts.id, [...new Set(claimed.map((c) => c.ownerId))]));
+  const byId = new Map(owners.map((h) => [h.id, h]));
+  let sent = 0;
+  for (const [i, c] of claimed.entries()) {
+    if (Date.now() > deadline) {
+      await db.update(O).set({ unpaidReminderSentAt: null }).where(inArray(O.id, claimed.slice(i).map((x) => x.id))).catch(() => {});
+      break;
+    }
+    const h = byId.get(c.ownerId);
+    if (!h || h.deletedAt) continue;
+    const date = new Date(c.createdAt.getTime() + s.unpaidDeleteDays * DAY_MS);
+    const days = Math.max(1, Math.ceil((date.getTime() - now.getTime()) / DAY_MS));
+    try {
+      await sendUnpaidDeletionReminder(h.email, { locale: loc(h.locale), brand: h.brand, title: c.title, occasionId: c.id, date, days, limitDays: s.unpaidDeleteDays });
+      sent++;
+    } catch (e) {
+      console.error("[expiry] unpaid reminder failed", e);
+      await db.update(O).set({ unpaidReminderSentAt: null }).where(eq(O.id, c.id)).catch(() => {});
+    }
+  }
+  return sent;
 }
 
 // ── Cleanup: retention deletions and housekeeping ────────────────────────────────────────────────
@@ -104,15 +150,29 @@ const EVENT_BATCH = 15;
 
 /**
  * Retention: once an event's delete_after has passed (closes_at + settings.retentionMonths), its files (media, covers,
- * guestbook recordings) are deleted, the event is archived and its package marked 'expired'. Idempotent: archived events
- * are skipped, so an interrupted run just continues next time. Setup (never paid) and refunded events are not touched here.
+ * guestbook recordings) are deleted, the event is archived and its package marked 'expired'. If guests still have paid
+ * download links, the package is marked 'expired' now (closed to host downloads and guests) but the photo/video files
+ * are kept until files_delete_after (the latest link expiry); the next run after that date deletes them.
+ * Idempotent: archived events are skipped, so an interrupted run just continues next time. Setup and refunded events
+ * are not touched here (unpaid events: deleteUnpaidEvents).
  */
-async function deleteExpiredEvents() {
+async function deleteExpiredEvents(deadline: number) {
   const now = new Date();
   const due = await db.select({ id: O.id }).from(O)
-    .where(and(ne(O.status, "archived"), inArray(O.packageStatus, ["paid", "live", "ended", "expired"]), isNotNull(O.deleteAfter), lte(O.deleteAfter, now)))
+    .where(and(
+      ne(O.status, "archived"), inArray(O.packageStatus, ["paid", "live", "ended", "expired"]), isNotNull(O.deleteAfter), lte(O.deleteAfter, now),
+      isNull(O.deletedAt), or(isNull(O.filesDeleteAfter), lte(O.filesDeleteAfter, now)),
+    ))
     .limit(EVENT_BATCH);
+  let deleted = 0, kept = 0;
   for (const o of due) {
+    if (Date.now() > deadline) break;
+    const hold = await guestPurchaseHold(o.id);
+    if (hold.until) {
+      await holdFilesForBuyers(o.id, hold.until, { expire: true });
+      kept++;
+      continue;
+    }
     await deleteObjects(await keysForOccasion(o.id));
     await db.batch([
       db.delete(schema.media).where(eq(schema.media.occasionId, o.id)),
@@ -120,15 +180,74 @@ async function deleteExpiredEvents() {
       db.delete(schema.shareLinks).where(eq(schema.shareLinks.occasionId, o.id)),
       // Guests' emails for this event go with its files (privacy policy: 12 months after the gallery ends).
       db.delete(schema.guestContacts).where(eq(schema.guestContacts.occasionId, o.id)),
-      db.update(O).set({ status: "archived", coverKey: null, packageStatus: "expired" }).where(eq(O.id, o.id)),
+      db.update(O).set({ status: "archived", coverKey: null, packageStatus: "expired", filesDeleteAfter: null }).where(eq(O.id, o.id)),
     ]);
+    deleted++;
   }
-  return due.length;
+  return { deleted, kept };
 }
 
-/** Daily (Vercel Hobby allows one run a day; upgrade to Pro to run hourly): delete files of events past retention, purge abandoned/failed/deleted media, stale login codes, rate-limit rows and expired share links. */
+/**
+ * Unpaid events: an event still in setup (never paid, not marked as paid) is deleted with its test uploads and files
+ * settings.unpaidDeleteDays (default 90) after it was created. Each event is claimed first with a conditional UPDATE
+ * (setup, not deleted, still past the date → deleted_at, deleted_by 'unpaid'), so a payment that lands at the same
+ * moment wins (billing.ts never marks a deleted event as paid) and the event disappears for the host at once; then
+ * deleteOccasion removes the files and the row (or, if guests still hold paid links, e.g. after an admin reset the event
+ * to setup, keeps the photo/video files until those expire). A claimed event whose deletion fails half-way is finished by
+ * purgeDeletedEvents on the next run.
+ */
+async function deleteUnpaidEvents(deadline: number) {
+  const s = await getSettings();
+  const pastLimit = sql`${O.createdAt} + make_interval(days => ${s.unpaidDeleteDays}::int) <= now()`;
+  const due = await db.select({ id: O.id }).from(O)
+    .where(and(eq(O.packageStatus, "setup"), isNull(O.deletedAt), pastLimit)).limit(EVENT_BATCH);
+  let deleted = 0, kept = 0;
+  for (const o of due) {
+    if (Date.now() > deadline) break;
+    const claimed = await db.update(O).set({ deletedAt: new Date(), deletedBy: "unpaid" })
+      .where(and(eq(O.id, o.id), eq(O.packageStatus, "setup"), isNull(O.deletedAt), pastLimit)).returning({ id: O.id });
+    if (!claimed.length) continue;
+    const r = await deleteOccasion(o.id, "unpaid");
+    if (r.keptUntil) kept++; else deleted++;
+  }
+  return { deleted, kept };
+}
+
+/**
+ * Deleted events whose files were kept for guests' paid links (deleted_at, files_delete_after ≤ now), and claimed
+ * deletions that didn't finish (deleted_at, no files_delete_after): deleteOccasion runs again. With no active purchase
+ * left the files and the row go; a purchase that became active meanwhile pushes files_delete_after later.
+ */
+async function purgeDeletedEvents(deadline: number) {
+  const now = new Date();
+  const due = await db.select({ id: O.id, by: O.deletedBy }).from(O)
+    .where(and(isNotNull(O.deletedAt), or(isNull(O.filesDeleteAfter), lte(O.filesDeleteAfter, now)))).limit(EVENT_BATCH);
+  let deleted = 0, kept = 0;
+  for (const o of due) {
+    if (Date.now() > deadline) break;
+    const by = (["host", "account", "admin", "unpaid"].includes(o.by ?? "") ? o.by : "host") as DeletedBy;
+    const r = await deleteOccasion(o.id, by);
+    if (r.keptUntil) kept++; else deleted++;
+  }
+  // Accounts deleted while some of their events were kept for guests (src/lib/account.ts): gone once those events are.
+  const H = schema.hosts;
+  const hosts = await db.delete(H).where(and(isNotNull(H.deletedAt), sql`not exists (select 1 from occasions o where o.owner_id = ${H.id})`))
+    .returning({ id: H.id });
+  return { deleted, kept, accounts: hosts.length };
+}
+
+/**
+ * Daily (Vercel Hobby allows one run a day; upgrade to Pro to run hourly): finish deletions whose files were kept for
+ * guests' paid links, delete unpaid events past settings.unpaidDeleteDays, delete files of events past retention, purge
+ * abandoned/failed/deleted media, stale login codes, rate-limit rows and expired share links.
+ */
 export async function runCleanup(): Promise<Record<string, number>> {
-  const archived = await deleteExpiredEvents();
+  // Storage deletions are sequential: each step works to a deadline inside the function's maxDuration (300 s) and leaves
+  // the rest for the next run (every step is idempotent and picks up where it stopped).
+  const started = Date.now();
+  const purged = await purgeDeletedEvents(started + 70_000);
+  const unpaid = await deleteUnpaidEvents(started + 140_000);
+  const retention = await deleteExpiredEvents(started + 210_000);
   const { media } = schema;
   const dayAgo = new Date(Date.now() - 24 * 3600_000);
   const stale = await db.select({
@@ -151,5 +270,8 @@ export async function runCleanup(): Promise<Record<string, number>> {
   await db.delete(schema.marketingConsents).where(lt(schema.marketingConsents.withdrawnAt, new Date(Date.now() - 2 * 365 * 86400_000)));
   // Keep a year of run history.
   await db.delete(schema.cronRuns).where(lt(schema.cronRuns.startedAt, new Date(Date.now() - 365 * 86400_000)));
-  return { archived, media: stale.length };
+  return {
+    archived: retention.deleted, retentionKeptForBuyers: retention.kept, unpaidDeleted: unpaid.deleted, unpaidKeptForBuyers: unpaid.kept,
+    deletedPurged: purged.deleted, deletedStillKept: purged.kept, accountsPurged: purged.accounts, media: stale.length,
+  };
 }

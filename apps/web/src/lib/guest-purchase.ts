@@ -12,7 +12,7 @@ import { publicSlug, revealedForGuests } from "./occasion";
 import { liveMedia, loadDays, mediaPage } from "./queries";
 import { EXT_BY_MIME, privateGetUrl } from "./storage";
 import { emailConfigured, sendGuestDownloadEmail } from "./email";
-import { guestMayDownloadOriginal, guestPurchaseOffered, purchaseActive, PURCHASE_VALID_DAYS, SPLIT_ZIP_BYTES, type PurchaseSummary } from "./purchase-rules";
+import { guestMayDownloadOriginal, guestPurchaseOffered, purchaseUsable, PURCHASE_VALID_DAYS, SPLIT_ZIP_BYTES, type PurchaseSummary } from "./purchase-rules";
 export type { PurchaseSummary } from "./purchase-rules";
 import { makeT } from "@/i18n/shared";
 
@@ -24,6 +24,10 @@ import { makeT } from "@/i18n/shared";
  * Same protections as the event package (src/lib/billing.ts): the webhook re-reads the session from Stripe, marking
  * paid is a conditional UPDATE (pending → paid), refunds are never undone by a late "completed" event, and only a
  * HASH of the emailed download token is stored.
+ *
+ * A paid purchase works for its full 30 days whatever happens to the event (purchase-rules.ts → purchaseUsable):
+ * only a refund of the purchase, the owner's suspension or an admin lock end it early. Deleting the event keeps its
+ * files until the latest active purchase expires (occasion-service.ts → deleteOccasion, cleanup cron).
  */
 
 type OccasionRow = typeof schema.occasions.$inferSelect;
@@ -48,13 +52,15 @@ export async function activePurchase(occasionId: string, guestId: string | null 
 export type GuestDownloadInfo = { pricePence: number; available: boolean; payments: boolean; purchased: boolean; expiresAt: string | null };
 
 export function guestDownloadInfo(access: Access, s: PackageSettings, purchase: PurchaseRow | null): GuestDownloadInfo {
-  const offered = guestPurchaseOffered({ paid: access.paid, guestsCanView: access.guestsCanView, canDownload: access.canDownload });
+  const offered = guestPurchaseOffered(access);
+  const purchased = purchaseUsable(purchase, access);
   return {
     pricePence: s.guestDownloadPence,
     available: offered && paymentsEnabled(),
     payments: paymentsEnabled(),
-    purchased: offered && purchaseActive(purchase),
-    expiresAt: purchase?.tokenExpiresAt?.toISOString() ?? null,
+    // A purchase stays usable after the gallery closes, is refunded to the host or is deleted (the guest page links to it).
+    purchased,
+    expiresAt: purchased ? purchase?.tokenExpiresAt?.toISOString() ?? null : null,
   };
 }
 
@@ -62,7 +68,7 @@ export function guestDownloadInfo(access: Access, s: PackageSettings, purchase: 
 export async function createGuestCheckout(o: OccasionRow, guest: GuestRow, locale: Locale): Promise<string> {
   if (!paymentsEnabled()) throw new ApiError(503, "payments_unavailable", "Payments are coming soon");
   const access = await accessForOccasion(o);
-  if (!guestPurchaseOffered({ paid: access.paid, guestsCanView: access.guestsCanView, canDownload: access.canDownload })) {
+  if (!guestPurchaseOffered(access)) {
     throw new ApiError(409, "cannot_pay", "Downloads can't be bought for this gallery right now");
   }
   if (await activePurchase(o.id, guest.id)) throw new ApiError(409, "already_paid", "You already have every photo and video from this event");
@@ -139,6 +145,13 @@ export async function fulfilGuestPurchase(sessionId: string): Promise<{ applied:
     stripePaymentIntentId: idOf(session.payment_intent), amountPence: session.amount_total, livemode: session.livemode,
   }).where(and(eq(P.stripeCheckoutSessionId, session.id), eq(P.status, "pending"))).returning();
   const [row] = updated.length ? updated : await db.select().from(P).where(eq(P.stripeCheckoutSessionId, session.id)).limit(1);
+  // The event may have been deleted (or passed retention) while this guest was in Checkout: its files are already being
+  // kept for other buyers, so keep them for this one too (never shorten an existing deferral).
+  if (row?.status === "paid" && row.tokenExpiresAt) {
+    const O = schema.occasions;
+    await db.update(O).set({ filesDeleteAfter: sql`greatest(${O.filesDeleteAfter}, ${row.tokenExpiresAt.toISOString()}::timestamptz)` })
+      .where(and(eq(O.id, occasionId), sql`${O.filesDeleteAfter} is not null`));
+  }
   if (row?.status === "paid") await sendDownloadLink(row);
   return { applied: updated.length > 0, purchase: row };
 }
@@ -179,14 +192,18 @@ export async function handleGuestPurchaseRefund(paymentIntentId: string, charge:
 
 const TOKEN_RE = /^[A-Za-z0-9_-]{40,64}$/;
 
-/** /d/<token>: hash lookup, paid, inside 30 days, event's downloads still open. Null when anything fails. */
+/**
+ * /d/<token>: hash lookup; paid, not refunded, inside its 30 days; the event not suspended or locked by an admin.
+ * Independent of the event's package state: a refunded, ended, expired, reset or deleted event keeps serving the
+ * buyer until token_expires_at (its files are kept until then). Null when anything fails.
+ */
 export async function purchaseFromToken(token: string): Promise<{ purchase: PurchaseRow; occasion: OccasionRow; access: Access } | null> {
   if (!TOKEN_RE.test(token)) return null;
   const [row] = await db.select({ p: P, o: schema.occasions }).from(P).innerJoin(schema.occasions, eq(schema.occasions.id, P.occasionId))
     .where(eq(P.downloadTokenHash, sha256(token))).limit(1);
-  if (!row || !purchaseActive(row.p) || row.o.status === "archived") return null;
+  if (!row) return null;
   const access = await accessForOccasion(row.o);
-  if (!access.canDownload) return null;
+  if (!purchaseUsable(row.p, access)) return null;
   return { purchase: row.p, occasion: row.o, access };
 }
 
@@ -251,16 +268,19 @@ export async function purchasableOriginalUrl(o: OccasionRow, mediaId: string): P
 }
 
 /**
- * A guest's single-original download (device token): own uploads always (free), anyone else's with an active purchase.
- * Throws 402 `purchase_required` otherwise.
+ * A guest's single-original download (device token): own uploads free while the gallery is open, anything the purchase
+ * covers with a usable purchase (whatever the event's package state). Throws 402 `purchase_required` otherwise.
  */
 export async function guestOriginalUrl(o: OccasionRow, guest: GuestRow, mediaId: string): Promise<string> {
   const m = schema.media;
   const [x] = await db.select().from(m).where(and(eq(m.id, mediaId), ...liveMedia(o.id), inArray(m.kind, ["photo", "video"]))).limit(1);
   if (!x) throw new ApiError(404, "not_found", "Unknown photo");
   const own = x.guestId === guest.id;
-  const [access, purchase] = await Promise.all([accessForOccasion(o), own ? Promise.resolve(null) : activePurchase(o.id, guest.id)]);
-  const ok = guestMayDownloadOriginal({ mediaGuestId: x.guestId, viewerGuestId: guest.id, purchase, event: { guestsCanView: access.guestsCanView, canDownload: access.canDownload } });
+  const [access, purchase] = await Promise.all([accessForOccasion(o), activePurchase(o.id, guest.id)]);
+  const ok = guestMayDownloadOriginal({
+    mediaGuestId: x.guestId, viewerGuestId: guest.id, purchase,
+    event: { guestsCanView: access.guestsCanView, canDownload: access.canDownload, suspended: access.suspended, locked: access.locked },
+  });
   if (!ok) throw new ApiError(402, "purchase_required", "Get every photo and video in full quality to download this");
   if (!own) {
     const url = await purchasableOriginalUrl(o, mediaId);

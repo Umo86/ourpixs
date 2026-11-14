@@ -27,6 +27,7 @@ export function pricingVars(email: string, s: PackageSettings) {
   return {
     price: formatGBP(s.eventPricePence), guestPrice: formatGBP(s.guestDownloadPence), windowDays: s.windowDays,
     retentionMonths: s.retentionMonths, videoSeconds: s.videoMaxSeconds, fairUseGb: s.fairUseGb, testLimit: s.hostTestUploadLimit,
+    unpaidDays: s.unpaidDeleteDays,
     maxDays: FEATURES.maxDays, cancelDays: CANCELLATION_DAYS, email,
   };
 }

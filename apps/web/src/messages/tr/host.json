@@ -116,7 +116,8 @@
    "expired": "Dosyalar silindi",
    "refunded": "İade edildi",
    "locked": "Kilitli",
-   "suspended": "Askıya alındı"
+   "suspended": "Askıya alındı",
+   "setupDelete": "Ödenmedi · ödeme yapmazsanız {date} tarihinde silinir"
   },
   "statusLabel": "Durum"
  },
@@ -366,7 +367,7 @@
  },
  "danger": {
   "title": "Etkinliği sil",
-  "body": "Etkinliği, bütün fotoğraf, video ve mesajları kalıcı olarak siler. Saklamak istediklerinizi önce indirin.",
+  "body": "Etkinliği, bütün fotoğraf, video ve mesajları kalıcı olarak siler. Saklamak istediklerinizi önce indirin. Fotoğrafları satın alan misafirlerin indirme bağlantısı süresi dolana kadar (ödemeden 30 gün sonra) çalışmaya devam eder; dosyaları o zaman silinir.",
   "delete": "Bu etkinliği sil",
   "confirmPrompt": "Onaylamak için etkinlik adını yazın: {title}",
   "mismatch": "Ad eşleşmedi, hiçbir şey silinmedi."
@@ -426,7 +427,9 @@
   "lockedRefunded": "Bu etkinlik iade edildiği için indirmeler kapalı.",
   "lockedExpired": "Bu etkinliğin dosyaları silindi.",
   "lockedSuspended": "Bu hesap askıya alındığı için indirmeler kapalı. Lütfen destekle iletişime geçin.",
-  "bigHint": "Toplam {size}: en sorunsuz sonuç için aşağıdan günleri tek tek indir."
+  "bigHint": "Toplam {size}: en sorunsuz sonuç için aşağıdan günleri tek tek indir.",
+  "unpaidDelete": "Henüz ödenmedi · ödeme yapmazsanız {date} tarihinde silinecek.",
+  "testOnly": "Henüz ödeme yapılmadığı için burada yalnızca sizin ve ortak ev sahiplerinin deneme modunda eklediği fotoğraf ve videolar indirilir. Misafirlerinizin yükledikleri, ödemeyi yaptığınızda açılır."
  },
  "support": {
   "metaTitle": "Destek",
@@ -445,7 +448,7 @@
   "metaTitle": "Hesabınızı silin",
   "title": "Hesabınızı silin",
   "lead": "Hesabınızı ve verilerinizi istediğiniz zaman silebilirsiniz.",
-  "points": "Sahibi olduğunuz etkinlikler, bütün fotoğraf, video ve mesajlarıyla birlikte silinir|Ortak ev sahibi olduğunuz etkinliklerden çıkarılırsınız|Giriş e-postanız ve uygulama bildirim kayıtlarınız silinir|Ödeme kayıtları yasal zorunluluk gereği Stripe tarafından saklanır",
+  "points": "Sahibi olduğunuz etkinlikler, bütün fotoğraf, video ve mesajlarıyla birlikte silinir|Bir etkinliğin fotoğraflarını satın alan misafirlerin indirme bağlantısı, süresi dolana kadar (ödemeden 30 gün sonra) çalışır|Ortak ev sahibi olduğunuz etkinliklerden çıkarılırsınız|Giriş e-postanız ve uygulama bildirim kayıtlarınız silinir|Ödeme kayıtları yasal zorunluluk gereği Stripe tarafından saklanır",
   "guests": "Misafirlerin hesabı yoktur. Misafir olarak yüklediğiniz fotoğrafları kaldırmak için etkinliği açıp \"Yüklediklerim\" bölümünü kullanın ya da ev sahiplerine yazın.",
   "signedInAs": "{email} ile giriş yaptınız",
   "button": "Hesabımı sil",
@@ -494,6 +497,15 @@
    "body": "{title} etkinliğinin fotoğraf, video ve mesajları {days} gün sonra, {date} tarihinde silinecek.",
    "body2": "Henüz indirmediyseniz her şeyi şimdi indirin. Bu tarihten sonra geri getirilemez.",
    "cta": "Her şeyi indir"
+  },
+  "unpaidDeletion": {
+   "subject": "{title}: henüz ödenmedi, {date} tarihinde silinecek",
+   "heading": "Etkinliğiniz yakında silinecek",
+   "body": "{title} için henüz ödeme yapılmadı. Ödenmeyen etkinlikler oluşturulduktan {limit} gün sonra silinir; bu etkinlik de deneme yüklemeleriyle birlikte {days} gün sonra, {date} tarihinde silinecek.",
+   "body2": "Saklamak istiyorsanız bu tarihten önce ödemeyi yapın. Galeri açıldığında misafirleriniz katılabilir.",
+   "body3": "Deneme fotoğraf ve videolarınızı saklamak mı istiyorsunuz? Buradan indirin: {url}",
+   "cta": "Etkinliğinizi açın",
+   "footer": "Bu e-postayı, {brand} üzerinde {title} etkinliğini oluşturduğunuz için alıyorsunuz. Artık ihtiyacınız yoksa bir şey yapmanıza gerek yok."
   }
  },
  "billing": {
@@ -568,7 +580,9 @@
   "changeDates": "Tarihleri değiştir",
   "download": "Her şeyi indir",
   "testBanner": "Deneme modu: yalnızca siz ve ortak ev sahipleri yükleme yapabilir ({limit} yüklemenin {used} tanesi kullanıldı). Ödeme yapılıp galeri açılana kadar misafirler “yakında açılıyor” görür.",
-  "cohostPay": "Galeriyi açmak için ödemeyi etkinlik sahibi yapabilir."
+  "cohostPay": "Galeriyi açmak için ödemeyi etkinlik sahibi yapabilir.",
+  "unpaidDelete": "Henüz ödenmedi · ödeme yapmazsanız {date} tarihinde silinecek.",
+  "downloadTest": "Deneme yüklemelerini indir"
  },
  "cards": {
   "instruction": "Fotoğraf ve videolarını eklemek için okut",
