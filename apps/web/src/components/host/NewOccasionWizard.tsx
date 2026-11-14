@@ -215,7 +215,7 @@ export function NewOccasionWizard({ templateId, initialTheme, windowDays, priceP
             <Field id="city" label={t("wizard.city")} value={city} maxLength={80} onChange={(e) => setCity(e.target.value)} placeholder={t("wizard.cityPlaceholder")} />
             <Field id="venue" className="sm:col-span-2" label={t("wizard.venue")} value={venueName} maxLength={120} onChange={(e) => setVenue(e.target.value)} placeholder={t("wizard.venuePlaceholder")} />
           </div>
-          <fieldset className="m-0 flex flex-col gap-3 rounded-[24px] border-0 bg-tint p-5">
+          <fieldset className="m-0 flex min-w-0 flex-col gap-3 rounded-[24px] border-0 bg-tint p-5">
             <legend className="float-left mb-1 p-0 text-[15px] font-extrabold">{t("wizard.daysTitle")}</legend>
             <p className="clear-both m-0 text-sm text-muted">{t("wizard.daysHint", { max: MAX_DAYS })}</p>
             {days.map((d, i) => (
@@ -223,7 +223,7 @@ export function NewOccasionWizard({ templateId, initialTheme, windowDays, priceP
                 <input type="checkbox" id={`day-${i}`} checked={d.on} onChange={(e) => setDays((arr) => arr.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))}
                   className="h-6 w-6 flex-none accent-royal" aria-label={t("wizard.includeDay", { name: d.name })} />
                 <input aria-label={t("wizard.dayName")} value={d.name} maxLength={60} onChange={(e) => setDays((arr) => arr.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
-                  className="min-h-11 flex-1 rounded-xl border-[1.5px] border-[#D5D8E2] bg-white px-3 text-[15px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky" />
+                  className="min-h-11 min-w-0 flex-1 rounded-xl border-[1.5px] border-[#D5D8E2] bg-white px-3 text-[15px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky" />
                 <span className="w-28 text-right text-sm text-muted">{startsOn ? shift(startsOn, d.offset) : ""}</span>
               </div>
             ))}
@@ -234,7 +234,7 @@ export function NewOccasionWizard({ templateId, initialTheme, windowDays, priceP
               </button>
             ) : null}
           </fieldset>
-          <fieldset className="m-0 flex flex-col gap-3 rounded-[24px] border-0 bg-tint p-5">
+          <fieldset className="m-0 flex min-w-0 flex-col gap-3 rounded-[24px] border-0 bg-tint p-5">
             <legend className="float-left mb-1 p-0 text-[15px] font-extrabold">{t("wizard.windowTitle")}</legend>
             <p className="clear-both m-0 text-sm text-muted">{t("wizard.windowHint", { days: windowDays })}</p>
             <WindowFields idPrefix="wz" opens={win.opens} closes={win.closes} tz={win.tz} windowDays={windowDays}

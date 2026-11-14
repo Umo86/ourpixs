@@ -35,7 +35,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="flex min-h-screen flex-col bg-white text-ink">
       <SiteHeader variant="light" minimal right={
         <div className="flex items-center gap-3">
-          <Sticker tone="ink" rotate={-4} caps className="hidden !px-3 !py-1.5 !text-[11px] sm:inline-block">{t("shell.badge")}</Sticker>
+          {/* Wrapped: the Sticker's own display class beat `hidden`, so the badge pushed the phone header off-screen. */}
+          <span className="hidden sm:inline-flex"><Sticker tone="ink" rotate={-4} caps className="!px-3 !py-1.5 !text-[11px]">{t("shell.badge")}</Sticker></span>
           <AccountMenu email={admin.email} />
         </div>
       } />

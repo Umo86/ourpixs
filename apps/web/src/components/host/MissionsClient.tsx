@@ -63,7 +63,7 @@ export function MissionsClient({ occasionId }: { occasionId: string }) {
           <span className="text-sm font-bold text-muted">{t("missions.ideasTitle")}</span>
           <div className="flex flex-wrap gap-2">
             {ideas.slice(0, 6).map((i) => (
-              <button key={i} type="button" onClick={() => add(i)} disabled={busy} className="min-h-10 rounded-full bg-tint px-4 text-[13px] font-bold hover:bg-[#E4E8F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky">+ {i}</button>
+              <button key={i} type="button" onClick={() => add(i)} disabled={busy} className="min-h-11 rounded-full bg-tint px-4 text-[13px] font-bold hover:bg-[#E4E8F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky">+ {i}</button>
             ))}
           </div>
         </div>

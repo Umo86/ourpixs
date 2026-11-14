@@ -1,16 +1,25 @@
-import type { Locale } from "@/lib/config";
+import { DEFAULT_TIME_ZONE, type Locale } from "@/lib/config";
 
 const tag = (l: Locale) => (l === "tr" ? "tr-TR" : "en-GB");
 
+/*
+ * Timestamps are always formatted in an explicit zone (the event's, else Europe/London), never the runtime's own:
+ * these helpers run on the server (UTC) AND in the browser (the visitor's zone) for the same render, and any difference
+ * broke hydration (React #418, e.g. the admin moderation list in Istanbul) and showed UTC times to UK visitors in summer.
+ */
+
+/** Date only. "YYYY-MM-DD" strings are calendar dates (no zone); timestamps use `opts.timeZone` (default Europe/London). */
 export function formatDate(iso: string | null | undefined, locale: Locale, opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" }) {
   if (!iso) return "";
-  const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(`${iso}T12:00:00Z`) : new Date(iso);
-  return d.toLocaleDateString(tag(locale), { timeZone: /^\d{4}-\d{2}-\d{2}$/.test(iso) ? "UTC" : undefined, ...opts });
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso);
+  const d = dateOnly ? new Date(`${iso}T12:00:00Z`) : new Date(iso);
+  return d.toLocaleDateString(tag(locale), { ...opts, timeZone: dateOnly ? "UTC" : opts.timeZone ?? DEFAULT_TIME_ZONE });
 }
 
-export function formatDateTime(iso: string | null | undefined, locale: Locale) {
+/** Day, month and time in `timeZone` (default Europe/London; pass the event's zone for event times). */
+export function formatDateTime(iso: string | null | undefined, locale: Locale, timeZone: string = DEFAULT_TIME_ZONE) {
   if (!iso) return "";
-  return new Date(iso).toLocaleString(tag(locale), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleString(tag(locale), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone });
 }
 
 export function formatNumber(n: number, locale: Locale) {

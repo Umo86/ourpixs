@@ -117,6 +117,11 @@ export function assertCanPay(a: Access) {
 
 const o0 = schema.occasions;
 
+/** Start of the unpaid-event clock: max(created_at, setup_reset_at) (mirror of unpaidDeleteAtOf). */
+export function unpaidClockSql(o: typeof o0 = o0): SQL<Date> {
+  return sql<Date>`greatest(${o.createdAt}, ${o.setupResetAt})`;
+}
+
 /**
  * Effective package state as SQL text ('setup' | 'paid' | 'live' | 'ended' | 'expired' | 'refunded').
  * `retentionMonths` is only used for events without a stored delete_after; `unpaidDeleteDays` turns a setup event
@@ -127,7 +132,7 @@ export function packageStateSql(s: { retentionMonths: number; unpaidDeleteDays: 
   const del = sql`coalesce(${o.deleteAfter}, ${o.closesAt} + make_interval(months => ${s.retentionMonths}::int))`;
   return sql<string>`(case
     when ${o.deletedAt} is not null then (case when ${o.packageStatus} = 'refunded' then 'refunded' else 'expired' end)
-    when ${o.packageStatus} = 'setup' and ${o.createdAt} + make_interval(days => ${s.unpaidDeleteDays}::int) <= now() then 'expired'
+    when ${o.packageStatus} = 'setup' and ${unpaidClockSql(o)} + make_interval(days => ${s.unpaidDeleteDays}::int) <= now() then 'expired'
     when ${o.packageStatus} in ('refunded', 'expired', 'setup') then ${o.packageStatus}::text
     when ${del} is not null and ${del} <= now() then 'expired'
     when ${o.packageStatus} = 'ended' then 'ended'

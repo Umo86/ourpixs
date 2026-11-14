@@ -151,6 +151,8 @@ export type PackageSettings = { -readonly [K in keyof typeof PACKAGE_DEFAULTS]: 
 export const DELETION_REMINDER_DAYS = [30, 7] as const;
 /** The one reminder before an unpaid (setup) event is deleted, in days before created_at + unpaidDeleteDays. */
 export const UNPAID_REMINDER_DAYS = 7;
+/** A refunded event's files are deleted this many days after the full refund (unless guests' paid links hold them). */
+export const REFUNDED_DELETE_DAYS = 90;
 /** Default gallery window start (local time in the event's time zone) on the event date. */
 export const DEFAULT_WINDOW_START_HOUR = 10;
 /** Time zone the gallery window is entered in unless the host picks another. */

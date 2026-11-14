@@ -61,7 +61,7 @@ export function demoOccasions(): OccasionSummary[] {
     },
     {
       id: "demo-bday", slug: "deniz-30", type: "dogum_gunu", title: "Deniz's Birthday", startsOn: "2026-12-05", coverUrl: demoImage("birthday"), mediaCount: 6, guestCount: 0, role: "cohost",
-      access: { canUpload: true, canDownload: false, readOnly: false, reason: "setup" }, packageStatus: "setup", opensAt: null, closesAt: null, deleteAfter: null, testMode: true, timeZone: "Europe/London",
+      access: { canUpload: true, canDownload: false, readOnly: false, reason: "setup" }, packageStatus: "setup", opensAt: null, closesAt: null, deleteAfter: hours(24 * 85), testMode: true, timeZone: "Europe/London",
     },
   ];
 }

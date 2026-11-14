@@ -244,7 +244,7 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
 
   const lbLabels = { close: t("common.close"), prev: t("common.previous"), next: t("common.next"), download: t("common.download"), by: (n: string) => t("album.by", { name: n }), processing: t("album.processingLong"), unavailable: t("album.unavailable") };
   const iconBtn = "inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky";
-  const select = "min-h-10 rounded-full border-[1.5px] border-[#D5D8E2] bg-white px-4 text-[13px] font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky";
+  const select = "min-h-11 rounded-full border-[1.5px] border-[#D5D8E2] bg-white px-4 text-[13px] font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky";
   const allSelected = items.length > 0 && items.every((i) => selected.has(i.id));
 
   return (

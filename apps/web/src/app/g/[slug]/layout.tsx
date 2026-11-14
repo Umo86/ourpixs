@@ -13,7 +13,8 @@ export const viewport: Viewport = { themeColor: "#0A0A0A", width: "device-width"
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { o } = await loadGuestContext((await params).slug);
-  return { title: o.title, robots: { index: false, follow: false }, openGraph: null };
+  // "Add to Home Screen" from a gallery opens that gallery, full screen (its own manifest; src/app/manifest.ts for the rest).
+  return { title: o.title, robots: { index: false, follow: false }, openGraph: null, manifest: `/g/${(await params).slug}/manifest.webmanifest` };
 }
 
 export default async function GuestLayout({ children, params }: { children: React.ReactNode; params: Promise<{ slug: string }> }) {

@@ -100,7 +100,7 @@ export function CameraScreen() {
     );
   }
 
-  const reveal = o.revealAt ? t("camera.revealAt", { time: formatDateTime(o.revealAt, locale) }) : t("camera.revealMorning");
+  const reveal = o.revealAt ? t("camera.revealAt", { time: formatDateTime(o.revealAt, locale, o.timeZone) }) : t("camera.revealMorning");
   const pending = queue.filter((q) => q.meta.fromDisposable && q.status !== "done").length;
   return (
     <main id="main" className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-3">

@@ -44,7 +44,7 @@ export default async function ComparePage() {
 
       <section>
         <Container>
-          <div className="overflow-x-auto rounded-[28px] border border-[#E3E5EE]">
+          <div className="relative overflow-x-auto rounded-[28px] border border-[#E3E5EE]">{/* relative: contains the sr-only cells, which otherwise widen the page on phones */}
             <table className="w-full min-w-[820px] border-collapse text-left text-[15px]">
               <caption className="sr-only">{c.title} {c.accent}</caption>
               <thead>

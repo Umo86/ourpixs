@@ -10,6 +10,8 @@ import type { NextConfig } from "next";
 const MEDIA_FILES = ["./node_modules/ffmpeg-static/ffmpeg", "./node_modules/ffmpeg-static/package.json", "./node_modules/ffmpeg-static/index.js", "./assets/watermark/**/*"];
 
 const nextConfig: NextConfig = {
+  // Test harness only (test/run.mjs builds into .next-e2e with test URLs baked in); unset everywhere else.
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   images: {
     // Marketing and demo photos hotlinked from Unsplash (as Unsplash requires).
     remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],

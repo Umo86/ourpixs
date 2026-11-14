@@ -294,7 +294,8 @@
    "host": "Deleted by host",
    "account": "Deleted with the host's account",
    "admin": "Deleted by an admin",
-   "unpaid": "Deleted as unpaid"
+   "unpaid": "Deleted as unpaid",
+   "refunded": "Deleted after a refund"
   },
   "deletedKept": "{by} · files kept until {date} for {n} guest purchase(s)",
   "retentionKept": "Past retention · files kept until {date} for {n} guest purchase(s)",

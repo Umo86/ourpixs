@@ -294,7 +294,8 @@
    "host": "Ev sahibi sildi",
    "account": "Ev sahibinin hesabıyla silindi",
    "admin": "Yönetici sildi",
-   "unpaid": "Ödenmediği için silindi"
+   "unpaid": "Ödenmediği için silindi",
+   "refunded": "İade sonrası silindi"
   },
   "deletedKept": "{by} · dosyalar {n} misafir satın alması için {date} tarihine kadar saklanıyor",
   "retentionKept": "Saklama süresi doldu · dosyalar {n} misafir satın alması için {date} tarihine kadar saklanıyor",

@@ -36,6 +36,8 @@ export type EventPackageRow = {
   paidAt?: Date | null;
   /** Needed for the unpaid-event limit (setup events are deleted unpaidDeleteDays after this). */
   createdAt?: Date | null;
+  /** An admin put the event back into setup: the unpaid limit counts from the later of this and createdAt. */
+  setupResetAt?: Date | null;
   /** Deleted, files kept only for guests' paid links (occasions.deleted_at). */
   deletedAt?: Date | null;
 };
@@ -98,9 +100,14 @@ export function deleteAfterOf(o: Pick<EventPackageRow, "deleteAfter" | "closesAt
   return o.deleteAfter ?? (o.closesAt ? addMonths(o.closesAt, retentionMonths) : null);
 }
 
-/** When an unpaid (setup) event is deleted: created_at + unpaidDeleteDays. Null without created_at. */
-export function unpaidDeleteAtOf(o: Pick<EventPackageRow, "createdAt">, unpaidDeleteDays: number): Date | null {
-  return o.createdAt ? new Date(o.createdAt.getTime() + unpaidDeleteDays * DAY) : null;
+/**
+ * When an unpaid (setup) event is deleted: max(created_at, setup_reset_at) + unpaidDeleteDays (an admin's "Back to setup"
+ * restarts the clock). Null without created_at.
+ */
+export function unpaidDeleteAtOf(o: Pick<EventPackageRow, "createdAt" | "setupResetAt">, unpaidDeleteDays: number): Date | null {
+  if (!o.createdAt) return null;
+  const from = o.setupResetAt && o.setupResetAt > o.createdAt ? o.setupResetAt : o.createdAt;
+  return new Date(from.getTime() + unpaidDeleteDays * DAY);
 }
 
 /** Stored status + the clock. Never needs the cron to have run. */

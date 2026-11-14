@@ -1,6 +1,6 @@
 import "server-only";
 import type Stripe from "stripe";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { BRANDS, MAIN_BRAND, brandBaseUrl, type Brand, type Locale } from "./config";
 import { ApiError } from "./http";
@@ -156,7 +156,8 @@ export async function fulfilCheckout(sessionId: string): Promise<{ applied: bool
 
 /** Event goes to "refunded" (read-only, closed to guests). Expired events stay expired. */
 async function markRefunded(occasionId: string) {
-  await db.update(schema.occasions).set({ packageStatus: "refunded" })
+  // refunded_at starts the REFUNDED_DELETE_DAYS clock (cleanup cron); a replayed refund never moves it.
+  await db.update(schema.occasions).set({ packageStatus: "refunded", refundedAt: sql`coalesce(${schema.occasions.refundedAt}, now())` })
     .where(and(eq(schema.occasions.id, occasionId), inArray(schema.occasions.packageStatus, ["setup", "paid", "live", "ended"])));
 }
 

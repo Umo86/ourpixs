@@ -3,6 +3,7 @@ import { and, asc, desc, eq, inArray, ne, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Stats } from "./api-types";
 import { badRequest } from "./http";
+import { ref } from "./sql-ref";
 
 const { media, guests, occasions, days, messages } = schema;
 type OccasionRow = typeof schema.occasions.$inferSelect;
@@ -49,7 +50,7 @@ export async function mediaPage(q: MediaQuery) {
   const c = q.sort === "top" ? { offset: q.cursor ? (decodeCursor(q.cursor) as { offset: number }).offset ?? 0 : 0 } : cursorCondition(q.cursor);
   const where = and(...q.where, ...("where" in c && c.where ? [c.where] : []));
   const reacted = q.guestIdForReaction
-    ? sql<boolean>`exists(select 1 from reactions r where r.media_id = ${media.id} and r.guest_id = ${q.guestIdForReaction})`
+    ? sql<boolean>`exists(select 1 from reactions r where r.media_id = ${ref(media.id)} and r.guest_id = ${q.guestIdForReaction})`
     : sql<boolean>`false`;
   const rows = await db
     .select({ media, guestName: guests.displayName, ts: tsText, reactedByMe: reacted })
@@ -78,10 +79,10 @@ export async function occasionExtras(ids: string[]) {
   const rows = await db
     .select({
       id: occasions.id,
-      mediaCount: sql<number>`(select count(*)::int from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`,
-      guestCount: sql<number>`(select count(*)::int from guests g where g.occasion_id = ${occasions.id})`,
+      mediaCount: sql<number>`(select count(*)::int from media m where m.occasion_id = ${ref(occasions.id)} and m.status = 'uploaded' and m.visibility <> 'deleted')`,
+      guestCount: sql<number>`(select count(*)::int from guests g where g.occasion_id = ${ref(occasions.id)})`,
       coverKey: sql<string | null>`coalesce(${occasions.coverKey}, (select coalesce(m.key_display, m.key_thumb) from media m
-        where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility = 'visible' and m.approved = true
+        where m.occasion_id = ${ref(occasions.id)} and m.status = 'uploaded' and m.visibility = 'visible' and m.approved = true
           and (m.key_display is not null or m.key_thumb is not null)
         order by m.favourite desc, m.reaction_count desc, m.created_at desc limit 1))`,
     })

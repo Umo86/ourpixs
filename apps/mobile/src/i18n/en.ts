@@ -208,7 +208,7 @@ const en = {
   },
   package: {
     title: "Gallery",
-    setup: "Setup", paidNoDate: "Ready · set the gallery dates", opens: "Opens {date}", live: "Live until {date}",
+    setup: "Setup", setupUnpaid: "Not paid yet · deleted on {date}", paidNoDate: "Ready · set the gallery dates", opens: "Opens {date}", live: "Live until {date}",
     ended: "Ended · download until {date}", endedNoDate: "Ended", expired: "Files deleted", refunded: "Refunded",
     suspended: "Account suspended", locked: "Locked by our team",
     window: "Gallery: {from} to {to} ({tz})",

@@ -258,7 +258,7 @@ export async function summariesFor(hostId: string) {
 }
 
 /** Who deleted an event (occasions.deleted_by). */
-export type DeletedBy = "host" | "account" | "admin" | "unpaid";
+export type DeletedBy = "host" | "account" | "admin" | "unpaid" | "refunded";
 
 /**
  * Until when the event's files must be kept for guests' paid "download everything" links: the latest token_expires_at

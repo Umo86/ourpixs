@@ -127,12 +127,19 @@ export function TestModeBanner({ used, limit }: { used: number; limit: number })
   );
 }
 
-function zoneOptions(current: string): string[] {
+function zoneOptions(current: string, browser: string | null): string[] {
   const list: string[] = [...TIME_ZONES];
-  let browser: string | null = null;
-  try { browser = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { browser = null; }
   for (const z of [current, browser]) if (z && !list.includes(z)) list.push(z);
   return list;
+}
+
+/** The browser's own zone, read after hydration (reading it while rendering made the server's list differ: React #418). */
+function useBrowserZone() {
+  const [zone, setZone] = useState<string | null>(null);
+  useEffect(() => {
+    try { setZone(Intl.DateTimeFormat().resolvedOptions().timeZone); } catch { /* keep null */ }
+  }, []);
+  return zone;
 }
 
 function lengthLabel(t: ReturnType<typeof useT>, opens: Date | null, closes: Date | null) {
@@ -156,7 +163,8 @@ export function WindowFields({ idPrefix, opens, closes, tz, onChange, windowDays
   onChange: (v: { opens: string; closes: string; tz: string }) => void;
 }) {
   const t = useT("host");
-  const zones = useMemo(() => zoneOptions(tz), [tz]);
+  const browserZone = useBrowserZone();
+  const zones = useMemo(() => zoneOptions(tz, browserZone), [tz, browserZone]);
   const o = zonedToUtc(opens, tz);
   const c = zonedToUtc(closes, tz);
   const err = opens || closes ? windowError({ opensAt: o, closesAt: c }, windowDays) : null;

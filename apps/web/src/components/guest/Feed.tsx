@@ -156,7 +156,7 @@ export function Feed() {
 
       <div role="group" aria-label={t("feed.filters")} className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1">
         <Chip tone="dark" pressed={!f.kind && !f.sort && !f.moment} onClick={() => setF({})}>{t("feed.all")}</Chip>
-        <Link href={`${path}/mine`} className="inline-flex min-h-10 flex-none items-center whitespace-nowrap rounded-full border-[1.5px] border-[#3A3F52] px-4 text-[13px] font-bold text-white no-underline hover:border-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky">{t("feed.mine")}</Link>
+        <Link href={`${path}/mine`} className="inline-flex min-h-11 flex-none items-center whitespace-nowrap rounded-full border-[1.5px] border-[#3A3F52] px-4 text-[13px] font-bold text-white no-underline hover:border-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky">{t("feed.mine")}</Link>
         <Chip tone="dark" pressed={f.kind === "video"} onClick={() => setF((x) => ({ ...x, kind: x.kind ? undefined : "video" }))}>{t("feed.videos")}</Chip>
         <Chip tone="dark" pressed={f.sort === "top"} onClick={() => setF((x) => ({ ...x, sort: x.sort ? undefined : "top" }))}>{t("feed.top")}</Chip>
         {o.moments.map((m) => (
@@ -167,7 +167,7 @@ export function Feed() {
       {!revealed ? (
         <div className="flex flex-col items-start gap-3 rounded-[28px] bg-royal p-6">
           <span className="rotate-[-3deg] rounded-full bg-white px-3 py-1.5 text-xs font-extrabold text-royal">{t("feed.revealSticker")}</span>
-          <p className="m-0 text-2xl font-black leading-tight tracking-tight">{o.revealAt ? t("feed.revealAt", { time: formatDateTime(o.revealAt, locale) }) : t("feed.revealMorning")}</p>
+          <p className="m-0 text-2xl font-black leading-tight tracking-tight">{o.revealAt ? t("feed.revealAt", { time: formatDateTime(o.revealAt, locale, o.timeZone) }) : t("feed.revealMorning")}</p>
           <p className="m-0 text-[15px] text-[#E3E8FF]">{t("feed.revealBody")}</p>
         </div>
       ) : null}
@@ -192,7 +192,7 @@ export function Feed() {
             {hero.displayUrl ? <img src={hero.displayUrl} alt="" className="max-h-[70vh] w-full object-cover" style={{ aspectRatio: hero.width && hero.height ? `${hero.width}/${hero.height}` : "4/5" }} /> : <span className="block aspect-[4/5]"><ProcessingTile failed={hero.processing === "failed"} label={processingLabel(hero)} /></span>}
             <span className="absolute inset-x-3.5 top-3.5 flex justify-between gap-2">
               {hero.momentTag ? <span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink">{hero.momentTag}</span> : <span />}
-              <span className="rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold">{timeAgo(hero.createdAt, locale)}</span>
+              <span suppressHydrationWarning className="rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold">{timeAgo(hero.createdAt, locale)}</span>
             </span>
             {demo && hero.displayUrl && !hero.mine ? <DemoWatermark brand={o.brand} /> : null}
             {hero.kind === "video" ? <span className="absolute inset-0 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-black/55"><Play size={28} fill="currentColor" aria-hidden /></span> : null}

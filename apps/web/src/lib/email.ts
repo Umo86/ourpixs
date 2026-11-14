@@ -4,12 +4,26 @@ import { makeT } from "@/i18n/shared";
 import { ApiError } from "./http";
 
 export function emailConfigured(): boolean {
-  return !!process.env.RESEND_API_KEY;
+  return !!process.env.RESEND_API_KEY || emailCaptureDir() !== null;
 }
 
-/** The login code may be shown in the UI only when email is not configured AND the deploy is not production. */
+/**
+ * TEST ONLY: EMAIL_CAPTURE_DIR writes every email (to, subject, html, text, headers) as a JSON file there instead of
+ * sending it through Resend (apps/web/test, docs/TESTING.md). Refused when VERCEL_ENV=production.
+ */
+function emailCaptureDir(): string | null {
+  const dir = process.env.EMAIL_CAPTURE_DIR;
+  if (!dir) return null;
+  if (process.env.VERCEL_ENV === "production") throw new Error("EMAIL_CAPTURE_DIR is not allowed in production");
+  return dir;
+}
+
+/**
+ * The login code may be shown in the UI only when email is not configured AND the deploy is not production.
+ * (Test harness: with EMAIL_CAPTURE_DIR the code is captured AND shown when PREVIEW_SHOW_CODE=1.)
+ */
 export function previewCodesAllowed(): boolean {
-  return process.env.PREVIEW_SHOW_CODE === "1" && !emailConfigured() && process.env.VERCEL_ENV !== "production";
+  return process.env.PREVIEW_SHOW_CODE === "1" && (!process.env.RESEND_API_KEY || emailCaptureDir() !== null) && process.env.VERCEL_ENV !== "production";
 }
 
 /** One sending address for both brands (hello@bizimresimler.com); only the display name follows the brand. */
@@ -43,6 +57,14 @@ ${opts.unsubscribe ? `<p style="margin:10px 0 0;font-size:12px;line-height:1.5;c
 }
 
 async function send(brand: Brand, to: string, subject: string, html: string, text: string, headers?: Record<string, string>) {
+  const capture = emailCaptureDir();
+  if (capture) {
+    const { mkdir, writeFile } = await import("node:fs/promises");
+    await mkdir(capture, { recursive: true });
+    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.json`;
+    await writeFile(`${capture}/${name}`, JSON.stringify({ from: fromAddress(brand), to, subject, html, text, headers: headers ?? {} }, null, 2));
+    return;
+  }
   const key = process.env.RESEND_API_KEY;
   if (!key) throw new ApiError(503, "email_unavailable", "Email is not configured");
   const res = await fetch("https://api.resend.com/emails", {

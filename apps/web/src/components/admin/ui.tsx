@@ -74,7 +74,7 @@ export const STATUS_TONE: Record<string, PillTone> = {
 /** Horizontal-scrolling table wrapper (tables stay real tables on mobile). */
 export function TableWrap({ children, label }: { children: ReactNode; label: string }) {
   return (
-    <div className="-mx-5 overflow-x-auto px-5 sm:mx-0 sm:px-0" role="region" aria-label={label} tabIndex={0}>
+    <div className="relative -mx-5 overflow-x-auto px-5 sm:mx-0 sm:px-0" role="region" aria-label={label} tabIndex={0}>
       <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm">{children}</table>
     </div>
   );

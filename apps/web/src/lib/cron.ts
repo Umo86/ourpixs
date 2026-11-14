@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq, gt, inArray, isNotNull, isNull, lt, lte, ne, or, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { DELETION_REMINDER_DAYS, UNPAID_REMINDER_DAYS } from "./config";
+import { DELETION_REMINDER_DAYS, REFUNDED_DELETE_DAYS, UNPAID_REMINDER_DAYS } from "./config";
 import { emailConfigured, sendDeletionReminder, sendUnpaidDeletionReminder } from "./email";
 import { sendDueEndedEmails } from "./package";
 import { sendGuestGalleryEmails } from "./consent";
@@ -9,6 +9,7 @@ import { abortUpload, deleteObjects, mediaFileKeys } from "./storage";
 import { sweepMedia } from "./media-processing";
 import { deleteOccasion, guestPurchaseHold, holdFilesForBuyers, keysForOccasion, type DeletedBy } from "./occasion-service";
 import { getSettings } from "./settings";
+import { unpaidClockSql, unpaidDeleteAtOf } from "./access";
 
 /**
  * The jobs called by /api/cron/* (Vercel Cron) and by "Run now" on /admin/system: expiry and cleanup (daily) and the
@@ -110,14 +111,14 @@ async function sendUnpaidReminders(deadline: number): Promise<number> {
   if (!emailConfigured()) return 0;
   const s = await getSettings();
   const now = new Date();
-  const deleteAt = sql`(${O.createdAt} + make_interval(days => ${s.unpaidDeleteDays}::int))`;
+  const deleteAt = sql`(${unpaidClockSql()} + make_interval(days => ${s.unpaidDeleteDays}::int))`;
   const batch = db.select({ id: O.id }).from(O).where(and(
     eq(O.packageStatus, "setup"), isNull(O.deletedAt), isNull(O.unpaidReminderSentAt),
     sql`${deleteAt} > now()`, sql`${deleteAt} <= now() + make_interval(days => ${UNPAID_REMINDER_DAYS}::int)`,
   )).limit(BATCH);
   const claimed = await db.update(O).set({ unpaidReminderSentAt: now })
     .where(and(inArray(O.id, batch), isNull(O.unpaidReminderSentAt), eq(O.packageStatus, "setup")))
-    .returning({ id: O.id, title: O.title, ownerId: O.ownerId, createdAt: O.createdAt });
+    .returning({ id: O.id, title: O.title, ownerId: O.ownerId, createdAt: O.createdAt, setupResetAt: O.setupResetAt });
   if (!claimed.length) return 0;
   const owners = await db.select({ id: schema.hosts.id, email: schema.hosts.email, locale: schema.hosts.locale, brand: schema.hosts.brand, deletedAt: schema.hosts.deletedAt })
     .from(schema.hosts).where(inArray(schema.hosts.id, [...new Set(claimed.map((c) => c.ownerId))]));
@@ -130,7 +131,7 @@ async function sendUnpaidReminders(deadline: number): Promise<number> {
     }
     const h = byId.get(c.ownerId);
     if (!h || h.deletedAt) continue;
-    const date = new Date(c.createdAt.getTime() + s.unpaidDeleteDays * DAY_MS);
+    const date = unpaidDeleteAtOf(c, s.unpaidDeleteDays)!;
     const days = Math.max(1, Math.ceil((date.getTime() - now.getTime()) / DAY_MS));
     try {
       await sendUnpaidDeletionReminder(h.email, { locale: loc(h.locale), brand: h.brand, title: c.title, occasionId: c.id, date, days, limitDays: s.unpaidDeleteDays });
@@ -189,7 +190,8 @@ async function deleteExpiredEvents(deadline: number) {
 
 /**
  * Unpaid events: an event still in setup (never paid, not marked as paid) is deleted with its test uploads and files
- * settings.unpaidDeleteDays (default 90) after it was created. Each event is claimed first with a conditional UPDATE
+ * settings.unpaidDeleteDays (default 90) after it was created (or after an admin last put it back into setup:
+ * max(created_at, setup_reset_at)). Each event is claimed first with a conditional UPDATE
  * (setup, not deleted, still past the date → deleted_at, deleted_by 'unpaid'), so a payment that lands at the same
  * moment wins (billing.ts never marks a deleted event as paid) and the event disappears for the host at once; then
  * deleteOccasion removes the files and the row (or, if guests still hold paid links, e.g. after an admin reset the event
@@ -198,7 +200,7 @@ async function deleteExpiredEvents(deadline: number) {
  */
 async function deleteUnpaidEvents(deadline: number) {
   const s = await getSettings();
-  const pastLimit = sql`${O.createdAt} + make_interval(days => ${s.unpaidDeleteDays}::int) <= now()`;
+  const pastLimit = sql`${unpaidClockSql()} + make_interval(days => ${s.unpaidDeleteDays}::int) <= now()`;
   const due = await db.select({ id: O.id }).from(O)
     .where(and(eq(O.packageStatus, "setup"), isNull(O.deletedAt), pastLimit)).limit(EVENT_BATCH);
   let deleted = 0, kept = 0;
@@ -208,6 +210,27 @@ async function deleteUnpaidEvents(deadline: number) {
       .where(and(eq(O.id, o.id), eq(O.packageStatus, "setup"), isNull(O.deletedAt), pastLimit)).returning({ id: O.id });
     if (!claimed.length) continue;
     const r = await deleteOccasion(o.id, "unpaid");
+    if (r.keptUntil) kept++; else deleted++;
+  }
+  return { deleted, kept };
+}
+
+/**
+ * Refunded events: the files (and the event) are deleted REFUNDED_DELETE_DAYS (90) after the full refund
+ * (occasions.refunded_at). Claimed like unpaid events (deleted_at, deleted_by 'refunded'), then deleteOccasion: if guests
+ * still hold paid download links the photo/video files are kept until the last one expires (purgeDeletedEvents finishes).
+ */
+async function deleteRefundedEvents(deadline: number) {
+  const pastLimit = sql`${O.refundedAt} + make_interval(days => ${REFUNDED_DELETE_DAYS}::int) <= now()`;
+  const due = await db.select({ id: O.id }).from(O)
+    .where(and(eq(O.packageStatus, "refunded"), isNull(O.deletedAt), isNotNull(O.refundedAt), pastLimit)).limit(EVENT_BATCH);
+  let deleted = 0, kept = 0;
+  for (const o of due) {
+    if (Date.now() > deadline) break;
+    const claimed = await db.update(O).set({ deletedAt: new Date(), deletedBy: "refunded" })
+      .where(and(eq(O.id, o.id), eq(O.packageStatus, "refunded"), isNull(O.deletedAt), pastLimit)).returning({ id: O.id });
+    if (!claimed.length) continue;
+    const r = await deleteOccasion(o.id, "refunded");
     if (r.keptUntil) kept++; else deleted++;
   }
   return { deleted, kept };
@@ -225,7 +248,7 @@ async function purgeDeletedEvents(deadline: number) {
   let deleted = 0, kept = 0;
   for (const o of due) {
     if (Date.now() > deadline) break;
-    const by = (["host", "account", "admin", "unpaid"].includes(o.by ?? "") ? o.by : "host") as DeletedBy;
+    const by = (["host", "account", "admin", "unpaid", "refunded"].includes(o.by ?? "") ? o.by : "host") as DeletedBy;
     const r = await deleteOccasion(o.id, by);
     if (r.keptUntil) kept++; else deleted++;
   }
@@ -238,7 +261,8 @@ async function purgeDeletedEvents(deadline: number) {
 
 /**
  * Daily (Vercel Hobby allows one run a day; upgrade to Pro to run hourly): finish deletions whose files were kept for
- * guests' paid links, delete unpaid events past settings.unpaidDeleteDays, delete files of events past retention, purge
+ * guests' paid links, delete unpaid events past settings.unpaidDeleteDays, refunded events REFUNDED_DELETE_DAYS after the
+ * refund, delete files of events past retention, purge
  * abandoned/failed/deleted media, stale login codes, rate-limit rows and expired share links.
  */
 export async function runCleanup(): Promise<Record<string, number>> {
@@ -246,7 +270,8 @@ export async function runCleanup(): Promise<Record<string, number>> {
   // the rest for the next run (every step is idempotent and picks up where it stopped).
   const started = Date.now();
   const purged = await purgeDeletedEvents(started + 70_000);
-  const unpaid = await deleteUnpaidEvents(started + 140_000);
+  const unpaid = await deleteUnpaidEvents(started + 120_000);
+  const refunded = await deleteRefundedEvents(started + 160_000);
   const retention = await deleteExpiredEvents(started + 210_000);
   const { media } = schema;
   const dayAgo = new Date(Date.now() - 24 * 3600_000);
@@ -272,6 +297,7 @@ export async function runCleanup(): Promise<Record<string, number>> {
   await db.delete(schema.cronRuns).where(lt(schema.cronRuns.startedAt, new Date(Date.now() - 365 * 86400_000)));
   return {
     archived: retention.deleted, retentionKeptForBuyers: retention.kept, unpaidDeleted: unpaid.deleted, unpaidKeptForBuyers: unpaid.kept,
+    refundedDeleted: refunded.deleted, refundedKeptForBuyers: refunded.kept,
     deletedPurged: purged.deleted, deletedStillKept: purged.kept, accountsPurged: purged.accounts, media: stale.length,
   };
 }

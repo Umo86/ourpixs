@@ -50,7 +50,8 @@ export const POST = adminRoute<{ id: string }>(async (req, { id }, admin) => {
       const [paid] = await db.select({ id: schema.orders.id }).from(schema.orders)
         .where(and(eq(schema.orders.occasionId, id), eq(schema.orders.status, "paid"))).limit(1);
       if (paid) throw new ApiError(409, "has_payment", "This event has a payment. Refund it in Stripe instead.");
-      set = { packageStatus: "setup", paidAt: null, compedAt: null, deleteAfter: null, endedEmailSentAt: null, reminder30SentAt: null, reminder7SentAt: null };
+      // The unpaid-event deletion clock restarts now (setup_reset_at), with a fresh reminder before it.
+      set = { packageStatus: "setup", paidAt: null, compedAt: null, deleteAfter: null, endedEmailSentAt: null, reminder30SentAt: null, reminder7SentAt: null, setupResetAt: now, unpaidReminderSentAt: null };
       break;
     }
   }

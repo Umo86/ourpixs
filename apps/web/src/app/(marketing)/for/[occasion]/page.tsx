@@ -98,7 +98,7 @@ export default async function OccasionPage({ params }: { params: Promise<{ occas
           <nav aria-label={ui.others} className="flex flex-wrap items-center gap-2 pt-4">
             <span className="mr-2 text-sm font-bold">{ui.others}:</span>
             {OCCASION_PAGES.filter((o) => o.slug !== page.slug).map((o) => (
-              <Link key={o.slug} href={`/for/${o.slug}`} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink no-underline hover:bg-ink hover:text-white">{o[locale].nav}</Link>
+              <Link key={o.slug} href={`/for/${o.slug}`} className="inline-flex min-h-11 items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink no-underline hover:bg-ink hover:text-white">{o[locale].nav}</Link>
             ))}
           </nav>
         </Container>

@@ -4,7 +4,7 @@ What is already done, and the steps that need an account owner. Every setting li
 
 ## Already set up
 - **GitHub:** `Umo86/ourpixs`, connected to the Vercel project `ourpixs` (root directory `apps/web`). Every push to `main` deploys to production.
-- **Neon Postgres:** project `fancy-hall-12485138` (London). Migrations 0000 to 0003 are applied; 0004 and 0005 are new (see step 3), 0006 (see step 7), 0007, 0008, 0009 and 0010 (see step 3).
+- **Neon Postgres:** project `fancy-hall-12485138` (London). Migrations 0000 to 0003 are applied; 0004 and 0005 are new (see step 3), 0006 (see step 8), 0007 to 0012 (see step 3).
 - **Vercel Blob:** media storage in London (temporary: originals are not private on Blob; production needs R2, step 4).
 - **Vercel settings:** `DATABASE_URL`, `AUTH_SECRET`, `GUEST_TOKEN_SECRET`, `CRON_SECRET`, `DEFAULT_BRAND`, `PREVIEW_SHOW_CODE`, `BLOB_READ_WRITE_TOKEN`.
 
@@ -51,6 +51,8 @@ Until step 2 is done, Pay buttons show "Payments coming soon". The Customer Port
 
 **Database (payment records kept, review fix):** apply `0010_short_energizer` (safe, no data change: `orders.occasion_id`, `orders.host_id` and `guest_purchases.occasion_id` become nullable and their foreign keys change to `ON DELETE SET NULL`). Apply it **before** deploying this code. Deleting an event or an account now keeps its payment rows in anonymised form (amount, dates, kind, live/test flag and Stripe ids stay; the links to the event and host are cut, a guest buyer's email and download token are cleared), as the privacy policy promises (six years). If the code runs before the migration, deleting an account that has payments fails safely with a database error instead of deleting the records.
 
+**Database (unpaid clock reset, refunded events):** apply `0012_wild_randall_flagg` (additive: `occasions.setup_reset_at` and `occasions.refunded_at`; existing refunded events get `refunded_at` from their package refund, else the migration time). Apply it **before** deploying this code. An admin's "Back to setup" now restarts the 90-day unpaid clock; refunded events are deleted 90 days after the refund by the daily cleanup.
+
 ## 4. Storage: Cloudflare R2 (required before going live)
 Originals must stay private: they are only ever handed out as signed links that expire within an hour, after the permission or payment check. **Vercel Blob can't do that** (its URLs are public and never expire, only unguessable), so Blob is a stop-gap for previews and `/admin/system` shows a red warning while it is in use. Newer Vercel Blob stores can be private; switching to one would need a code change, so R2 remains the plan.
 1. Cloudflare → R2 → create a bucket (e.g. `bizimresimler-media`, location hint Western Europe). Keep it **private**: no public access, no `r2.dev` subdomain, no custom public domain.
@@ -71,11 +73,14 @@ After an upload completes the server makes the copies guests see: a ≈1,200 px 
 - **Preview deployments with Vercel Authentication:** turn on Settings → Deployment Protection → "Protection Bypass for Automation". Vercel then provides `VERCEL_AUTOMATION_BYPASS_SECRET`, which the internal call sends. Without it the internal call is refused and the completion request processes the files itself (slower uploads finish the same).
 - Bundle size: the processing functions carry ffmpeg (≈80 MB) and sharp (≈40 MB); about 125 MB in total, under Vercel's 250 MB limit. ffmpeg-static downloads its binary during `npm install` on Vercel.
 
-## 6. Optional
+## 6. Installable web app (PWA)
+Nothing to set up. The site serves a brand-aware manifest (`/manifest.webmanifest`, `src/app/manifest.ts`) and each guest gallery its own (`/g/<slug>/manifest.webmanifest`, starts in that gallery), with icons in `public/icons/<brand>/` (re-render with `node scripts/make-app-icons.mjs` if the look changes) and the iOS home-screen tags. There is no service worker on purpose: nothing is cached on the device.
+
+## 7. Optional
 - `OPENAI_API_KEY`: turns on the free automatic NSFW check for uploaded photos.
 - **Vercel Pro:** lets the jobs run hourly instead of daily (`apps/web/vercel.json`). On Hobby the "gallery ended — download everything" email can lag up to a day; it is also sent as soon as the host (or a guest) opens an ended event. Functions run in London (`regions: ["lhr1"]`), next to the database.
 
-## 7. Admin dashboard
+## 8. Admin dashboard
 A superadmin area at `/admin` on both domains (overview, users, events, moderation, enquiries, settings, audit log, system health).
 1. **Database first:** apply migration `0006_admin_dashboard` (additive: new columns `hosts.comp_until`, `hosts.suspended_at`, `hosts.suspended_reason`, `occasions.admin_locked_at`, `leads.handled_at`; new tables `admin_audit`, `media_reports`, `cron_runs`; a few indexes), **then** deploy. The new code reads these columns on every request.
 2. Set `ADMIN_EMAILS` in Vercel to a comma-separated list of admin emails (e.g. `you@bizimresimler.com`) and redeploy.
@@ -94,7 +99,7 @@ What the admin overrides do:
 - **Payments** (`/admin/payments`): every event package and guest download, filtered by kind, status, live/test and dates, with totals. Real money only: set Mode to Live.
 - **Marketing consents** (`/admin/consents`): who opted in to offers and news, the exact wording they saw, where and when, and withdrawals. **Download CSV** exports the filtered list (UTF-8, opens in Excel); every export is written to the audit log with the filters and row count. Treat the file as personal data: keep it out of shared drives and delete it when done.
 
-## 8. Mobile apps (Expo / EAS)
+## 9. Mobile apps (Expo / EAS)
 See `apps/mobile/README.md` and `apps/mobile/store/checklist.md`. In short:
 1. Run `npm i -g eas-cli`, then `eas login`, then `eas init` in `apps/mobile`.
 2. Replace the placeholder icon and splash in `apps/mobile/assets`.
@@ -104,7 +109,7 @@ See `apps/mobile/README.md` and `apps/mobile/store/checklist.md`. In short:
 6. Google Play: run a closed test with at least 12 testers for 14 days before production access.
 7. Run `eas submit --platform ios` and `eas submit --platform android`, using the metadata in `apps/mobile/store/`.
 
-## 9. Legal (before launch)
+## 10. Legal (before launch)
 - Fill in `[COMPANY NAME]`, `[COMPANY NUMBER]`, `[REGISTERED ADDRESS]` and `[ICO REGISTRATION NUMBER]` on the privacy and terms pages.
 - Register with the ICO (data protection fee).
 - Have a solicitor review the privacy policy and terms. Sections changed for the event package and for the consumer launch (guest email, marketing consent and unsubscribe, the £3 guest download with the immediate-supply / cancellation-right checkbox and its 30-day link surviving event removal, watermarked previews, processors, retention, unpaid events deleted after 90 days) show an "Updated · to be checked" badge (the `review: true` flag in `messages/*/marketing.json`); remove the flag once approved.
@@ -118,5 +123,7 @@ npx tsc --noEmit && npm run build           # must pass before every push
 npx tsx --conditions=react-server --require ./scripts/server-only-shim.cjs scripts/paywall-check.ts
 npx tsx --conditions=react-server --require ./scripts/server-only-shim.cjs scripts/media-smoke.ts
 ```
+End-to-end tests (local PostgreSQL, fake Stripe, local storage, captured email, fake clock; nothing external): `npm run test:e2e`, see `docs/TESTING.md`.
+
 Printable QR cards: `npx tsx scripts/qr-cards-sample.ts /tmp/qr-cards` writes sample A6/A5 PDFs (EN/TR, three designs, plus bleed and crop marks) without a database. The fonts are DejaVu (Bitstream Vera licence, `assets/fonts/LICENSE-DejaVu.txt`).
 Watermark PNGs: `node scripts/make-watermarks.mjs` re-renders `assets/watermark/` (needs DejaVu Sans Bold; only when the wordmark changes).

@@ -161,6 +161,8 @@ export async function requestLoginCode(input: { email: string; locale: Locale; b
   await db.insert(schema.loginTokens).values({ email, codeHash: hashCode(email, code), expiresAt: new Date(Date.now() + CODE_TTL_MS) });
   if (emailConfigured()) {
     await sendLoginCode(email, code, input.locale, input.brand);
+    // Test harness only (EMAIL_CAPTURE_DIR + PREVIEW_SHOW_CODE): the code is also returned. Never in production.
+    if (previewCodesAllowed()) return { ok: true as const, previewCode: code };
     return { ok: true as const };
   }
   return { ok: true as const, previewCode: code };

@@ -22,7 +22,7 @@ const U = settings.unpaidDeleteDays;
 const ok = { suspendedAt: null };
 
 function row(p: Partial<EventPackageRow>): EventPackageRow {
-  return { packageStatus: "setup", opensAt: at(3), closesAt: at(10), deleteAfter: null, adminLockedAt: null, compedAt: null, paidAt: null, createdAt: at(-5), deletedAt: null, ...p };
+  return { packageStatus: "setup", opensAt: at(3), closesAt: at(10), deleteAfter: null, adminLockedAt: null, compedAt: null, paidAt: null, createdAt: at(-5), setupResetAt: null, deletedAt: null, ...p };
 }
 const paid = (opens: number, closes: number, extra: Partial<EventPackageRow> = {}) =>
   row({ packageStatus: "paid", paidAt: at(-20), opensAt: at(opens), closesAt: at(closes), deleteAfter: addMonths(at(closes), settings.retentionMonths), ...extra });
@@ -63,7 +63,12 @@ const cases: { name: string; o: EventPackageRow; owner?: { suspendedAt: Date | n
     guard: { fn: assertCanPay, code: "event_expired" } },
   { name: "setup past the limit: guests see unavailable", o: row({ createdAt: at(-(U + 1)) }), expect: { guestsCanView: false }, guard: { fn: assertGuestsCanView, code: "event_unavailable" } },
   { name: "paid long ago: unpaid limit doesn't apply", o: paid(-1, 6, { createdAt: at(-400) }), expect: { state: "live", unpaid: false, guestsCanView: true } },
-  { name: "reset to setup, created 200 days ago → expired", o: row({ createdAt: at(-200), compedAt: null }), expect: { state: "expired", canPay: false } },
+  { name: "created 200 days ago, never reset → expired", o: row({ createdAt: at(-200), compedAt: null }), expect: { state: "expired", canPay: false } },
+  // An admin's "Back to setup" restarts the unpaid clock: max(created_at, setup_reset_at) + unpaidDeleteDays.
+  { name: "created 200 days ago, reset to setup 10 days ago → setup", o: row({ createdAt: at(-200), setupResetAt: at(-10) }),
+    expect: { state: "setup", unpaid: true, canPay: true, deleteAfter: at(U - 10) } },
+  { name: `reset to setup ${U + 1} days ago → expired`, o: row({ createdAt: at(-300), setupResetAt: at(-(U + 1)) }), expect: { state: "expired", canPay: false } },
+  { name: "reset before creation (clock skew) counts from created_at", o: row({ createdAt: at(-5), setupResetAt: at(-50) }), expect: { state: "setup", deleteAfter: at(U - 5) } },
   { name: "setup, owner suspended: no test downloads", o: row({}), owner: { suspendedAt: at(-1) }, expect: { canDownloadTest: false, canDownload: false } },
   // Deleted while guests hold paid links (deleted_at): closed to everyone (guests' downloads follow purchase-rules.ts).
   { name: "deleted by host, files kept for buyers (live)", o: paid(-1, 6, { deletedAt: at(-0.1) }),

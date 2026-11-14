@@ -210,7 +210,7 @@ const tr: Messages = {
   },
   package: {
     title: "Galeri",
-    setup: "Hazırlık", paidNoDate: "Hazır · galeri tarihlerini seçin", opens: "{date} açılıyor", live: "{date} tarihine kadar açık",
+    setup: "Hazırlık", setupUnpaid: "Henüz ödenmedi · {date} tarihinde silinecek", paidNoDate: "Hazır · galeri tarihlerini seçin", opens: "{date} açılıyor", live: "{date} tarihine kadar açık",
     ended: "Kapandı · {date} tarihine kadar indirilebilir", endedNoDate: "Kapandı", expired: "Dosyalar silindi", refunded: "İade edildi",
     suspended: "Hesap askıya alındı", locked: "Ekibimiz tarafından kilitlendi",
     window: "Galeri: {from} – {to} ({tz})",

@@ -31,7 +31,7 @@ type KeptRow = { deletedAt: Date | null; deletedBy: string | null; filesDeleteAf
  * (occasions.files_delete_after). E.g. "Deleted by host · files kept until 12 Mar 2027 for 2 guest purchases".
  */
 export function keptForBuyersNote(o: KeptRow, purchases: number, t: T, fmt: (d: Date) => string, now = new Date()): string | null {
-  const by = ["host", "account", "admin", "unpaid"].includes(o.deletedBy ?? "") ? o.deletedBy! : "host";
+  const by = ["host", "account", "admin", "unpaid", "refunded"].includes(o.deletedBy ?? "") ? o.deletedBy! : "host";
   if (o.deletedAt) {
     if (!o.filesDeleteAfter) return t("event.deletingNow", { by: t(`event.deletedBy.${by}`) });
     return t("event.deletedKept", { by: t(`event.deletedBy.${by}`), date: fmt(o.filesDeleteAfter), n: purchases });

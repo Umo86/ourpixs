@@ -13,6 +13,7 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { ApiError } from "./http";
 import { randomToken } from "./crypto";
+import { localCopyTo, localDelete, localHead, localPut, localStorageEnabled, localUrl } from "./storage-local";
 
 /**
  * Media storage behind one interface. Driver is picked from env:
@@ -31,7 +32,8 @@ import { randomToken } from "./crypto";
  * (private bucket). /admin/system shows a red warning while the driver is Blob. See docs/SETUP.md.
  */
 
-export type Driver = "r2" | "blob";
+/** `local`: test harness only (STORAGE_DRIVER=local, src/lib/storage-local.ts); refused in production. */
+export type Driver = "r2" | "blob" | "local";
 export type PresignedPut = {
   url: string;
   method: "PUT";
@@ -54,6 +56,7 @@ export function storageDriver(): Driver | null {
   const e = process.env;
   if (e.R2_ACCOUNT_ID && e.R2_ACCESS_KEY_ID && e.R2_SECRET_ACCESS_KEY && e.R2_BUCKET) return "r2";
   if (e.BLOB_READ_WRITE_TOKEN) return "blob";
+  if (localStorageEnabled()) return "local";
   return null;
 }
 
@@ -136,6 +139,7 @@ export async function presignPut(key: string, contentType: string, bytes?: numbe
     }
     return out;
   }
+  if (d === "local") return { url: localUrl("PUT", key, URL_TTL, { ct: contentType }), method: "PUT", headers: { "Content-Type": contentType } };
   const clientToken = await generateClientTokenFromReadWriteToken({
     token: blobToken(),
     pathname: key,
@@ -173,6 +177,7 @@ export async function presignGet(key: string, opts: { download?: string } = {}):
       Bucket: bucket(), Key: key, ResponseContentDisposition: opts.download ? disposition(opts.download) : undefined,
     }), { expiresIn: URL_TTL });
   }
+  if (d === "local") return localUrl("GET", key, URL_TTL, { dl: opts.download });
   return opts.download ? `${blobPublicUrl(key)}?download=1` : blobPublicUrl(key);
 }
 
@@ -192,6 +197,7 @@ export async function privateGetUrl(key: string, ttlSeconds = PRIVATE_URL_MAX_TT
       Bucket: bucket(), Key: key, ResponseContentDisposition: opts.download ? disposition(opts.download) : undefined,
     }), { expiresIn: ttl });
   }
+  if (d === "local") return localUrl("GET", key, ttl, { dl: opts.download });
   return opts.download ? `${blobPublicUrl(key)}?download=1` : blobPublicUrl(key);
 }
 
@@ -204,6 +210,7 @@ export async function downloadToFile(key: string, path: string): Promise<void> {
     await pipeline(r.Body as Readable, createWriteStream(path));
     return;
   }
+  if (d === "local") return localCopyTo(key, path);
   const res = await fetch(blobPublicUrl(key), { cache: "no-store" });
   if (!res.ok || !res.body) throw new Error(`blob fetch ${res.status} for ${key}`);
   await pipeline(Readable.fromWeb(res.body as import("node:stream/web").ReadableStream), createWriteStream(path));
@@ -221,6 +228,7 @@ export async function uploadObject(key: string, body: Buffer | { path: string },
     }
     return;
   }
+  if (d === "local") return localPut(key, body, contentType);
   const data = Buffer.isBuffer(body) ? body : createReadStream(body.path);
   const big = !Buffer.isBuffer(body) && (await stat(body.path)).size > MULTIPART_THRESHOLD;
   await blobPut(key, data, { access: "public", token: blobToken(), contentType, addRandomSuffix: false, allowOverwrite: true, multipart: big });
@@ -244,6 +252,7 @@ export async function headObject(key: string): Promise<{ bytes: number } | null>
       throw e;
     }
   }
+  if (d === "local") return localHead(key);
   try {
     const r = await blobHead(blobPublicUrl(key), { token: blobToken() });
     return { bytes: r.size };
@@ -300,6 +309,7 @@ export async function deleteObjects(keys: (string | null | undefined)[]) {
     }
     return;
   }
+  if (driver() === "local") return localDelete(list);
   for (let i = 0; i < list.length; i += 500) {
     await blobDel(list.slice(i, i + 500).map(blobPublicUrl), { token: blobToken() });
   }

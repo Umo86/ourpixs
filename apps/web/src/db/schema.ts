@@ -148,10 +148,17 @@ export const occasions = pgTable("occasions", {
   /** Once-only marker (claimed before sending) for the reminder sent before an unpaid event is deleted. */
   unpaidReminderSentAt: timestamp("unpaid_reminder_sent_at", { withTimezone: true }),
   /**
+   * When an admin last put the event back into setup ("Back to setup"). The unpaid-event deletion clock counts from
+   * max(created_at, setup_reset_at) (access-rules.ts → unpaidDeleteAtOf, the SQL mirror in access.ts and the crons).
+   */
+  setupResetAt: timestamp("setup_reset_at", { withTimezone: true }),
+  /** When the event package was refunded in full. Files are deleted REFUNDED_DELETE_DAYS later unless guests' paid links hold them. */
+  refundedAt: timestamp("refunded_at", { withTimezone: true }),
+  /**
    * Deleted (by the host, with the host's account, by an admin, or as an unpaid event) while guests still had paid
    * "download everything" links: hidden from hosts and closed to guests at once, but the media files and this row stay
    * until files_delete_after (the latest active token_expires_at), then the cleanup cron deletes both
-   * (src/lib/occasion-service.ts → deleteOccasion). deleted_by: "host" | "account" | "admin" | "unpaid".
+   * (src/lib/occasion-service.ts → deleteOccasion). deleted_by: "host" | "account" | "admin" | "unpaid" | "refunded".
    */
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   deletedBy: text("deleted_by"),

@@ -19,7 +19,7 @@ import { Txt } from "./Text";
 type T = ReturnType<typeof useI18n>["t"];
 
 /**
- * Event package status, shown NEUTRALLY: Setup / Opens … / Live until … / Ended · download until … .
+ * Event package status, shown NEUTRALLY: Setup ("Not paid yet · deleted on …") / Opens … / Live until … / Ended · download until … .
  * App Store 3.1.1 / Play billing: no prices, no "buy" wording, no link to a purchase page in store builds.
  * Only non-store dev builds (EXPO_PUBLIC_EXTERNAL_CHECKOUT=1) show a button that opens the web dashboard.
  */
@@ -28,7 +28,8 @@ export function packageLine(o: Pick<OccasionSummary, "packageStatus" | "opensAt"
   if (o.access?.reason === "suspended") return { label: t("package.suspended"), icon: "lock" };
   if (o.access?.reason === "locked") return { label: t("package.locked"), icon: "lock" };
   switch (o.packageStatus) {
-    case "setup": return { label: t("package.setup"), icon: "settings" };
+    // Unpaid events are deleted on the API's deleteAfter (created_at + 90 days) unless paid on the web. Neutral wording, no prices.
+    case "setup": return o.deleteAfter ? { label: t("package.setupUnpaid", { date: d(o.deleteAfter) }), icon: "clock" } : { label: t("package.setup"), icon: "settings" };
     case "paid": return { label: o.opensAt ? t("package.opens", { date: d(o.opensAt) }) : t("package.paidNoDate"), icon: "clock" };
     case "live": return { label: t("package.live", { date: d(o.closesAt) }), icon: "sparkles" };
     case "ended": return { label: o.deleteAfter ? t("package.ended", { date: d(o.deleteAfter) }) : t("package.endedNoDate"), icon: "download" };

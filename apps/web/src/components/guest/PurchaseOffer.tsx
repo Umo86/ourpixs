@@ -64,7 +64,7 @@ export function PurchaseCard() {
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-[28px] bg-surface p-5">
         <span className="flex min-w-0 flex-col gap-1">
           <span className="text-lg font-black tracking-tight">{t("purchase.haveTitle")}</span>
-          {g.expiresAt ? <span className="text-sm text-muted-dark">{t("purchase.until", { date: formatDate(g.expiresAt, locale) })}</span> : null}
+          {g.expiresAt ? <span className="text-sm text-muted-dark">{t("purchase.until", { date: formatDate(g.expiresAt, locale, { day: "numeric", month: "long", year: "numeric", timeZone: o.timeZone }) })}</span> : null}
         </span>
         <Link href={`${path}/download`} className={`${btn} bg-white text-ink`}><Download size={18} aria-hidden />{t("purchase.open")}</Link>
       </div>

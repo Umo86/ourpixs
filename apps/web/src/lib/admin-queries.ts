@@ -7,6 +7,7 @@ import { getSettings } from "./settings";
 import { privateGetUrl, signMany, storageDriver } from "./storage";
 import { likePattern, PAGE } from "./admin";
 import { consentWhere } from "./consent";
+import { ref } from "./sql-ref";
 
 /**
  * Read-only queries behind /admin. Lists are paginated (PAGE = 50, one extra row tells us whether there is a next page)
@@ -37,7 +38,7 @@ const packageCols = {
   createdAt: occasions.createdAt, deletedAt: occasions.deletedAt, deletedBy: occasions.deletedBy, filesDeleteAfter: occasions.filesDeleteAfter,
 };
 /** Guests' paid, unrefunded "download everything" purchases whose 30 days haven't run out (they keep the files alive). */
-const occActivePurchases = sql<number>`(select count(*)::int from guest_purchases p where p.occasion_id = ${occasions.id} and p.status = 'paid' and p.token_expires_at > now())`;
+const occActivePurchases = sql<number>`(select count(*)::int from guest_purchases p where p.occasion_id = ${ref(occasions.id)} and p.status = 'paid' and p.token_expires_at > now())`;
 /** Paid event-package orders (refunds and duplicates excluded). */
 const paidOrder = and(eq(orders.kind, "event_package"), eq(orders.status, "paid"));
 
@@ -48,7 +49,7 @@ const offsetOf = (page: number) => (page - 1) * PAGE;
 
 // ── Moderation queue definition (shared by the overview count and /admin/moderation) ──────────────
 
-const openReportExists = sql`exists(select 1 from media_reports r where r.media_id = ${media.id} and r.resolved_at is null)`;
+const openReportExists = sql`exists(select 1 from media_reports r where r.media_id = ${ref(media.id)} and r.resolved_at is null)`;
 /**
  * In the queue: visible, uploaded media that a guest reported (open report), or that auto-moderation held back
  * (approved = false with a flag, e.g. "nsfw"; also older reports from before media_reports existed).
@@ -139,15 +140,15 @@ export async function dailySeries(n = 30) {
 
 // ── Users ──────────────────────────────────────────────────────────────────────────────────────────
 
-const hostEventCount = sql<number>`(select count(*)::int from occasions o where o.owner_id = ${hosts.id})`;
+const hostEventCount = sql<number>`(select count(*)::int from occasions o where o.owner_id = ${ref(hosts.id)})`;
 const hostStorage = sql<number>`(select coalesce(sum(m.bytes), 0)::bigint from media m inner join occasions o on o.id = m.occasion_id
-  where o.owner_id = ${hosts.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`;
+  where o.owner_id = ${ref(hosts.id)} and m.status = 'uploaded' and m.visibility <> 'deleted')`;
 
-const hostPaidEvents = sql<number>`(select count(*)::int from occasions o where o.owner_id = ${hosts.id} and o.package_status in ('paid', 'live', 'ended', 'expired'))`;
+const hostPaidEvents = sql<number>`(select count(*)::int from occasions o where o.owner_id = ${ref(hosts.id)} and o.package_status in ('paid', 'live', 'ended', 'expired'))`;
 
 function userFilterSql(f: UserFilter): SQL {
   if (f === "suspended") return sql`${hosts.suspendedAt} is not null`;
-  return sql`exists(select 1 from occasions o where o.owner_id = ${hosts.id} and o.package_status in ('paid', 'live', 'ended'))`;
+  return sql`exists(select 1 from occasions o where o.owner_id = ${ref(hosts.id)} and o.package_status in ('paid', 'live', 'ended'))`;
 }
 
 export async function listUsers(opts: { q: string; filter: UserFilter | null; page: number }) {
@@ -169,9 +170,9 @@ export async function userDetail(id: string) {
     db.select({
       id: occasions.id, title: occasions.title, type: occasions.type, slug: occasions.slug, status: occasions.status,
       startsOn: occasions.startsOn, ...packageCols, fairUseAlertedAt: occasions.fairUseAlertedAt, keptPurchases: occActivePurchases,
-      mediaCount: sql<number>`(select count(*)::int from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`,
-      bytes: sql<number>`(select coalesce(sum(m.bytes), 0)::bigint from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`,
-      guestCount: sql<number>`(select count(*)::int from guests g where g.occasion_id = ${occasions.id})`,
+      mediaCount: sql<number>`(select count(*)::int from media m where m.occasion_id = ${ref(occasions.id)} and m.status = 'uploaded' and m.visibility <> 'deleted')`,
+      bytes: sql<number>`(select coalesce(sum(m.bytes), 0)::bigint from media m where m.occasion_id = ${ref(occasions.id)} and m.status = 'uploaded' and m.visibility <> 'deleted')`,
+      guestCount: sql<number>`(select count(*)::int from guests g where g.occasion_id = ${ref(occasions.id)})`,
     }).from(occasions).where(eq(occasions.ownerId, id)).orderBy(desc(occasions.createdAt)).limit(PAGE),
     db.select({ id: occasions.id, title: occasions.title, status: occasions.status })
       .from(occasionMembers).innerJoin(occasions, eq(occasions.id, occasionMembers.occasionId))
@@ -189,9 +190,9 @@ export async function userDetail(id: string) {
 
 // ── Events ─────────────────────────────────────────────────────────────────────────────────────────
 
-const occMediaCount = sql<number>`(select count(*)::int from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`;
-const occStorage = sql<number>`(select coalesce(sum(m.bytes), 0)::bigint from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`;
-const occGuests = sql<number>`(select count(*)::int from guests g where g.occasion_id = ${occasions.id})`;
+const occMediaCount = sql<number>`(select count(*)::int from media m where m.occasion_id = ${ref(occasions.id)} and m.status = 'uploaded' and m.visibility <> 'deleted')`;
+const occStorage = sql<number>`(select coalesce(sum(m.bytes), 0)::bigint from media m where m.occasion_id = ${ref(occasions.id)} and m.status = 'uploaded' and m.visibility <> 'deleted')`;
+const occGuests = sql<number>`(select count(*)::int from guests g where g.occasion_id = ${ref(occasions.id)})`;
 
 function eventFilterSql(f: EventFilter, settings: { retentionMonths: number; unpaidDeleteDays: number }): SQL {
   if (f === "archived") return eq(occasions.status, "archived");
@@ -272,12 +273,12 @@ export async function eventDetail(id: string, opts: { mediaPage: number; mediaFi
       .from(occasionMembers).innerJoin(hosts, eq(hosts.id, occasionMembers.hostId)).where(eq(occasionMembers.occasionId, id)).limit(PAGE),
     db.select({
       guests: occGuests, media: occMediaCount, bytes: occStorage,
-      photos: sql<number>`(select count(*)::int from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility <> 'deleted' and m.kind = 'photo')`,
-      videos: sql<number>`(select count(*)::int from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility <> 'deleted' and m.kind = 'video')`,
-      hidden: sql<number>`(select count(*)::int from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility = 'hidden')`,
-      pending: sql<number>`(select count(*)::int from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility = 'visible' and m.approved = false)`,
-      messages: sql<number>`(select count(*)::int from messages x where x.occasion_id = ${occasions.id})`,
-      openReports: sql<number>`(select count(*)::int from media_reports r where r.occasion_id = ${occasions.id} and r.resolved_at is null)`,
+      photos: sql<number>`(select count(*)::int from media m where m.occasion_id = ${ref(occasions.id)} and m.status = 'uploaded' and m.visibility <> 'deleted' and m.kind = 'photo')`,
+      videos: sql<number>`(select count(*)::int from media m where m.occasion_id = ${ref(occasions.id)} and m.status = 'uploaded' and m.visibility <> 'deleted' and m.kind = 'video')`,
+      hidden: sql<number>`(select count(*)::int from media m where m.occasion_id = ${ref(occasions.id)} and m.status = 'uploaded' and m.visibility = 'hidden')`,
+      pending: sql<number>`(select count(*)::int from media m where m.occasion_id = ${ref(occasions.id)} and m.status = 'uploaded' and m.visibility = 'visible' and m.approved = false)`,
+      messages: sql<number>`(select count(*)::int from messages x where x.occasion_id = ${ref(occasions.id)})`,
+      openReports: sql<number>`(select count(*)::int from media_reports r where r.occasion_id = ${ref(occasions.id)} and r.resolved_at is null)`,
       keptPurchases: occActivePurchases,
     }).from(occasions).where(eq(occasions.id, id)),
     db.select({ m: media, guestName: guests.displayName }).from(media).leftJoin(guests, eq(guests.id, media.guestId))
@@ -285,7 +286,7 @@ export async function eventDetail(id: string, opts: { mediaPage: number; mediaFi
       .orderBy(desc(media.createdAt), desc(media.id)).limit(PAGE + 1).offset(offsetOf(opts.mediaPage)),
     db.select({
       id: guests.id, displayName: guests.displayName, createdAt: guests.createdAt, blockedAt: guests.blockedAt,
-      uploads: sql<number>`(select count(*)::int from media m where m.guest_id = ${guests.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`,
+      uploads: sql<number>`(select count(*)::int from media m where m.guest_id = ${ref(guests.id)} and m.status = 'uploaded' and m.visibility <> 'deleted')`,
     }).from(guests).where(eq(guests.occasionId, id)).orderBy(desc(guests.createdAt), desc(guests.id)).limit(PAGE + 1).offset(offsetOf(opts.guestPage)),
     db.select().from(adminAudit).where(and(eq(adminAudit.targetType, "occasion"), eq(adminAudit.targetId, id))).orderBy(desc(adminAudit.createdAt)).limit(20),
     db.select().from(orders).where(eq(orders.occasionId, id)).orderBy(desc(orders.createdAt)).limit(20),
@@ -344,12 +345,12 @@ export async function recentPayments(n = 20) {
 // ── Moderation ─────────────────────────────────────────────────────────────────────────────────────
 
 export async function moderationQueue(page: number) {
-  const lastReport = sql<Date | null>`(select max(r.created_at) from media_reports r where r.media_id = ${media.id} and r.resolved_at is null)`;
+  const lastReport = sql<Date | null>`(select max(r.created_at) from media_reports r where r.media_id = ${ref(media.id)} and r.resolved_at is null)`;
   const rows = await db.select({
     m: media, guestName: guests.displayName, occasionTitle: occasions.title,
-    reportCount: sql<number>`(select count(*)::int from media_reports r where r.media_id = ${media.id} and r.resolved_at is null)`,
+    reportCount: sql<number>`(select count(*)::int from media_reports r where r.media_id = ${ref(media.id)} and r.resolved_at is null)`,
     reasons: sql<string[] | null>`(select array_agg(x.reason) from (select r.reason from media_reports r
-      where r.media_id = ${media.id} and r.resolved_at is null and r.reason is not null and r.reason <> '' order by r.created_at desc limit 5) x)`,
+      where r.media_id = ${ref(media.id)} and r.resolved_at is null and r.reason is not null and r.reason <> '' order by r.created_at desc limit 5) x)`,
   }).from(media)
     .innerJoin(occasions, eq(occasions.id, media.occasionId))
     .leftJoin(guests, eq(guests.id, media.guestId))

@@ -19,7 +19,11 @@ function pickMime(kind: "voice" | "video") {
 export function GuestbookScreen() {
   const t = useT("guest");
   const { occasion: o, guest, api: url } = useGuest();
-  const recordable = o.voiceGuestbook && typeof window !== "undefined" && typeof MediaRecorder !== "undefined";
+  // Decided after hydration: the server can't know whether the browser records (a render-time check made the server and
+  // the first client render differ, React error #418).
+  const [canRecord, setCanRecord] = useState(false);
+  useEffect(() => setCanRecord(typeof MediaRecorder !== "undefined"), []);
+  const recordable = o.voiceGuestbook && canRecord;
   const [mode, setMode] = useState<Mode>(o.voiceGuestbook ? "voice" : "text");
   const [text, setText] = useState("");
   const [recording, setRecording] = useState(false);

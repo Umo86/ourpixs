@@ -21,7 +21,12 @@ export async function generateMetadata(): Promise<Metadata> {
       ? "Misafirler QR kodu okutur, fotoğraf ve videolarını yükler. Uygulama yok, üyelik yok. Düğün, kına, doğum günü ve her özel gün için."
       : "Guests scan a QR code and share their photos and videos. No app, no sign-up. For weddings, birthdays, parties and every special day.",
     openGraph: { siteName: name, locale: tr ? "tr_TR" : "en_GB" },
-    icons: { icon: "/favicon.ico" },
+    icons: { icon: "/favicon.ico", apple: `/icons/${brand}/apple-touch-icon.png` },
+    // Installable web app (src/app/manifest.ts; guest galleries override it with their own start URL). iOS: full screen
+    // from the home screen, black status bar over the dark guest app.
+    manifest: "/manifest.webmanifest",
+    appleWebApp: { capable: true, title: name, statusBarStyle: "black-translucent" },
+    other: { "apple-mobile-web-app-capable": "yes" },
   };
 }
 

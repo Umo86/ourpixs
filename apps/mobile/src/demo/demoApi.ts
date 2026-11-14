@@ -39,7 +39,7 @@ export async function demoRequest<T>(method: string, path: string, body?: unknow
   if (p === "/occasions" && method === "GET") return { occasions: demoOccasions() } as T;
   if (p === "/occasions" && method === "POST") {
     const base = demoOccasion("demo-wedding");
-    const setup = { packageStatus: "setup" as const, opensAt: null, closesAt: null, deleteAfter: null, testMode: true };
+    const setup = { packageStatus: "setup" as const, opensAt: null, closesAt: null, deleteAfter: new Date(Date.now() + 90 * 86400_000).toISOString(), testMode: true };
     return { occasion: { ...base, ...setup, id: "demo-new", title: String(b.title ?? ""), type: String(b.type ?? "dugun"), mediaCount: 0, guestCount: 0,
       access: { ...demoAccess, canDownload: false, reason: "setup" }, package: { ...base.package, ...setup, status: "setup", canEditWindow: true, canEndEarly: false } } } as T;
   }
