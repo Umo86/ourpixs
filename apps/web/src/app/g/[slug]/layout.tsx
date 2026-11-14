@@ -35,8 +35,10 @@ export default async function GuestLayout({ children, params }: { children: Reac
         <div className="guest-app flex min-h-dvh flex-col bg-ink text-white">
           <SiteHeader variant="dark" minimal />
           {demo ? <p className="m-0 bg-royal px-5 py-2 text-center text-[13px] font-bold">{t("demo.banner")}</p> : null}
-          <div className={`flex flex-1 flex-col ${joined ? "pb-28" : ""}`}>{children}</div>
-          <CookieNotice />
+          <div className={`flex flex-1 flex-col ${joined ? "pb-28" : ""}`}>
+            {children}
+            <CookieNotice inline />
+          </div>
           {joined ? <TabBar /> : <SiteFooter compact />}
         </div>
       </GuestProvider>
