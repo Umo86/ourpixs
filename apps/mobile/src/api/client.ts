@@ -9,7 +9,7 @@ import { API_URL, DEMO_MODE, type Brand, type Locale } from "@/config";
 import { demoRequest } from "@/demo/demoApi";
 import type {
   GuestMission, Host, MediaAction, MediaItem, MediaQuery, Message, MessageKind, Mission, Occasion, OccasionCreate,
-  OccasionPatch, OccasionSummary, Page, PublicOccasion, ShareLink, Stats, Subscription, UploadFileSpec, UploadGrant,
+  OccasionPatch, OccasionSummary, Page, PublicOccasion, ShareLink, Stats, UploadFileSpec, UploadGrant,
 } from "./types";
 
 export class ApiError extends Error {
@@ -122,8 +122,9 @@ export const authApi = {
     request<{ ok: true; previewCode?: string }>("/api/v1/auth/request-code", { method: "POST", body: { email, locale, brand }, auth: "none" }),
   verify: (email: string, code: string) =>
     request<{ token: string; host: Host }>("/api/v1/auth/verify", { method: "POST", body: { email, code }, auth: "none" }),
-  me: () => request<{ host: Host; subscription?: Subscription }>("/api/v1/me"),
-  updateMe: (patch: { name?: string; locale?: Locale }) => request<{ host: Host; subscription?: Subscription }>("/api/v1/me", { method: "PATCH", body: patch }),
+  /** Payments are per event now (see Occasion.package); there is no account subscription. */
+  me: () => request<{ host: Host; marketing?: { consented: boolean } }>("/api/v1/me"),
+  updateMe: (patch: { name?: string; locale?: Locale }) => request<{ host: Host }>("/api/v1/me", { method: "PATCH", body: patch }),
   /** Deletes the account and the events it owns (all files) and memberships. */
   deleteAccount: () => request<{ ok: true }>("/api/v1/me", { method: "DELETE" }),
   registerPushToken: (token: string, platform: "ios" | "android") =>
@@ -137,6 +138,10 @@ export const hostApi = {
   get: (id: string) => request<{ occasion: Occasion; stats: Stats }>(`/api/v1/occasions/${enc(id)}`),
   update: (id: string, patch: OccasionPatch) => request<{ occasion: Occasion }>(`/api/v1/occasions/${enc(id)}`, { method: "PATCH", body: patch }),
   remove: (id: string) => request<{ ok: true }>(`/api/v1/occasions/${enc(id)}`, { method: "DELETE" }),
+  /** Closes a live gallery now (guest uploads stop). 409 `not_live` otherwise. */
+  endGallery: (id: string) => request<{ occasion: Occasion }>(`/api/v1/occasions/${enc(id)}/end`, { method: "POST" }),
+  /** Signed link (≤ 1 hour) to one original. 402 `payment_required` before the event is paid. */
+  downloadUrl: (id: string, mediaId: string) => request<{ url: string }>(`/api/v1/occasions/${enc(id)}/media/${enc(mediaId)}/download`),
 
   media: (id: string, q: MediaQuery = {}) =>
     request<Page<MediaItem>>(`/api/v1/occasions/${enc(id)}/media`, { query: { ...q, cursor: q.cursor ?? undefined } }),
@@ -188,6 +193,9 @@ export const guestApi = {
   /** Reports a photo/video: it leaves the feed until a host reviews it. */
   report: (slug: string, auth: GuestAuth, mediaId: string) =>
     request<{ ok: true }>(`/api/v1/g/${enc(slug)}/report`, { method: "POST", body: { mediaId }, auth }),
+  /** Signed link (≤ 1 hour) to an original: own uploads only from the app (others need a web purchase: 402 `purchase_required`). */
+  downloadUrl: (slug: string, auth: GuestAuth, mediaId: string) =>
+    request<{ url: string }>(`/api/v1/g/${enc(slug)}/media/${enc(mediaId)}/download`, { auth }),
   mine: (slug: string, auth: GuestAuth) => request<{ items: MediaItem[] }>(`/api/v1/g/${enc(slug)}/mine`, { auth }),
   deleteMine: (slug: string, auth: GuestAuth, mediaId: string) =>
     request<{ ok: true }>(`/api/v1/g/${enc(slug)}/mine`, { method: "DELETE", auth, query: { mediaId } }),
@@ -195,20 +203,34 @@ export const guestApi = {
 
 export type { GuestAuth };
 
-/** Maps an error to a user-facing i18n key. */
-export function errorKey(e: unknown): "errors.network" | "errors.session" | "errors.notFound" | "errors.downloadsLocked" | "errors.generic" {
+type ErrorKey =
+  | "errors.network" | "errors.session" | "errors.notFound" | "errors.downloadsLocked" | "errors.generic" | "errors.paymentRequired"
+  | "errors.testLimit" | "errors.videoTooLong" | "errors.videoDuration" | "errors.uploadClosed" | "errors.notOpen" | "errors.windowLocked";
+
+/** Maps an error to a user-facing i18n key. 402s get neutral wording: no prices, no purchase prompt (App Store 3.1.1). */
+export function errorKey(e: unknown): ErrorKey {
   if (e instanceof ApiError) {
     if (e.isNetwork) return "errors.network";
     if (e.status === 401) return "errors.session";
     if (e.status === 404) return "errors.notFound";
-    // 402 `plan_required`: downloads are locked on this account. Neutral message, no purchase prompt.
+    switch (e.code) {
+      case "payment_required": return "errors.paymentRequired";
+      case "test_limit": return "errors.testLimit";
+      case "video_too_long": return "errors.videoTooLong";
+      case "video_duration_required": return "errors.videoDuration";
+      case "upload_closed": return "errors.uploadClosed";
+      case "not_open": return "errors.notOpen";
+      case "window_locked": return "errors.windowLocked";
+    }
     if (e.status === 402) return "errors.downloadsLocked";
   }
   return "errors.generic";
 }
 
 /** Server message if it sent a human-readable one, else the generic key's text. */
-export function errorMessage(e: unknown, t: (k: ReturnType<typeof errorKey>) => string): string {
+export function errorMessage(e: unknown, t: (k: ErrorKey) => string): string {
+  const k = errorKey(e);
+  if (k !== "errors.generic" && k !== "errors.downloadsLocked" && k !== "errors.network" && k !== "errors.session" && k !== "errors.notFound") return t(k);
   if (e instanceof ApiError && e.status >= 400 && e.status < 500 && e.status !== 401 && e.status !== 402 && e.status !== 404 && e.message && !e.message.startsWith("http_")) {
     return e.message;
   }

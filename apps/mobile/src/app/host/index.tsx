@@ -9,7 +9,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { AppHeader } from "@/components/AppHeader";
 import { Button, IconButton } from "@/components/Button";
 import { Pill } from "@/components/Card";
-import { PlanBanner } from "@/components/PlanStatus";
+import { packageLine } from "@/components/PackageStatus";
 import { Screen } from "@/components/Screen";
 import { EmptyState, ErrorView, Loading } from "@/components/States";
 import { Heading, Txt } from "@/components/Text";
@@ -21,10 +21,12 @@ import { colors, radius } from "@/theme";
 function CoverCard({ o }: { o: OccasionSummary }) {
   const { t, locale } = useI18n();
   const meta = [occasionLabel(o.type, locale), o.startsOn ? formatDate(o.startsOn, locale) : t("host.noDate")].join(" · ");
+  // Package status, neutrally: Setup / Opens … / Live until … / Ended · download until … (no prices).
+  const status = packageLine(o, t, locale).label;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${o.title}. ${meta}. ${t("host.mediaCount", { n: o.mediaCount })}`}
+      accessibilityLabel={`${o.title}. ${meta}. ${status}. ${t("host.mediaCount", { n: o.mediaCount })}`}
       onPress={() => router.push({ pathname: "/host/[id]", params: { id: o.id } })}
       style={({ pressed }) => [styles.card, { opacity: pressed ? 0.9 : 1 }]}
     >
@@ -32,8 +34,9 @@ function CoverCard({ o }: { o: OccasionSummary }) {
         <Image source={{ uri: o.coverUrl, cacheKey: `cover-${o.id}` }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
       ) : null}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: o.coverUrl ? "rgba(10,10,10,0.38)" : colors.black }]} />
-      <View style={styles.cardTop}>
+      <View style={[styles.cardTop, { flexDirection: "column", gap: 8 }]}>
         <Pill text={meta} tone="dark" />
+        <Pill text={status} tone="dark" variant="blue" />
       </View>
       <View style={{ gap: 6 }}>
         <Heading tone="dark" size="md" numberOfLines={2}>
@@ -53,7 +56,7 @@ export default function HostHome() {
   const [list, setList] = useState<OccasionSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const { subscription, refreshMe } = useAuth();
+  const { refreshMe } = useAuth();
 
   const load = useCallback(async () => {
     try {
@@ -63,7 +66,7 @@ export default function HostHome() {
     } catch (e) {
       setError(errorMessage(e, t));
     }
-    // The plan status (trial days left, read-only…) can change while away; refresh it quietly.
+    // Keep the profile fresh (name, language) while away.
     void refreshMe();
   }, [t, refreshMe]);
 
@@ -102,7 +105,6 @@ export default function HostHome() {
               <Heading size="lg" accent={t("host.homeAccent")} style={{ marginBottom: 4 }}>
                 {t("host.homeTitle")}
               </Heading>
-              <PlanBanner sub={subscription} />
             </View>
           }
           ListEmptyComponent={

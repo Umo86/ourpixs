@@ -31,9 +31,9 @@ export const API_URL = (process.env.EXPO_PUBLIC_API_URL || extra.apiUrl || "http
 export const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO === "1" || extra.demo === true;
 
 /**
- * Show a "Choose a plan" button that opens the website's pricing page in the browser.
- * OFF for App Store / Play builds: selling an account subscription via an external link, or showing prices,
- * conflicts with Apple 3.1.1 and Google Play Payments policy. Store builds show plan status only, neutrally.
+ * Show an "Open on the website" button on an event's settings (the web dashboard is where the event package is paid).
+ * OFF for App Store / Play builds: selling the package via an external link, or showing prices, conflicts with
+ * Apple 3.1.1 and Google Play Payments policy. Store builds show each event's gallery status only, neutrally.
  * Only non-store dev builds (EXPO_PUBLIC_EXTERNAL_CHECKOUT=1) may show the button.
  */
 export const EXTERNAL_CHECKOUT = process.env.EXPO_PUBLIC_EXTERNAL_CHECKOUT === "1";

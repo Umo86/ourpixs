@@ -50,6 +50,7 @@ Tracking: **No.** We don't link data with third-party data for advertising or sh
 **Families / children:** target audience 18+ for hosts; the app is not directed at children. Answer "No" to "Is your app designed for children".
 
 ## Data retention (state it in the policy)
-- Event media: kept while the account has a free trial or an active plan. If the trial ends unpaid, events are read-only for 30 days, then deleted. After a cancelled plan ends, events are read-only (downloads allowed) for 90 days, then deleted.
+- Event media: kept while the event's gallery is live and for 12 months after it ends (admin-editable), then deleted; hosts get reminders 30 and 7 days before. Test uploads in an event that is never paid for stay until the host deletes the event or the account.
+- Guest email (optional, web only): kept with the event and deleted with its files. Marketing consent records: while valid and 2 years after withdrawal. Payment records: 6 years.
 - Account: until the host deletes it (or asks us to; we act within 30 days).
 - Guest identity: random per-event token stored on the device; server keeps only its hash.

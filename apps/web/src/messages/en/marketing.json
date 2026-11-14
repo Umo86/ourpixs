@@ -442,7 +442,7 @@
   },
   "legal": {
     "updated": "Last updated: 14 November 2026",
-    "review": "Updated for the event package · to be checked"
+    "review": "Updated · to be checked"
   },
   "privacy": {
     "title": "Privacy",
@@ -460,7 +460,9 @@
         "h": "What we collect",
         "list": [
           "Hosts: your email address, name, the details of the events you create (including the gallery dates), and your payment records for event packages (amount, date, status). Card details are handled by Stripe and never reach us.",
-          "Guests: the first name you type, and the photos, videos, voice messages and reactions you upload.",
+          "Guests: the first name you type, and the photos, videos, voice messages and reactions you upload. Your email address only if you choose to give it (see below). You never need an email address to upload.",
+          "Guests who buy the photos: the email address you give Stripe at checkout, the purchase record (amount, date, status, test or live), the time you agreed to start the download straight away, and a scrambled (hashed) copy of your download link.",
+          "Marketing choices: if you tick a box to get offers and news, we keep your email address, the exact words you agreed to, the language, where you ticked it, the date and time, a scrambled (hashed) copy of your IP address and your browser type, and the date you unsubscribe.",
           "Enquiries: what you tell us when you contact us.",
           "Technical data: IP address, device type and basic usage logs, used to keep the service secure and running."
         ],
@@ -472,11 +474,43 @@
           "Under Article 6 of the UK GDPR we rely on the following lawful bases:"
         ],
         "list": [
-          "Contract (Article 6(1)(b)): to create and run events, store and show uploads to the people the host has chosen, send sign-in codes and receipts, and take payment.",
+          "Contract (Article 6(1)(b)): to create and run events, store and show uploads to the people the host has chosen, send sign-in codes and receipts, take payment, deliver a guest's paid download, and send the one gallery email a guest asked for.",
           "Legitimate interests (Article 6(1)(f)): to keep the service secure, prevent abuse, fix problems and improve the service. For guests, this includes running the album you chose to take part in. We balance these interests against your rights.",
-          "Legal obligation (Article 6(1)(c)): to keep accounting and tax records and respond to lawful requests.",
-          "Consent (Article 6(1)(a)): only where we ask for it separately, and you can withdraw it at any time."
-        ]
+          "Legal obligation (Article 6(1)(c)): to keep accounting and tax records, keep records of marketing consent, and respond to lawful requests.",
+          "Consent (Article 6(1)(a)) and the Privacy and Electronic Communications Regulations (PECR): to send offers and news by email, only if you ticked the box for it. You can withdraw your consent at any time; that doesn't affect what we sent before."
+        ],
+        "review": true
+      },
+      {
+        "h": "Your email address as a guest",
+        "p": [
+          "After you have uploaded a few photos, we may ask whether you'd like the event's photos emailed to you afterwards. It's optional and you never need it to upload. If you give your email address, we use it for one thing: one email when the gallery closes, with a link to the gallery and, if the host's event offers it, the option to buy every photo and video in full quality. That email is something you asked for, not marketing.",
+          "We keep the address with the event and delete it when the event's files are deleted ({retentionMonths} months after the gallery ends), or sooner if you ask."
+        ],
+        "review": true
+      },
+      {
+        "h": "Offers and news (marketing)",
+        "p": [
+          "We only send offers and news by email if you have said yes. The box is separate from everything else, it is never ticked for you, and saying no never stops you using the service. Guests see it next to the gallery email question; hosts see it when they sign in and on their dashboard.",
+          "To stop them: use the unsubscribe link in any of these emails (one click is enough), use the unsubscribe option in your email app, switch it off on your dashboard if you are a host, or email {email}. We stop straight away. Emails you need, such as sign-in codes, receipts and download links, still come.",
+          "We keep a record of each consent (the wording, when and where) while it is valid and for 2 years after you withdraw it, so we can show we had your permission. Then we delete it."
+        ],
+        "review": true
+      },
+      {
+        "h": "Previews and watermarks",
+        "p": [
+          "Guests see the event's photos and videos as smaller previews with a watermark (our name and the event's name). Hosts, the live slideshow, and guests looking at their own uploads see clean copies. Full-quality originals are only given to the hosts and to guests who buy them, through links that expire within an hour (and a download link by email that works for 30 days)."
+        ],
+        "review": true
+      },
+      {
+        "h": "Buying the photos as a guest",
+        "p": [
+          "Guests can pay {guestPrice} to download every photo and video from an event in full quality. Stripe takes the payment and the email address for the receipt; we never see card details. We use that email address to send your download link, which works for 30 days. The purchase is linked to the phone or computer you bought it on, so the gallery there shows clean previews too."
+        ],
+        "review": true
       },
       {
         "h": "Automated image moderation",
@@ -496,26 +530,31 @@
           "These providers process data on our behalf, only to run the service:"
         ],
         "list": [
-          "Vercel: hosting",
+          "Vercel: hosting (London region)",
           "Neon: database (London)",
-          "Vercel Blob: photo, video and audio storage (London)",
+          "Cloudflare R2: photo, video and audio storage (Western Europe). Until we move to it, Vercel Blob (London) stores media",
           "Resend: email delivery",
-          "Stripe: payments",
+          "Stripe: payments (Stripe is also an independent controller for payment data)",
           "OpenAI: automated image moderation"
-        ]
+        ],
+        "review": true
       },
       {
         "h": "International transfers",
         "p": [
-          "Our database and media storage are in London. Some providers, for example for payments, email delivery or image moderation, may process limited data outside the UK. When that happens we only use providers covered by UK adequacy regulations, or we put safeguards in place such as the UK International Data Transfer Agreement (IDTA) or the UK Addendum to the EU standard contractual clauses."
-        ]
+          "Our database is in London and our media storage is in London or Western Europe. Some providers, for example for payments, email delivery or image moderation, may process limited data outside the UK. When that happens we only use providers covered by UK adequacy regulations, or we put safeguards in place such as the UK International Data Transfer Agreement (IDTA) or the UK Addendum to the EU standard contractual clauses."
+        ],
+        "review": true
       },
       {
         "h": "How long we keep it",
         "list": [
           "Event photos, videos and messages: while the event's gallery is live and for {retentionMonths} months after it ends, then deleted. We email the host 30 days and 7 days before. Test uploads in an event that is never paid for are kept until the host deletes the event or the account. Hosts can delete an event or individual uploads at any time.",
+          "Guest email addresses given for the gallery email: deleted with the event's files ({retentionMonths} months after the gallery ends).",
+          "Guest download links: they stop working 30 days after payment, or straight away if the payment is refunded.",
           "Account details: while your account is open, then deleted when you delete your account or on request.",
-          "Payment records: kept by us and by Stripe for six years, as UK tax and accounting rules require. Stripe also keeps its own records as an independent controller under its privacy policy.",
+          "Payment records (event packages and guest purchases): kept by us and by Stripe for six years, as UK tax and accounting rules require. Stripe also keeps its own records as an independent controller under its privacy policy.",
+          "Marketing consent records: while your consent is valid and for 2 years after you withdraw it, then deleted.",
           "Enquiries: for as long as needed to deal with them."
         ],
         "review": true
@@ -575,7 +614,8 @@
       {
         "h": "The service",
         "p": [
-          "{brand} lets a host create an event page and QR code so guests can upload and view photos, videos and messages. Each event is paid for once, with an event package. Before paying, a host can set an event up for free and try it in test mode."
+          "{brand} lets a host create an event page and QR code so guests can upload and view photos, videos and messages. Each event is paid for once, with an event package. Before paying, a host can set an event up for free and try it in test mode.",
+          "Guests see other people's photos and videos as smaller, watermarked previews. Hosts get everything in full quality. Guests can always download their own uploads, and can buy everything else in full quality (see Guest downloads)."
         ],
         "review": true
       },
@@ -607,16 +647,26 @@
           "A package covers one event: unlimited guests, photos and videos (subject to fair use), a live gallery for up to {windowDays} days, and downloads of every original for the host.",
           "You choose when the gallery goes live and when it ends, no more than {windowDays} days apart. You can change the dates until it goes live, and end it early at any time. Guests can join and upload only while it is live.",
           "Before paying, you can set the event up, print its QR cards and upload up to {testLimit} photos or videos yourself in test mode. Guests cannot join until the event is paid for and its gallery has opened.",
-          "Guests can buy all of an event's photos and videos in full quality for {guestPrice}. That is a separate purchase by the guest.",
+          "Guests can buy all of an event's photos and videos in full quality for {guestPrice}. That is a separate purchase by the guest (see Guest downloads).",
           "If we change the price, the new price applies only to events paid for after the change."
         ]
+      },
+      {
+        "h": "Guest downloads",
+        "list": [
+          "For {guestPrice}, paid once by card, Apple Pay or Google Pay through Stripe, a guest gets every photo and video of that event in full quality, without watermarks: as one ZIP (or one ZIP per day for big events) and through a link we email, which works for 30 days from payment.",
+          "It covers everything the hosts show in the gallery at the time you download, including photos added after you paid. Anything the hosts hide or remove is not included. Downloads end if the event's files are deleted or the purchase is refunded.",
+          "This is digital content supplied straight away. Before paying, you tick a box to ask us to start the download immediately and to confirm you understand that you then lose your {cancelDays}-day right to cancel under the Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013.",
+          "If the download doesn't work or isn't as described, tell us at {email}: you have rights under the Consumer Rights Act 2015, and we will fix it or refund you. A full refund ends access to the downloads."
+        ],
+        "review": true
       },
       {
         "h": "Cancellations and refunds",
         "list": [
           "Money-back promise: if you change your mind, email {email} from the address on your account any time before your gallery goes live, and we will refund the package in full, back to the original payment method through Stripe. The event then becomes read-only and guests can no longer open it.",
           "Your statutory cancellation right: under the Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013 you have {cancelDays} days from paying to cancel. By choosing the gallery dates you ask us to start the service when the gallery goes live, which may be within those {cancelDays} days. If you cancel after it has gone live but within the {cancelDays} days, we refund what you paid minus a proportionate amount for the service already provided. You acknowledge that once the gallery has ended the service has been fully provided and the right to cancel no longer applies.",
-          "Guest purchases are digital content supplied straight after payment. By buying, a guest asks for immediate access and acknowledges that the right to cancel is lost once the download is available.",
+          "Guest downloads are digital content supplied straight after payment. Before paying, the guest asks for immediate access and confirms they lose the right to cancel once the download is available. This does not affect their rights if the download is faulty.",
           "Refunds are made by our support team. Nothing in this section affects your rights if the service is faulty."
         ],
         "review": true
@@ -629,6 +679,13 @@
           "Test uploads in an event that is never paid for are kept until you delete the event or your account.",
           "If a package is refunded, the event becomes read-only and guests can no longer open it. You can delete it at any time.",
           "We cannot guarantee uninterrupted service, so keep your own copies of anything important."
+        ],
+        "review": true
+      },
+      {
+        "h": "Emails to guests",
+        "p": [
+          "If a guest gives us their email address on the event page, we send them one email when the gallery closes, with a link to it. We only send offers and news to people who have opted in, and every one of those emails has an unsubscribe link. See our privacy policy."
         ],
         "review": true
       },

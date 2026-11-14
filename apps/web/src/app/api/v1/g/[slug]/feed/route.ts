@@ -7,6 +7,8 @@ import { liveMedia, mediaPage } from "@/lib/queries";
 import { toMediaItems } from "@/lib/serializers";
 import { canonicalMoment, revealedForGuests, uploadOpen } from "@/lib/occasion";
 import { accessForOccasion, assertGuestsCanView } from "@/lib/access";
+import { activePurchase } from "@/lib/guest-purchase";
+import { guestSeesClean } from "@/lib/purchase-rules";
 
 const { media } = schema;
 
@@ -32,10 +34,15 @@ export const GET = route<{ slug: string }>(async (req, { slug }) => {
   if (q.kind) where.push(eq(media.kind, q.kind));
   if (q.dayId) where.push(eq(media.dayId, q.dayId));
   if (q.moment) where.push(eq(media.momentTag, canonicalMoment(o, q.moment) ?? q.moment));
-  const { rows, nextCursor } = await mediaPage({ where, cursor: q.after ? undefined : q.cursor, sort: q.sort, guestIdForReaction: guest?.id, limit: q.after ? 100 : 30 });
+  const [{ rows, nextCursor }, purchase] = await Promise.all([
+    mediaPage({ where, cursor: q.after ? undefined : q.cursor, sort: q.sort, guestIdForReaction: guest?.id, limit: q.after ? 100 : 30 }),
+    activePurchase(o.id, guest?.id),
+  ]);
+  // A guest who bought "download everything" sees clean previews on this device; everyone else stays watermarked.
+  const purchased = guestSeesClean(purchase, access);
   // `uploadsOpen` is false unless the gallery is live (and inside any per-event upload window).
   return json({
-    items: await toMediaItems(rows, { kind: "guest", guestId: guest?.id ?? null }), nextCursor: q.after ? null : nextCursor,
+    items: await toMediaItems(rows, { kind: "guest", guestId: guest?.id ?? null, purchased }), nextCursor: q.after ? null : nextCursor,
     uploadsOpen: uploadOpen(o, access.guestsCanUpload),
   });
 });

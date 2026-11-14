@@ -49,7 +49,8 @@ export default async function GuestDownloadPage({ params, searchParams }: { para
   }
 
   const [summary, page] = await Promise.all([purchaseSummary(o), purchaseItems(o, 300)]);
-  const items = await toMediaItems(page.rows, { kind: "guest", guestId: guest.id });
+  // Active purchase checked above: clean previews for the buyer on this device.
+  const items = await toMediaItems(page.rows, { kind: "guest", guestId: guest.id, purchased: true });
   return (
     <main id="main" className="mx-auto flex w-full max-w-xl flex-col gap-5 px-5">
       <ScreenHeader title={t("download.title")} accent={t("download.titleAccent")} sub={o.title} close={path} closeLabel={t("common.close")} />

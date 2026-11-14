@@ -51,7 +51,7 @@ node store/check-metadata.mjs       # store text length limits
 | `EXPO_PUBLIC_BRAND` | app | `bizimresimler` | Brand the app presents and signs hosts up under (`ourpixs` only for an alias build) |
 | `EXPO_PUBLIC_DEMO` | app | off | `1` = built-in demo data, `/demo/<screen>` deep links |
 | `EXPO_PUBLIC_SHOW_PREVIEW_CODE` | app | on in `__DEV__` | Show the `previewCode` the API returns when email isn't configured |
-| `EXPO_PUBLIC_EXTERNAL_CHECKOUT` | app | off | `1` = show a "Choose a plan" button that opens the website pricing page. **Keep off in store builds** (Apple 3.1.1 / Play payments policy); store builds show plan status only, with no prices |
+| `EXPO_PUBLIC_EXTERNAL_CHECKOUT` | app | off | `1` = show an "Open on the website" button on an event's settings (opens the web dashboard, where the event package is paid). **Keep off in store builds** (Apple 3.1.1 / Play payments policy); store builds show each event's gallery status only, with no prices or pay buttons |
 | `EXPO_PUBLIC_REVIEW_EMAIL` | app | none | App Review account email (see `store/review-notes.md`) |
 | `EXPO_PUBLIC_SUPPORT_EMAIL` | app | hello@bizimresimler.com | Contact links (one address for both languages) |
 | `APP_VARIANT` | build | `production` | `development` / `preview` change the bundle ID and name so they install side by side |
@@ -116,7 +116,7 @@ src/
     login.tsx             email → 6-digit code
     settings.tsx          language, notifications, sign out, joined events, legal, delete-account request, footer
     host/                 signed-in host area (guarded)
-      index.tsx           my events (+ plan status banner)
+      index.tsx           my events (+ gallery status per event: Setup / Opens … / Live until … / Ended)
       new.tsx             create wizard: type → names/title → date/venue/days → theme → QR
       [id]/               event tabs (one HostTabBar): album, upload, qr, guestbook, missions (Challenges), wall, settings
     join/                 scan QR / enter code → name + consent (+ PIN)
@@ -126,7 +126,7 @@ src/
   upload/                 queue (concurrency 3, retries, progress), renditions (1600px display + 400px thumb JPEG), picker
   components/             AppHeader (every screen), Screen, Footer + LanguageSwitch, TabBars, Button, Card/Sticker/Pill,
                           Form (Field, Checkbox, Toggle, Chip, Segmented), MediaGrid, MediaViewer, UploadPanel,
-                          CameraCapture, QrCard, PlanStatus (neutral plan status), EventBrand (guest header + theme colours), States
+                          CameraCapture, QrCard, PackageStatus (neutral gallery status, window editor, end early), EventBrand (guest header + theme colours), States
   i18n/                   en.ts, tr.ts (typed: tr must match en's keys), useI18n/useT
   auth/, host/, guest/    session + per-event contexts
   lib/                    secure storage, guest sessions, push, save-to-Photos, QR print/share, formatting
@@ -141,7 +141,9 @@ src/
 - Host uploads complete at `POST /api/v1/occasions/:id/uploads/complete` (contract only names the guest route).
 - Display/thumbnail renditions are JPEG; the app sends `Content-Type` unless the presigned `headers` already include one.
 - A PIN-protected event answers 401/403 with an error code or message containing "pin".
-- Account subscription: `GET /api/v1/me` returns `subscription` (status, daysLeft, `canCreateEvents`, `canDownload`, `readOnly`…); host occasions return `access` (`canUpload`, `canDownload`, `readOnly`, `reason`); guest payloads return `uploadsOpen`. The app shows this neutrally (no prices, no purchase buttons or links).
+- Event package (Nov 2026; replaces the account subscription and trial): host occasions return `packageStatus`, `opensAt`/`closesAt`/`timeZone` and `package` (`EventPackage`: status, window, `canEditWindow`, `canEndEarly`, `testUploadLimit`, `videoMaxSeconds`…) plus `access` (`canUpload`, `canDownload`, `readOnly`, `reason`: setup / not_open / ended / expired / refunded / suspended / locked). The app shows status and dates neutrally (no prices, no purchase buttons or links), lets the host edit the gallery window (PATCH `opensAt`/`closesAt`/`timeZone`) and end a live gallery early (`POST /occasions/:id/end`).
+- Media: lists never carry originals (`originalUrl: null`). Save to Photos asks `GET /occasions/:id/media/:mediaId/download` (host) or `/g/:slug/media/:mediaId/download` (a guest's own uploads) for a signed link per item. Items with `processing: "pending"` show a "Getting ready" tile; videos play the transcoded `playbackUrl` (1080p for hosts) once ready.
+- Videos: uploads send `durationS` (from the picker, or read from the file); videos over the event's limit (`videoMaxSeconds`, default 60 s) are stopped before upload with a friendly message.
 - Locked downloads answer HTTP 402 `{ error: "plan_required" }`; the app shows "Downloads aren't available on this account yet."
 - Push notification payload: `data.occasionId` (host) or `data.slug` (guest) opens that screen.
 - Guest voice/video guestbook notes need a presign route for `mediaKey`; the app posts text notes only.

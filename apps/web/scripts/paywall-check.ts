@@ -9,7 +9,8 @@
  *  1. No ORIGINAL key/URL in any feed payload (guest, share, wall; host except the documented HEIC fallback) and
  *     `originalUrl` is null everywhere.
  *  2. Guests (and share links) get only WATERMARKED copies of other people's media; nothing while processing.
- *  3. Guests get CLEAN copies only of their own media. Hosts and the wall get clean copies.
+ *  3. Guests get CLEAN copies only of their own media, unless this device bought "download everything" (then clean
+ *     copies of everything; the buyer's emailed /d page too). Hosts and the wall get clean copies.
  *  4. Guests can't download others' originals without an active paid purchase (refunded / expired / pending fail),
  *     and only permission-checked modules can mint links to originals.
  */
@@ -81,10 +82,16 @@ const isClean = (k: string | null) => !!k && /\/(display|thumb)\.webp$|\/video\.
 
 async function main() {
   const { toMediaItems } = await import("../src/lib/serializers");
-  const { guestMayDownloadOriginal, guestPurchaseOffered, purchaseActive } = await import("../src/lib/purchase-rules");
+  const { guestMayDownloadOriginal, guestPurchaseOffered, guestSeesClean, purchaseActive } = await import("../src/lib/purchase-rules");
 
   const audiences = {
     guest: await toMediaItems(rows, { kind: "guest", guestId: ME }),
+    // `purchased: false` explicitly (an expired / refunded / pending purchase resolves to false): still watermarked.
+    guestUnpaid: await toMediaItems(rows, { kind: "guest", guestId: ME, purchased: false }),
+    // A visitor who hasn't joined can never be "purchased" (no device to tie it to).
+    visitorPaidFlag: await toMediaItems(rows, { kind: "guest", guestId: null, purchased: true }),
+    paidGuest: await toMediaItems(rows, { kind: "guest", guestId: ME, purchased: true }),
+    buyer: await toMediaItems(rows, { kind: "buyer" }),
     visitor: await toMediaItems(rows, { kind: "guest", guestId: null }),
     share: await toMediaItems(rows, { kind: "share" }),
     wall: await toMediaItems(rows, { kind: "wall" }),
@@ -108,8 +115,16 @@ async function main() {
         if (isOriginal(k)) check(`${aud}/${name}: no original key in payload`, hostFallback, k!);
       }
       const own = name.startsWith("mine");
-      if (aud === "guest" || aud === "visitor" || aud === "share") {
-        if (own && aud === "guest") {
+      if (aud === "paidGuest" || aud === "buyer") {
+        // 5. paying guest (this device) and the buyer's link: clean copies of everything, never an original.
+        check(`${aud}/${name}: clean copies only`, keys.every((k) => !k || isClean(k)), keys.join(","));
+        check(`${aud}/${name}: no original`, keys.every((k) => !isOriginal(k)), keys.join(","));
+        if (it.kind === "video" && row.processingStatus === "ready") check(`${aud}/${name}: clean 1080p playback`, /\/video\.mp4$/.test(keys[2] ?? ""), String(keys[2]));
+        if (row.processingStatus === "ready") check(`${aud}/${name}: clean preview present`, isClean(keys[0]) && isClean(keys[1]), keys.join(","));
+        continue;
+      }
+      if (aud === "guest" || aud === "guestUnpaid" || aud === "visitor" || aud === "visitorPaidFlag" || aud === "share") {
+        if (own && (aud === "guest" || aud === "guestUnpaid")) {
           // 3. own uploads → clean copies only (or nothing yet).
           check(`${aud}/${name}: own media is clean`, keys.every((k) => !k || isClean(k)), keys.join(","));
           check(`${aud}/${name}: marked mine`, it.mine === true);
@@ -120,7 +135,7 @@ async function main() {
           if (!ready) check(`${aud}/${name}: no URL until processed`, keys.every((k) => !k), keys.join(","));
           if (ready) check(`${aud}/${name}: watermarked preview present`, isWatermarked(keys[0]) && isWatermarked(keys[1]), keys.join(","));
           if (ready && it.kind === "video") check(`${aud}/${name}: watermarked 720p video`, /guest-video\.mp4$/.test(keys[2] ?? ""), String(keys[2]));
-          if (aud !== "guest") check(`${aud}/${name}: not mine`, !it.mine);
+          if (aud !== "guest" && aud !== "guestUnpaid") check(`${aud}/${name}: not mine`, !it.mine);
         }
       } else {
         // host and wall → clean copies.
@@ -155,6 +170,12 @@ async function main() {
     { name: "paid purchase but event downloads closed (expired/refunded/suspended)", ok: guestMayDownloadOriginal({ mediaGuestId: OTHER, viewerGuestId: ME, purchase: { status: "paid", tokenExpiresAt: later }, event: { guestsCanView: false, canDownload: false }, now }), expect: false },
     { name: "purchaseActive(paid, future)", ok: purchaseActive({ status: "paid", tokenExpiresAt: later }, now), expect: true },
     { name: "purchaseActive(paid, no expiry)", ok: purchaseActive({ status: "paid", tokenExpiresAt: null }, now), expect: false },
+    { name: "clean previews: paid purchase, downloads open", ok: guestSeesClean({ status: "paid", tokenExpiresAt: later }, live, now), expect: true },
+    { name: "clean previews: no purchase", ok: guestSeesClean(null, live, now), expect: false },
+    { name: "clean previews: pending purchase", ok: guestSeesClean({ status: "pending", tokenExpiresAt: later }, live, now), expect: false },
+    { name: "clean previews: refunded purchase", ok: guestSeesClean({ status: "refunded", tokenExpiresAt: later }, live, now), expect: false },
+    { name: "clean previews: purchase past 30 days", ok: guestSeesClean({ status: "paid", tokenExpiresAt: earlier }, live, now), expect: false },
+    { name: "clean previews: event downloads closed", ok: guestSeesClean({ status: "paid", tokenExpiresAt: later }, { guestsCanView: true, canDownload: false }, now), expect: false },
     { name: "offer: unpaid event", ok: guestPurchaseOffered({ paid: false, guestsCanView: false, canDownload: false }), expect: false },
     { name: "offer: paid + live", ok: guestPurchaseOffered({ paid: true, guestsCanView: true, canDownload: true }), expect: true },
     { name: "offer: paid but not open yet", ok: guestPurchaseOffered({ paid: true, guestsCanView: false, canDownload: true }), expect: false },
@@ -186,6 +207,15 @@ async function main() {
   }
   const gp = readFileSync(path.join(src, "app/api/v1/g/[slug]/purchase/files/route.ts"), "utf8");
   check("guest manifest requires an active purchase", /activePurchase\(/.test(gp) && /purchase_required/.test(gp));
+  // Clean previews for guests only through guestSeesClean (feed) or after the purchase check (download pages).
+  for (const f of files) {
+    const rel = path.relative(src, f).split(path.sep).join("/");
+    const text = readFileSync(f, "utf8");
+    if (/purchased:\s*true/.test(text)) check(`purchased: true only on the paid download page: ${rel}`, rel === "app/g/[slug]/download/page.tsx");
+    if (/kind:\s*"buyer"/.test(text) && rel !== "lib/media-urls.ts") check(`buyer audience only on the /d page: ${rel}`, rel === "app/d/[token]/page.tsx");
+  }
+  const feed = readFileSync(path.join(src, "app/api/v1/g/[slug]/feed/route.ts"), "utf8");
+  check("guest feed decides clean previews with guestSeesClean", /guestSeesClean\(/.test(feed) && /activePurchase\(/.test(feed));
 
   console.log(`\n${passes} passed, ${failures} failed`);
   process.exit(failures ? 1 : 0);

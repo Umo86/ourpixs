@@ -11,9 +11,19 @@ import { IconButton } from "./Button";
 import { mediaSource } from "./MediaGrid";
 import { Txt } from "./Text";
 
+function Processing({ item, width, height }: { item: MediaItem; width: number; height: number }) {
+  const { t } = useI18n();
+  return (
+    <View style={{ width, height, alignItems: "center", justifyContent: "center", gap: 10 }}>
+      <Txt tone="dark" weight="bold">{item.processing === "failed" ? t("album.unavailable") : t("album.processing")}</Txt>
+    </View>
+  );
+}
+
 function VideoPage({ item, active, width, height }: { item: MediaItem; active: boolean; width: number; height: number }) {
-  // displayUrl is the poster frame for videos; play the video file itself.
-  const uri = item.playbackUrl ?? item.originalUrl ?? null;
+  // displayUrl is the poster frame for videos; play the transcoded MP4 (1080p for hosts). Never the original:
+  // lists don't carry it, and until the copy is ready there's nothing to play.
+  const uri = item.playbackUrl ?? null;
   const player = useVideoPlayer(uri ? { uri } : null, (p) => {
     p.loop = false;
   });
@@ -75,7 +85,10 @@ export function MediaViewer({ items, index, onClose, onIndexChange, renderAction
             renderItem={({ item: it, index: i }) => (
               <View style={{ width, height, alignItems: "center", justifyContent: "center" }}>
                 {it.kind === "video" ? (
-                  Math.abs(i - current) <= 1 ? <VideoPage item={it} active={i === current} width={width} height={height * 0.8} /> : null
+                  !it.playbackUrl ? <Processing item={it} width={width} height={height} />
+                    : Math.abs(i - current) <= 1 ? <VideoPage item={it} active={i === current} width={width} height={height * 0.8} /> : null
+                ) : !it.displayUrl && !it.thumbUrl ? (
+                  <Processing item={it} width={width} height={height} />
                 ) : (
                   <Image
                     source={mediaSource(it, "display")}

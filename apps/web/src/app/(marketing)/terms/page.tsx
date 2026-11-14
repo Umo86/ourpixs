@@ -10,8 +10,8 @@ import { pageMetadata } from "@/components/marketing/meta";
 export const generateMetadata = () => pageMetadata("terms", "/terms");
 
 // TODO(legal): English law only. Have these terms reviewed by a solicitor before launch (CCR 2013 cancellation wording for the
-// event package, liability cap, retention). Paragraphs changed for the £69 event package are marked "[UPDATED — solicitor to check]"
-// in messages/*/marketing.json (terms.sections) and shown with that marker on the page until reviewed.
+// event package and guest downloads, liability cap, retention). Sections changed for the event package and the consumer launch
+// have `review: true` in messages/*/marketing.json and show the "Updated · to be checked" badge until reviewed.
 export default async function TermsPage() {
   const [{ t, locale }, brand, settings] = await Promise.all([getT("marketing"), getBrand(), getSettings()]);
   // The service is BizimResimler on every domain; ourpixs.com is named as its English alias.

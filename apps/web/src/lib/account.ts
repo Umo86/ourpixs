@@ -2,6 +2,7 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { deleteOccasion } from "./occasion-service";
+import { withdrawConsent } from "./consent";
 
 /**
  * Real account deletion (App Store / Play requirement): every event the host owns is deleted with all files;
@@ -16,5 +17,7 @@ export async function deleteAccount(hostId: string) {
   // Payment rows keep no personal link once the host is gone (Stripe keeps the receipts).
   await db.delete(schema.orders).where(eq(schema.orders.hostId, hostId));
   await db.delete(schema.loginTokens).where(eq(schema.loginTokens.email, host.email));
+  // Marketing consent ends with the account (the consent record itself is kept for 2 years as proof, then purged).
+  await withdrawConsent(host.email, "all", "account_deleted");
   await db.delete(schema.hosts).where(eq(schema.hosts.id, hostId));
 }

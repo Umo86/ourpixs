@@ -2,7 +2,7 @@ import "server-only";
 import type Stripe from "stripe";
 import { and, asc, desc, eq, gt, inArray, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { BRANDS, MAIN_BRAND, brandBaseUrl, type Locale, type PackageSettings } from "./config";
+import { BRANDS, CANCELLATION_DAYS, MAIN_BRAND, brandBaseUrl, type Locale, type PackageSettings } from "./config";
 import { ApiError } from "./http";
 import { accessForOccasion, type Access } from "./access";
 import { getSettings } from "./settings";
@@ -69,6 +69,8 @@ export async function createGuestCheckout(o: OccasionRow, guest: GuestRow, local
   const s = await getSettings();
   const t = makeT(locale, "guest");
   const base = `${brandBaseUrl(o.brand)}/g/${publicSlug(o)}`;
+  // The guest ticked this before Checkout (the route refuses without it); stored with the exact wording.
+  const waiver = t("purchase.waiver", { days: CANCELLATION_DAYS });
   const meta = { kind: GUEST_DOWNLOAD_KIND, occasionId: o.id, guestId: guest.id };
   const session = await stripe().checkout.sessions.create({
     mode: "payment",
@@ -85,13 +87,14 @@ export async function createGuestCheckout(o: OccasionRow, guest: GuestRow, local
     }],
     metadata: meta,
     payment_intent_data: { metadata: meta },
+    custom_text: { submit: { message: waiver.slice(0, 1200) } },
     success_url: `${base}/download?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: base,
   });
   if (!session.url) throw new ApiError(502, "payments_unavailable", "Could not start checkout");
   await db.insert(P).values({
     occasionId: o.id, guestId: guest.id, amountPence: s.guestDownloadPence, currency: "gbp", stripeCheckoutSessionId: session.id,
-    status: "pending", livemode: session.livemode, locale, brand: o.brand,
+    status: "pending", livemode: session.livemode, locale, brand: o.brand, waiverAcceptedAt: new Date(), waiverWording: waiver,
   }).onConflictDoNothing({ target: P.stripeCheckoutSessionId });
   return session.url;
 }

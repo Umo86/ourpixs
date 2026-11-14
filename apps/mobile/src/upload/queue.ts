@@ -9,10 +9,10 @@ import { File, UploadTask, UploadType } from "expo-file-system";
 import { useMemo, useSyncExternalStore } from "react";
 import { Platform } from "react-native";
 
-import { guestApi, hostApi } from "@/api/client";
+import { ApiError, guestApi, hostApi } from "@/api/client";
 import type { PresignedTarget, UploadFileSpec, UploadGrant } from "@/api/types";
 import { DEMO_MODE } from "@/config";
-import { prepareVideoThumb, preparePhoto, sizeOf, type Rendition } from "./prepare";
+import { prepareVideoThumb, preparePhoto, sizeOf, videoDurationS, type Rendition } from "./prepare";
 
 export type UploadTarget =
   | { type: "host"; occasionId: string }
@@ -37,6 +37,14 @@ export type PickedAsset = {
 
 export type UploadExtras = { dayId?: string; momentTag?: string; missionId?: string; fromDisposable?: boolean };
 
+/** Errors that retrying won't fix (shown with a friendly message, not retried automatically). */
+export class UploadRejected extends Error {
+  constructor(public code: "video_too_long" | "video_duration_required") {
+    super(code);
+    this.name = "UploadRejected";
+  }
+}
+
 export type QueueItem = {
   id: string;
   key: string;
@@ -47,6 +55,8 @@ export type QueueItem = {
   progress: number; // 0..1
   error?: string;
   mediaId?: string;
+  /** Longest video allowed for this event (seconds). */
+  maxVideoSeconds?: number;
 };
 
 const CONCURRENCY = 3;
@@ -150,6 +160,14 @@ async function run(item: QueueItem) {
   const name = guessName(asset, mime);
   const bytes = asset.bytes || sizeOf(asset.uri);
 
+  // Videos must send their length (server: 400 `video_duration_required`) and stay within the event's limit.
+  let durationS: number | null = null;
+  if (asset.kind === "video") {
+    durationS = await videoDurationS(asset.uri, asset.durationS);
+    if (durationS == null) throw new UploadRejected("video_duration_required");
+    if (item.maxVideoSeconds && durationS > item.maxVideoSeconds + 1) throw new UploadRejected("video_too_long");
+  }
+
   let display: Rendition | null = null;
   let thumb: Rendition | null = null;
   if (asset.kind === "photo") {
@@ -166,7 +184,7 @@ async function run(item: QueueItem) {
     kind: asset.kind,
     width: asset.width || undefined,
     height: asset.height || undefined,
-    durationS: asset.durationS ?? undefined,
+    durationS: durationS ?? undefined,
     ...item.extras,
     hasDisplay: !!display,
     hasThumb: !!thumb,
@@ -219,7 +237,7 @@ function pump() {
     // mark immediately so the loop doesn't pick it twice
     update(next.id, { status: "preparing" });
     run(next)
-      .catch((e: unknown) => update(next.id, { status: "failed", error: e instanceof Error ? e.message : String(e) }))
+      .catch((e: unknown) => update(next.id, { status: "failed", error: e instanceof UploadRejected ? e.code : e instanceof ApiError ? e.code : e instanceof Error ? e.message : String(e) }))
       .finally(() => {
         active--;
         pump();
@@ -227,18 +245,20 @@ function pump() {
   }
 }
 
-export function enqueue(target: UploadTarget, assets: PickedAsset[], extras: UploadExtras = {}) {
+export function enqueue(target: UploadTarget, assets: PickedAsset[], extras: UploadExtras = {}, maxVideoSeconds?: number) {
   const key = targetKey(target);
   const added: QueueItem[] = assets.map((asset) => ({
-    id: uid(), key, target, asset, extras, status: "queued", progress: 0,
+    id: uid(), key, target, asset, extras, status: "queued", progress: 0, maxVideoSeconds,
   }));
   items = [...items, ...added];
   emit();
   pump();
 }
 
+const NO_RETRY = new Set(["video_too_long", "video_duration_required", "upload_closed", "not_open", "test_limit", "payment_required", "event_locked", "guest_blocked"]);
+
 export function retryFailed(key: string) {
-  items = items.map((i) => (i.key === key && i.status === "failed" ? { ...i, status: "queued", progress: 0, error: undefined } : i));
+  items = items.map((i) => (i.key === key && i.status === "failed" && !NO_RETRY.has(i.error ?? "") ? { ...i, status: "queued", progress: 0, error: undefined } : i));
   emit();
   pump();
 }

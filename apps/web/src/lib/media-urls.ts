@@ -11,6 +11,9 @@
  *  - Hosts and co-hosts: clean copies (≈2,000 px display, thumb, 1080p video).
  *  - Live wall (the host's screen): clean copies.
  *  - A guest's OWN uploads: clean copies (they have the originals on their phone anyway).
+ *  - A guest who BOUGHT "download everything" (paid, not refunded, inside its 30 days, event downloads open — decided by
+ *    purchase-rules.ts → guestSeesClean, passed in as `purchased`): clean copies of everything, on that device only.
+ *    The emailed /d/<token> page (the buyer's link, which also hands out the originals) is audience "buyer": clean.
  *  - Everyone else (other guests, share links / family abroad): WATERMARKED copies only (≈1,200 px guest preview,
  *    watermarked thumb, 720p watermarked video). While those are being made the item is "processing": no URL at all,
  *    never a fallback to the clean copy or the original.
@@ -36,8 +39,13 @@ export type MediaAudience =
   | { kind: "host" }
   | { kind: "wall" }
   | { kind: "share" }
-  /** `guestId` = the viewing guest (null for a visitor who hasn't joined). */
-  | { kind: "guest"; guestId: string | null };
+  /**
+   * `guestId` = the viewing guest (null for a visitor who hasn't joined). `purchased` = this device has an active
+   * "download everything" purchase (purchase-rules.ts → guestSeesClean); only then are other people's items clean.
+   */
+  | { kind: "guest"; guestId: string | null; purchased?: boolean }
+  /** The buyer's emailed /d/<token> page (an active purchase; checked by purchaseFromToken). */
+  | { kind: "buyer" };
 
 export type PlannedMedia = {
   thumb: string | null;
@@ -54,7 +62,8 @@ export type PlannedMedia = {
 
 export function planMediaKeys(m: MediaKeyRow, audience: MediaAudience): PlannedMedia {
   const mine = audience.kind === "guest" && !!audience.guestId && m.guestId === audience.guestId;
-  const clean = audience.kind === "host" || audience.kind === "wall" || mine;
+  const paidGuest = audience.kind === "guest" && !!audience.guestId && audience.purchased === true;
+  const clean = audience.kind === "host" || audience.kind === "wall" || audience.kind === "buyer" || mine || paidGuest;
   const processing: ProcessingStatus = m.kind === "voice" ? "ready" : m.processingStatus;
   if (m.kind === "voice") return { thumb: null, display: null, playback: null, clean, mine, processing };
 

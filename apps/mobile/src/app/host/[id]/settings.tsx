@@ -12,9 +12,8 @@ import { Field, Segmented, ToggleRow } from "@/components/Form";
 import { Icon } from "@/components/Icon";
 import { Screen } from "@/components/Screen";
 import { Loading, Notice } from "@/components/States";
-import { accessNoticeKey, ChoosePlanButton } from "@/components/PlanStatus";
+import { PackageCard } from "@/components/PackageStatus";
 import { Heading, Txt } from "@/components/Text";
-import { useAuth } from "@/auth/AuthProvider";
 import { useOccasion } from "@/host/OccasionContext";
 import { useI18n } from "@/i18n";
 import { formatDate } from "@/lib/format";
@@ -35,8 +34,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function HostSettings() {
   const { t, locale } = useI18n();
-  const { id, occasion, stats, patch } = useOccasion();
-  const { subscription } = useAuth();
+  const { id, occasion, stats, patch, refresh } = useOccasion();
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
@@ -116,7 +114,6 @@ export default function HostSettings() {
 
   const shotsValue = occasion.disposableShots ? (String(occasion.disposableShots) as (typeof SHOTS)[number]) : "off";
   const isOwner = occasion.role === "owner";
-  const accessKey = accessNoticeKey(occasion.access);
 
   return (
     <Screen header={<AppHeader tone="light" back={() => router.replace("/host")} title={occasion.title} />} scroll bottomInset={false} keyboard>
@@ -130,12 +127,8 @@ export default function HostSettings() {
         </Txt>
       ) : null}
 
-      {accessKey ? (
-        <Section title={t("account.title")}>
-          <Notice text={t(accessKey)} icon={occasion.access.readOnly ? "lock" : "sparkles"} />
-          <ChoosePlanButton sub={subscription} />
-        </Section>
-      ) : null}
+      {/* Gallery status and window. Neutral: no prices or pay buttons in the app (App Store 3.1.1 / Play billing). */}
+      <PackageCard occasion={occasion} onChanged={() => refresh()} />
 
       <Section title={t("settings.albumSection")}>
         <ToggleRow label={t("settings.approval")} help={t("settings.approvalHelp")} value={occasion.approvalMode} disabled={saving === "approval"} onChange={(v) => void save("approval", { approvalMode: v })} />

@@ -569,5 +569,28 @@
   "download": "Her şeyi indir",
   "testBanner": "Deneme modu: yalnızca siz ve ortak ev sahipleri yükleme yapabilir ({limit} yüklemenin {used} tanesi kullanıldı). Ödeme yapılıp galeri açılana kadar misafirler “yakında açılıyor” görür.",
   "cohostPay": "Galeriyi açmak için ödemeyi etkinlik sahibi yapabilir."
+ },
+ "cards": {
+  "instruction": "Fotoğraf ve videolarını eklemek için okut",
+  "sub": "Uygulama gerekmez",
+  "pdfTitle": "Baskıya hazır PDF kartlar",
+  "pdfLead": "Her sayfada bir kart: isimleriniz, tarih, QR kod ve kısa link, yukarıdaki tasarımla. Matbaaya gönderin ya da evde yazdırın.",
+  "a6": "A6 kartlar (105 × 148 mm)",
+  "a5": "A5 kartlar (148 × 210 mm)",
+  "a6Each": "A6, her gün için bir kart",
+  "a5Each": "A5, her gün için bir kart",
+  "otherLang": "{lang}:",
+  "langName": {
+   "en": "İngilizce",
+   "tr": "Türkçe"
+  },
+  "marksOn": "Taşma payı ve kesim işaretleri: açık",
+  "marksOff": "Taşma payı ve kesim işaretleri: kapalı",
+  "pdfHint": "%100 ölçekle (gerçek boyut) yazdırın. Matbaa isterse taşma payını ve kesim işaretlerini açın."
+ },
+ "marketing": {
+  "title": "E-posta tercihleri",
+  "optIn": "{brand} kampanyalarından ve haberlerinden e-postayla haberdar olmak istiyorum.",
+  "optInHint": "Yeni özellikler ve kampanyalar hakkında ara sıra e-posta. Siz açmadıkça kapalıdır; istediğiniz zaman abonelikten çıkabilirsiniz."
  }
 }

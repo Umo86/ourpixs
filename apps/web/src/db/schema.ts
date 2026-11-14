@@ -322,12 +322,72 @@ export const guestPurchases = pgTable("guest_purchases", {
   locale: text("locale").notNull().default("en"),
   brand: brandEnum("brand").notNull().default("bizimresimler"),
   livemode: boolean("livemode").notNull().default(false),
+  /**
+   * Consumer Contracts Regulations 2013 (digital content): when the guest ticked "start now; I lose my 14-day right to
+   * cancel" before Checkout, and the exact wording shown. Checkout can't start without it.
+   */
+  waiverAcceptedAt: timestamp("waiver_accepted_at", { withTimezone: true }),
+  waiverWording: text("waiver_wording"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index("guest_purchases_occasion_idx").on(t.occasionId),
   index("guest_purchases_guest_idx").on(t.guestId),
   index("guest_purchases_pi_idx").on(t.stripePaymentIntentId),
   uniqueIndex("guest_purchases_token_idx").on(t.downloadTokenHash),
+]);
+
+/**
+ * Guests who asked (optionally, after a few uploads) to get the event's photos emailed when the gallery ends.
+ * Email is never needed to upload. One row per event + email (a second submit updates it). The "gallery has ended"
+ * email (src/lib/consent.ts → sendGuestGalleryEmails) is a transactional message the guest requested: no marketing in it.
+ * Marketing consent is recorded separately, in `marketing_consents`.
+ */
+export const guestContacts = pgTable("guest_contacts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  occasionId: uuid("occasion_id").notNull().references(() => occasions.id, { onDelete: "cascade" }),
+  guestId: uuid("guest_id").references(() => guests.id, { onDelete: "set null" }),
+  email: text("email").notNull(),
+  locale: text("locale").notNull().default("en"),
+  brand: brandEnum("brand").notNull().default("bizimresimler"),
+  wantsEventPhotos: boolean("wants_event_photos").notNull().default(true),
+  /** When the "gallery has ended, here are the photos" email went out (claimed before sending; cleared if it fails). */
+  photosEmailedAt: timestamp("photos_emailed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("guest_contacts_occasion_email_idx").on(t.occasionId, t.email),
+  index("guest_contacts_due_idx").on(t.wantsEventPhotos, t.photosEmailedAt),
+]);
+
+/**
+ * Marketing consent (UK GDPR / PECR): opt-in only, separate from anything else, one row per consent given, with the
+ * exact wording shown, the locale and when. Withdrawing (unsubscribe link, host settings) sets withdrawn_at on every
+ * current consent of that email + brand. The unsubscribe token is HMAC(secret, id): only its hash is stored, and it is
+ * recomputed when an email is sent. Kept while valid and for 2 years after withdrawal (records of consent).
+ * source: "guest_upload" (guest email card) | "host_signup" (sign-in form) | "host_settings" (dashboard).
+ */
+export const marketingConsents = pgTable("marketing_consents", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull(),
+  brand: brandEnum("brand").notNull().default("bizimresimler"),
+  locale: text("locale").notNull().default("en"),
+  consented: boolean("consented").notNull().default(true),
+  /** The exact text next to the checkbox, as shown. */
+  wording: text("wording").notNull(),
+  source: text("source").notNull(),
+  occasionId: uuid("occasion_id").references(() => occasions.id, { onDelete: "set null" }),
+  /** HMAC of the IP (never the IP itself). */
+  ipHash: text("ip_hash"),
+  /** First 200 characters of the User-Agent. */
+  userAgent: text("user_agent"),
+  consentedAt: timestamp("consented_at", { withTimezone: true }).notNull().defaultNow(),
+  withdrawnAt: timestamp("withdrawn_at", { withTimezone: true }),
+  /** How it was withdrawn: "unsubscribe_link" | "list_unsubscribe" | "host_settings" | "admin" | "account_deleted". */
+  withdrawnVia: text("withdrawn_via"),
+  unsubscribeTokenHash: text("unsubscribe_token_hash").notNull(),
+}, (t) => [
+  uniqueIndex("marketing_consents_unsub_idx").on(t.unsubscribeTokenHash),
+  index("marketing_consents_email_idx").on(t.email, t.brand),
+  index("marketing_consents_created_idx").on(t.consentedAt),
 ]);
 
 /** Admin-editable settings (/admin/settings). Missing keys fall back to PACKAGE_DEFAULTS in src/lib/config.ts. */

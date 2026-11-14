@@ -23,6 +23,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { key: "overview" as const, href: "/admin", label: t("nav.overview") },
     { key: "users" as const, href: "/admin/users", label: t("nav.users") },
     { key: "events" as const, href: "/admin/events", label: t("nav.events") },
+    { key: "payments" as const, href: "/admin/payments", label: t("nav.payments") },
+    { key: "consents" as const, href: "/admin/consents", label: t("nav.consents") },
     { key: "moderation" as const, href: "/admin/moderation", label: t("nav.moderation") },
     { key: "enquiries" as const, href: "/admin/enquiries", label: t("nav.enquiries") },
     { key: "settings" as const, href: "/admin/settings", label: t("nav.settings") },

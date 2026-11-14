@@ -12,6 +12,7 @@ import type { MediaItem } from "@/lib/api-types";
 import { useGuest } from "./GuestContext";
 import { Title } from "./Title";
 import { PurchaseCard, PurchaseDialog } from "./PurchaseOffer";
+import { EmailOffer } from "./EmailOffer";
 import { ProcessingTile } from "@/components/app/ProcessingTile";
 import { useProcessingRefresh } from "@/components/app/useProcessingRefresh";
 
@@ -170,6 +171,7 @@ export function Feed() {
       ) : null}
 
       {revealed ? <PurchaseCard /> : null}
+      <EmailOffer />
 
       {error ? <p role="alert" className="m-0 rounded-2xl bg-surface p-4 text-sm">{error} <button type="button" className="font-bold underline" onClick={() => load(true, null)}>{t("common.retry")}</button></p> : null}
 

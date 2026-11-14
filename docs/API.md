@@ -5,8 +5,8 @@ Auth: `Authorization: Bearer <jwt>` (same JWT as the web `op_session` cookie, 30
 
 ## Auth
 - `POST /api/v1/auth/request-code` `{ email, locale?: "en"|"tr", brand?: "bizimresimler"|"ourpixs" }` (brand defaults to the request host's brand; the app sends `bizimresimler`) → `{ ok: true, previewCode?: string }` (previewCode only when PREVIEW_SHOW_CODE=1 and email not configured)
-- `POST /api/v1/auth/verify` `{ email, code }` → `{ token, host: Host }` (also sets the `op_session` cookie for web). If env `REVIEW_EMAIL` and `REVIEW_CODE` are both set, that email signs in with that code (app-store review).
-- `GET /api/v1/me` → `{ host: Host }` (no `subscription` any more: payments are per event — see "Event package" below)
+- `POST /api/v1/auth/verify` `{ email, code, marketingConsent?: boolean, locale?: "en"|"tr" }` → `{ token, host: Host }` (`marketingConsent: true` = the separate, unticked "Send me offers and news" box was ticked; recorded only after the code is verified, with the wording shown in `locale`) (also sets the `op_session` cookie for web). If env `REVIEW_EMAIL` and `REVIEW_CODE` are both set, that email signs in with that code (app-store review).
+- `GET /api/v1/me` → `{ host: Host, marketing: { consented: boolean } }` (no `subscription` any more: payments are per event — see "Event package" below). `marketing.consented` = a current opt-in to offers and news for the request host's brand.
 - `PATCH /api/v1/me` `{ name?, locale? }` → `{ host }` (same shape as GET)
 - `DELETE /api/v1/me` → `{ ok: true }` — deletes the account, events it owns (all files), memberships, push tokens. (Event packages are one-off payments; there is nothing to cancel.)
 - `POST /api/v1/auth/logout` → `{ ok: true }` (web: clears the cookie)
@@ -173,3 +173,24 @@ A purchase covers every visible, approved, revealed photo and video of the event
 
 **Internal (not for clients):** `POST /api/internal/media/process` (HMAC-signed ids, server-to-server) and `GET /api/cron/media` (Vercel Cron) make the copies.
 New error codes: `purchase_required` (402), `already_paid` / `cannot_pay` (409) on the guest purchase.
+
+
+### Consumer launch stage C (Nov 2026)
+
+**Printable QR cards (PDF).** `GET /api/v1/occasions/:id/cards.pdf?size=a6|a5&template=<id>&day=<dayId>|each&lang=en|tr&bleed=1&marks=1` → `application/pdf` (attachment). Hosts and co-hosts; works in every state including setup (print before paying). One card per page at trim size (A6 105×148 mm, A5 148×210 mm): the names (honorees, else the title), the event (or day) date, the vector QR, the short link, a one-line instruction in `lang` (default: the host's language), the brand wordmark, in the QR studio design `template` (default: the event's theme). `day=<id>` prints that day's link; `day=each` one card per day. `bleed=1` adds 3 mm bleed (off by default); `marks=1` adds crop marks (implies bleed). Rate-limited (30 per 10 min per host). Bearer auth works, so the app can fetch it too.
+
+**Event package.** `EventPackage.videoMaxSeconds` (additive): longest video for this event (also on `PublicOccasion.videoMaxSeconds`).
+
+**Guest feed: paying guests see clean previews.** `GET /g/:slug/feed` items are CLEAN copies (no watermark) for a device with an active "download everything" purchase (paid, not refunded, inside its 30 days, event downloads open). Everyone else, share links included, still gets watermarked copies. Same on the paying device's `/g/:slug/download` page and on the emailed `/d/:token` page.
+
+**Guest purchase (CHANGED).** `POST /api/v1/g/:slug/purchase` now requires `{ acceptImmediateSupply: true, locale?: "en"|"tr" }`: the guest ticked "Start my download straight away. I understand that once it starts I lose my 14-day right to cancel." (Consumer Contracts Regulations 2013, digital content). Without it: `400 waiver_required`. The time and exact wording are stored on the purchase. Web only, as before.
+
+**Guest email (optional).** `POST /api/v1/g/:slug/contact` `{ email, marketing?: boolean, locale: "en"|"tr" }` → `{ ok: true }` (joined guest; rate-limited). Email is never needed to upload; the web guest app offers this once per device after the 3rd successful upload. When the gallery ends the guest gets ONE email with the gallery link and, if it can be bought, the event's "download everything" offer (transactional, requested by the guest). `marketing: true` = the separate, unticked "Send me offers and news from {brand}" box: a marketing consent is recorded with the wording shown in `locale`. Sending the email alone always works.
+
+**Host marketing preference.** `GET /api/v1/me/marketing` → `{ consented }`; `PUT /api/v1/me/marketing` `{ consented: boolean, locale: "en"|"tr" }` → `{ consented }` (opt in records a consent with the wording shown; opt out withdraws every current consent for this email and the site's brand).
+
+**Unsubscribe.** Every marketing email has a visible link `/unsubscribe/<token>` (web page, EN/TR; opening it withdraws the consent) and the headers `List-Unsubscribe: <https://…/api/v1/unsubscribe/<token>>, <mailto:hello@bizimresimler.com?subject=unsubscribe>` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`. `POST /api/v1/unsubscribe/:token` (RFC 8058 one-click) → `{ ok: true }` always (unknown tokens do nothing). Withdrawal covers every current consent of that email + brand.
+
+**Live wall (CHANGED).** `GET /api/v1/wall/:slug?k=<key>&since=<cursor>` → `{ items, cursor, stats }`. Only items whose copies are ready (never "processing"): photos as the clean display copy, videos with the clean 1080p `playbackUrl` (the wall plays them muted). Pass the previous response's `cursor` as `since` to get items that became ready after it (new uploads and videos that finished transcoding). `after` (ISO) is still accepted and treated like `since`.
+
+New error codes: `waiver_required` (400, guest purchase), `no_consent` (409, internal: marketing email without consent).

@@ -37,7 +37,8 @@
   "purchase_required": "Bunu indirmek için tüm fotoğraf ve videoları tam kalitede al.",
   "already_paid": "Bu etkinliğin tüm fotoğraf ve videoları zaten sende.",
   "cannot_pay": "Bu galeri için tam kalite indirme şu an satın alınamıyor.",
-  "payments_unavailable": "Ödemeler çok yakında."
+  "payments_unavailable": "Ödemeler çok yakında.",
+  "waiver_required": "İndirmenin hemen başlamasını istediğini onaylamak için kutuyu işaretle."
  },
  "demo": {
   "banner": "Demo etkinlik: her şeyi dene, hiçbir şey kaydedilmez."
@@ -234,7 +235,9 @@
   "fine": "Kart, Apple Pay ya da Google Pay ile tek seferlik ödeme. Hesap açman gerekmez.",
   "haveTitle": "Tüm fotoğraf ve videolar sende",
   "until": "İndirmelerin {date} tarihine kadar hazır.",
-  "open": "İndirmelere git"
+  "open": "İndirmelere git",
+  "waiver": "İndirmem hemen başlasın. İndirme başladığında {days} günlük cayma hakkımı kaybettiğimi biliyorum.",
+  "terms": "Koşullar"
  },
  "download": {
   "title": "İndirmelerin",
@@ -274,6 +277,28 @@
    "body2": "Bu link {date} tarihine kadar çalışır. En büyük indirmeler için bilgisayarda aç.",
    "cta": "Hepsini indir",
    "footer": "Bunu {brand} üzerinden aldın. Bu e-postayı sakla: link yalnızca bir kez gönderilir."
+  },
+  "gallery": {
+   "subject": "{title} fotoğrafları seni bekliyor",
+   "heading": "{title}: galeri kapandı",
+   "body": "Galeri kapanınca haber vermemizi istemiştin. {title} için herkesin fotoğraf ve videoları tek yerde, bir göz at.",
+   "offer": "Hepsini filigransız, tam kalitede ister misin? Tüm fotoğraf ve videoları {price} karşılığında al, 30 gün boyunca indir.",
+   "body2": "Yeni bir telefon ya da bilgisayardan açarsan galeriye girmek için adını yazman yeterli.",
+   "cta": "Fotoğraflara bak",
+   "footer": "Bu e-postayı {brand} etkinlik sayfasında istediğin için bir kez gönderiyoruz. Bu etkinlikle ilgili sana tekrar e-posta göndermeyeceğiz."
   }
+ },
+ "emailOffer": {
+  "title": "Bu etkinliğin tüm fotoğrafları sonra e-postana gelsin mi?",
+  "body": "E-posta adresini bırak, galeri kapanınca sana bağlantısını gönderelim.",
+  "emailLabel": "E-posta adresin",
+  "emailPlaceholder": "sen@ornek.com",
+  "marketing": "Bana {brand} kampanyalarını ve haberlerini gönder.",
+  "submit": "Fotoğrafları bana gönder",
+  "sending": "Kaydediliyor…",
+  "thanks": "Tamam! Galeri kapanınca bağlantıyı e-postana göndereceğiz.",
+  "dismiss": "Hayır, teşekkürler",
+  "fine": "İsteğe bağlı, yükleme yapmak için gerekmez. Kutuyu işaretlemezsen sana kampanya göndermeyiz; istediğin zaman abonelikten çıkabilirsin.",
+  "privacy": "Gizlilik politikası"
  }
 }

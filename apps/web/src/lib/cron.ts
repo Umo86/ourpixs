@@ -4,6 +4,7 @@ import { db, schema } from "@/db";
 import { DELETION_REMINDER_DAYS } from "./config";
 import { emailConfigured, sendDeletionReminder } from "./email";
 import { sendDueEndedEmails } from "./package";
+import { sendGuestGalleryEmails } from "./consent";
 import { abortUpload, deleteObjects, mediaFileKeys } from "./storage";
 import { sweepMedia } from "./media-processing";
 import { keysForOccasion } from "./occasion-service";
@@ -47,12 +48,15 @@ const loc = (l: string) => (l === "tr" ? "tr" : "en") as "en" | "tr";
  *  1. Gallery ended (closes_at passed) → package_status 'ended' + "download everything" email to the owner.
  *     Vercel Hobby crons run once a day, so this can lag up to a day; the same claim also runs lazily whenever
  *     an ended event is opened (src/lib/package.ts → touchEnded).
- *  2. Deletion reminders 30 and 7 days before delete_after (one marker column each).
+ *  2. Guests who asked on the event page get one "the gallery has closed, here are the photos" email.
+ *  3. Deletion reminders 30 and 7 days before delete_after (one marker column each).
  * The deletions themselves run in the cleanup job.
  */
 export async function runExpiry(): Promise<Record<string, number>> {
   const out: Record<string, number> = {};
   out.endedEmails = await sendDueEndedEmails({ max: BATCH });
+  // Guests who asked for the photos by email (transactional; they requested it).
+  out.guestPhotoEmails = await sendGuestGalleryEmails({ max: 500 });
   out.reminders30 = 0;
   out.reminders7 = 0;
   if (!emailConfigured()) return out;
@@ -106,6 +110,8 @@ async function deleteExpiredEvents() {
       db.delete(schema.media).where(eq(schema.media.occasionId, o.id)),
       db.delete(schema.messages).where(eq(schema.messages.occasionId, o.id)),
       db.delete(schema.shareLinks).where(eq(schema.shareLinks.occasionId, o.id)),
+      // Guests' emails for this event go with its files (privacy policy: 12 months after the gallery ends).
+      db.delete(schema.guestContacts).where(eq(schema.guestContacts.occasionId, o.id)),
       db.update(O).set({ status: "archived", coverKey: null, packageStatus: "expired" }).where(eq(O.id, o.id)),
     ]);
   }
@@ -133,6 +139,8 @@ export async function runCleanup(): Promise<Record<string, number>> {
   await db.delete(schema.rateLimits).where(and(lt(schema.rateLimits.updatedAt, new Date(Date.now() - 2 * 86400_000)), sql`${schema.rateLimits.key} not like 'mark:%'`));
   await db.delete(schema.shareLinks).where(lt(schema.shareLinks.expiresAt, new Date()));
   await db.delete(schema.cohostInvites).where(lt(schema.cohostInvites.createdAt, new Date(Date.now() - 90 * 86400_000)));
+  // Records of marketing consent: kept while valid and for 2 years after withdrawal (privacy policy), then purged.
+  await db.delete(schema.marketingConsents).where(lt(schema.marketingConsents.withdrawnAt, new Date(Date.now() - 2 * 365 * 86400_000)));
   // Keep a year of run history.
   await db.delete(schema.cronRuns).where(lt(schema.cronRuns.startedAt, new Date(Date.now() - 365 * 86400_000)));
   return { archived, media: stale.length };

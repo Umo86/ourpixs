@@ -8,6 +8,7 @@ import { api } from "@/lib/client/api";
 import type { GuestMission } from "@/lib/api-types";
 import { useGuest } from "./GuestContext";
 import { ScreenHeader } from "./ScreenHeader";
+import { EmailOffer } from "./EmailOffer";
 
 export function UploadScreen() {
   const t = useT("guest");
@@ -95,6 +96,8 @@ export function UploadScreen() {
         if (files.length) uploader.add(files, { dayId, momentTag: moment, missionId });
         e.target.value = "";
       }} />
+
+      <EmailOffer />
 
       {o.moments.length ? (
         <div className="flex flex-col gap-2.5">

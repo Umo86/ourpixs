@@ -26,6 +26,8 @@ export type EventPackage = {
   canEditWindow: boolean; canEndEarly: boolean; canPay: boolean;
   /** Longest window in days (admin setting). */
   windowDays: number;
+  /** Additive: longest video in seconds (admin setting; checked before upload and on the server). */
+  videoMaxSeconds: number;
   daysLeft: number | null;
 };
 export type Theme = "noir" | "royal" | "ivory" | "dusk" | "mono" | "blush";

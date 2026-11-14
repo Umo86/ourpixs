@@ -26,7 +26,7 @@ export function toPackage(o: OccasionRow, a: Access, s: PackageSettings): EventP
     status: a.state, pricePence: s.eventPricePence, paidAt: iso(o.paidAt), comped: !!o.compedAt,
     opensAt: iso(o.opensAt), closesAt: iso(o.closesAt), timeZone: o.timeZone, deleteAfter: iso(a.deleteAfter),
     testMode: a.testMode, testUploadLimit: a.testUploadLimit, canEditWindow: a.canEditWindow, canEndEarly: a.canEndEarly,
-    canPay: a.canPay, windowDays: s.windowDays, daysLeft: a.daysLeft,
+    canPay: a.canPay, windowDays: s.windowDays, videoMaxSeconds: s.videoMaxSeconds, daysLeft: a.daysLeft,
   };
 }
 

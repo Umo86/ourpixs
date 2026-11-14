@@ -2,7 +2,7 @@
 import type { MediaItem, Mission, ShareLink } from "@/api/types";
 import {
   DEMO_GUEST_TOKEN, demoGuestMissions, demoHost, demoMedia, demoMessages, demoMissionTitles, demoOccasion, demoOccasions, demoPublic,
-  demoAccess, demoShareLinks, demoStats, demoSubscription,
+  demoAccess, demoShareLinks, demoStats,
 } from "./data";
 
 let media: MediaItem[] | null = null;
@@ -33,12 +33,15 @@ export async function demoRequest<T>(method: string, path: string, body?: unknow
 
   if (p === "/auth/request-code") return { ok: true, previewCode: "123456" } as T;
   if (p === "/auth/verify") return { token: "demo-token", host: demoHost } as T;
-  if (p === "/me") return { host: demoHost, subscription: demoSubscription } as T;
+  if (p === "/me" && method !== "DELETE") return { host: demoHost, marketing: { consented: false } } as T;
   if (p === "/push-tokens") return { ok: true } as T;
 
   if (p === "/occasions" && method === "GET") return { occasions: demoOccasions() } as T;
   if (p === "/occasions" && method === "POST") {
-    return { occasion: { ...demoOccasion("demo-wedding"), id: "demo-new", title: String(b.title ?? ""), type: String(b.type ?? "dugun"), mediaCount: 0, guestCount: 0, access: demoAccess } } as T;
+    const base = demoOccasion("demo-wedding");
+    const setup = { packageStatus: "setup" as const, opensAt: null, closesAt: null, deleteAfter: null, testMode: true };
+    return { occasion: { ...base, ...setup, id: "demo-new", title: String(b.title ?? ""), type: String(b.type ?? "dugun"), mediaCount: 0, guestCount: 0,
+      access: { ...demoAccess, canDownload: false, reason: "setup" }, package: { ...base.package, ...setup, status: "setup", canEditWindow: true, canEndEarly: false } } } as T;
   }
 
   if ((m = p.match(/^\/occasions\/([^/]+)$/))) {
@@ -73,6 +76,16 @@ export async function demoRequest<T>(method: string, path: string, body?: unknow
     return page(list, q.cursor) as T;
   }
   if ((m = p.match(/^\/occasions\/([^/]+)\/messages$/))) return { messages: demoMessages } as T;
+  if ((m = p.match(/^\/occasions\/([^/]+)\/end$/))) {
+    const o = demoOccasion(m[1]);
+    const ended = { packageStatus: "ended" as const, closesAt: new Date().toISOString() };
+    occasionPatch = { ...occasionPatch, ...ended, access: { ...o.access, reason: "ended" }, package: { ...o.package, status: "ended", closesAt: ended.closesAt, canEndEarly: false } };
+    return { occasion: { ...o, ...occasionPatch } } as T;
+  }
+  if ((m = p.match(/^\/occasions\/([^/]+)\/media\/([^/]+)\/download$/)) || (m = p.match(/^\/g\/([^/]+)\/media\/([^/]+)\/download$/))) {
+    const it = allMedia().find((x) => x.id === m![2]);
+    return { url: it?.displayUrl ?? "" } as T;
+  }
   if ((m = p.match(/^\/occasions\/([^/]+)\/missions$/))) {
     if (method === "POST") missions = [...missions, { id: `mi${Date.now()}`, title: String(b.title), sortOrder: missions.length }];
     if (method === "DELETE") missions = missions.filter((x) => x.id !== q.missionId);

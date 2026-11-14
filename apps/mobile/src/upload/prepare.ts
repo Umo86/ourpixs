@@ -75,3 +75,24 @@ export async function prepareVideoThumb(uri: string): Promise<Rendition | null> 
 export function sizeOf(uri: string): number {
   return fileSize(uri);
 }
+
+/**
+ * The video's length in whole seconds (the API requires `durationS` for videos). Uses the picker's value when it has
+ * one; otherwise loads the file into a player and reads the duration. Null if it can't be read.
+ */
+export async function videoDurationS(uri: string, known?: number | null): Promise<number | null> {
+  if (known != null && known > 0) return Math.round(known);
+  if (Platform.OS === "web") return null;
+  const player = createVideoPlayer(uri);
+  try {
+    return await new Promise<number | null>((resolve) => {
+      const done = (v: number | null) => { clearTimeout(timer); sub.remove(); resolve(v); };
+      const timer = setTimeout(() => done(player.duration > 0 ? Math.round(player.duration) : null), 4000);
+      const sub = player.addListener("sourceLoad", (e) => done(e.duration > 0 ? Math.round(e.duration) : null));
+    });
+  } catch {
+    return null;
+  } finally {
+    player.release();
+  }
+}

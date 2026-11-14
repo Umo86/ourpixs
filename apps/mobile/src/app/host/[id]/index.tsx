@@ -16,7 +16,7 @@ import { useOccasion } from "@/host/OccasionContext";
 import { useI18n } from "@/i18n";
 import { formatNumber } from "@/lib/format";
 import { DownloadLockedError, PermissionDeniedError, saveToCameraRoll } from "@/lib/saveMedia";
-import { accessNoticeKey } from "@/components/PlanStatus";
+import { accessNoticeKey, packageLine } from "@/components/PackageStatus";
 import { onUploadCompleted } from "@/upload/queue";
 import { colors, radius } from "@/theme";
 
@@ -167,11 +167,11 @@ export default function Album() {
   };
 
   const save = async (list: MediaItem[]) => {
-    // Downloads follow the account: locked during the trial and on past-due events. Neutral message, no purchase prompt.
-    if (occasion?.access && !occasion.access.canDownload) return Alert.alert(t("account.downloadsLockedEvent"));
+    // Downloads follow the event package (not before it's paid). Neutral message, no purchase prompt (App Store 3.1.1).
+    if (occasion?.access && !occasion.access.canDownload) return Alert.alert(t("errors.paymentRequired"));
     setBusy(true);
     try {
-      const n = await saveToCameraRoll(list);
+      const n = await saveToCameraRoll(list, async (it) => (await hostApi.downloadUrl(id, it.id)).url);
       Alert.alert(n === 1 ? t("album.saved") : t("album.savedN", { n }));
       setSelected(new Set());
     } catch (e) {
@@ -180,7 +180,7 @@ export default function Album() {
           { text: t("common.cancel"), style: "cancel" },
           { text: t("errors.openSettings"), onPress: () => void Linking.openSettings() },
         ]);
-      } else if (e instanceof DownloadLockedError) Alert.alert(t("account.downloadsLockedEvent"));
+      } else if (e instanceof DownloadLockedError) Alert.alert(t("errors.paymentRequired"));
       else Alert.alert(t("errors.generic"));
     } finally {
       setBusy(false);
@@ -219,7 +219,8 @@ export default function Album() {
       <Heading size="md" accent={t("album.headingAccent")}>
         {formatNumber((stats?.photos ?? 0) + (stats?.videos ?? 0), locale)}
       </Heading>
-      {accessKey ? <Notice icon={occasion?.access.readOnly ? "lock" : "sparkles"} text={t(accessKey)} /> : null}
+      {occasion ? <Txt variant="small" weight="bold" muted>{packageLine(occasion, t, locale).label}</Txt> : null}
+      {accessKey ? <Notice icon={occasion?.access.readOnly ? "lock" : "sparkles"} text={t(accessKey, { n: occasion?.package?.testUploadLimit ?? 20 })} /> : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
         {filters.map((f) => (
           <Chip key={f.key} label={f.label} selected={filter === f.key} onPress={() => setFilter(f.key)} />

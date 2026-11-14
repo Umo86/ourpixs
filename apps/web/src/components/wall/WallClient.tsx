@@ -5,41 +5,54 @@ import type { MediaItem } from "@/lib/api-types";
 
 type Props = {
   slug: string; wallKey: string; title: string; qr: string; shortUrl: string;
-  initial: MediaItem[]; initialStats: { photos: number; guests: number };
+  initial: MediaItem[]; initialCursor: string | null; initialStats: { photos: number; guests: number };
   brandName: string | null; logoUrl: string | null; accent: string;
   labels: { shareYours: string; shareYoursAccent: string; scan: string; stats: string; justNow: string; by: string; empty: string; fullscreen: string };
 };
 
 const POLL_MS = 5000;
 const SLIDE_MS = 7000;
+/** A video stays on screen until it ends, but never longer than this (videos are ≤ 60 s by default). */
+const MAX_VIDEO_MS = 90_000;
 const MAX = 200;
 
-/** Full-screen live slideshow: newest shots jump the queue, crossfade between slides, QR corner to join. */
-export function WallClient({ slug, wallKey, title, qr, shortUrl, initial, initialStats, brandName, logoUrl, accent, labels }: Props) {
-  const [items, setItems] = useState(initial);
+/** Only finished items: the server sends ready items only, but never show anything without its clean copy. */
+const showable = (m: MediaItem) => m.processing !== "pending" && m.processing !== "failed" && (m.kind === "video" ? !!m.playbackUrl : !!m.displayUrl);
+
+/**
+ * Full-screen live slideshow (the host's venue screen): newest shots jump the queue, crossfade between slides, QR corner
+ * to join. Clean compressed copies only; videos play the 1080p copy muted and hold the slide until they end.
+ * Polls with the server's `cursor` (when items became READY), so a video that finishes transcoding later still arrives.
+ */
+export function WallClient({ slug, wallKey, title, qr, shortUrl, initial, initialCursor, initialStats, brandName, logoUrl, accent, labels }: Props) {
+  const [items, setItems] = useState(() => initial.filter(showable));
   const [stats, setStats] = useState(initialStats);
-  const [current, setCurrent] = useState<MediaItem | null>(initial[0] ?? null);
+  const [current, setCurrent] = useState<MediaItem | null>(() => initial.find(showable) ?? null);
   const [previous, setPrevious] = useState<MediaItem | null>(null);
   const [fade, setFade] = useState(false);
   const fresh = useRef<string[]>([]);
   const cursor = useRef(0);
   const itemsRef = useRef(items);
   itemsRef.current = items;
+  const cursorRef = useRef(initialCursor);
+  /** While a video plays, the slideshow waits until this time (or until the video ends). */
+  const holdUntil = useRef(0);
 
-  // Poll for new uploads.
+  // Poll for items that became ready since the last cursor.
   useEffect(() => {
     const id = setInterval(async () => {
-      const newest = itemsRef.current[0]?.createdAt;
       const qs = new URLSearchParams({ k: wallKey });
-      if (newest) qs.set("after", newest);
+      if (cursorRef.current) qs.set("since", cursorRef.current);
       try {
         const r = await fetch(`/api/v1/wall/${slug}?${qs}`, { cache: "no-store" });
         if (!r.ok) return;
-        const data = (await r.json()) as { items: MediaItem[]; stats: { photos: number; guests: number } };
+        const data = (await r.json()) as { items: MediaItem[]; cursor: string | null; stats: { photos: number; guests: number } };
         setStats(data.stats);
-        if (data.items.length) {
+        if (data.cursor) cursorRef.current = data.cursor;
+        const ready = data.items.filter(showable);
+        if (ready.length) {
           setItems((prev) => {
-            const add = data.items.filter((i) => !prev.some((p) => p.id === i.id));
+            const add = ready.filter((i) => !prev.some((p) => p.id === i.id));
             fresh.current.push(...add.map((a) => a.id).reverse());
             return [...add, ...prev].slice(0, MAX);
           });
@@ -52,6 +65,7 @@ export function WallClient({ slug, wallKey, title, qr, shortUrl, initial, initia
   // Slideshow: fresh uploads first, then cycle through everything.
   useEffect(() => {
     const id = setInterval(() => {
+      if (Date.now() < holdUntil.current) return;
       const list = itemsRef.current;
       if (!list.length) return;
       let next: MediaItem | undefined;
@@ -61,13 +75,16 @@ export function WallClient({ slug, wallKey, title, qr, shortUrl, initial, initia
         next = list[cursor.current];
       }
       if (!next) return;
-      const img = new Image();
-      img.src = next.displayUrl || "";
       const go = () => {
         setCurrent((c) => { setPrevious(c); return next!; });
         setFade(false);
         requestAnimationFrame(() => requestAnimationFrame(() => setFade(true)));
       };
+      // Preload the photo (or the video's poster) so the crossfade never shows a half-loaded image.
+      const src = next.displayUrl || next.thumbUrl;
+      if (!src) { go(); return; }
+      const img = new Image();
+      img.src = src;
       img.onload = go;
       img.onerror = go;
     }, SLIDE_MS);
@@ -75,6 +92,10 @@ export function WallClient({ slug, wallKey, title, qr, shortUrl, initial, initia
   }, []);
 
   useEffect(() => { if (!current && items[0]) setCurrent(items[0]); }, [items, current]);
+  // A video holds its slide until it ends (onEnded clears the hold), capped for safety.
+  useEffect(() => {
+    holdUntil.current = current?.kind === "video" ? Date.now() + Math.min(MAX_VIDEO_MS, Math.max(SLIDE_MS, ((current.durationS ?? 0) + 2) * 1000)) : 0;
+  }, [current]);
 
   const tiles = items.filter((i) => i.id !== current?.id).slice(0, 5);
   const statLine = labels.stats.replace("{photos}", stats.photos.toLocaleString()).replace("{guests}", stats.guests.toLocaleString());
@@ -87,7 +108,12 @@ export function WallClient({ slug, wallKey, title, qr, shortUrl, initial, initia
           // eslint-disable-next-line @next/next/no-img-element
           <img key={`p-${previous.id}`} src={previous.displayUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
         ) : null}
-        {current?.displayUrl ? (
+        {current?.kind === "video" && current.playbackUrl ? (
+          <video key={`c-${current.id}`} src={current.playbackUrl} poster={current.displayUrl ?? undefined} autoPlay muted playsInline
+            onEnded={() => { holdUntil.current = 0; }} onError={() => { holdUntil.current = 0; }}
+            aria-label={current.guestName ? labels.by.replace("{name}", current.guestName) : undefined}
+            className={`absolute inset-0 h-full w-full bg-black object-contain transition-opacity duration-[1200ms] ${fade || !previous ? "opacity-100" : "opacity-0"}`} />
+        ) : current?.displayUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img key={`c-${current.id}`} src={current.displayUrl} alt={current.guestName ? labels.by.replace("{name}", current.guestName) : ""}
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1200ms] ${fade || !previous ? "opacity-100" : "opacity-0"}`} />

@@ -569,5 +569,28 @@
   "download": "Download everything",
   "testBanner": "Test mode: only you and your co-hosts can upload ({used} of {limit}). Guests see “opens soon” until you pay and the gallery opens.",
   "cohostPay": "The event owner can pay to open the gallery."
+ },
+ "cards": {
+  "instruction": "Scan to add your photos and videos",
+  "sub": "No app needed",
+  "pdfTitle": "Print-ready PDF cards",
+  "pdfLead": "One card per page with your names, the date, the QR code and the short link, in the design above. Send it to a print shop or print at home.",
+  "a6": "A6 cards (105 × 148 mm)",
+  "a5": "A5 cards (148 × 210 mm)",
+  "a6Each": "A6, one card per day",
+  "a5Each": "A5, one card per day",
+  "otherLang": "In {lang}:",
+  "langName": {
+   "en": "English",
+   "tr": "Turkish"
+  },
+  "marksOn": "Bleed and crop marks: on",
+  "marksOff": "Bleed and crop marks: off",
+  "pdfHint": "Print at 100% (actual size). Turn on bleed and crop marks if your print shop asks for them."
+ },
+ "marketing": {
+  "title": "Email preferences",
+  "optIn": "Send me offers and news from {brand}.",
+  "optInHint": "Occasional emails about new features and offers. Off unless you turn it on, and you can unsubscribe any time."
  }
 }

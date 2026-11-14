@@ -14,6 +14,15 @@ import { Notice, ProgressBar } from "./States";
 import { Heading, Txt } from "./Text";
 
 function statusLabel(t: ReturnType<typeof useI18n>["t"], i: QueueItem) {
+  if (i.status === "failed") {
+    switch (i.error) {
+      case "video_too_long": return t("errors.videoTooLong");
+      case "video_duration_required": return t("errors.videoDuration");
+      case "test_limit": return t("errors.testLimit");
+      case "upload_closed": return t("errors.uploadClosed");
+      case "not_open": return t("errors.notOpen");
+    }
+  }
   switch (i.status) {
     case "queued": return t("upload.queued");
     case "preparing": return t("upload.preparing");
@@ -27,8 +36,10 @@ function statusLabel(t: ReturnType<typeof useI18n>["t"], i: QueueItem) {
  * Upload screen body shared by host and guest: pick from library, take photos, and watch the queue.
  * Moments/days are optional taggers (guests).
  */
-export function UploadPanel({ target, tone, body, moments = [], days = [], shotsLeft, disabledReason, missionId, onDisposableShot }: {
+export function UploadPanel({ target, tone, body, moments = [], days = [], shotsLeft, disabledReason, missionId, onDisposableShot, maxVideoSeconds = 60 }: {
   target: UploadTarget;
+  /** Longest video for this event (seconds, from the API); longer videos are stopped here with a friendly message. */
+  maxVideoSeconds?: number;
   tone: Tone;
   body: string;
   moments?: string[];
@@ -48,16 +59,16 @@ export function UploadPanel({ target, tone, body, moments = [], days = [], shots
   const extras: UploadExtras = { momentTag: moment ?? undefined, dayId: dayId ?? undefined, missionId };
 
   const addAssets = (assets: PickedAsset[], fromDisposable = false) => {
-    const ok: PickedAsset[] = [];
-    for (const a of assets) {
-      ok.push(a);
-    }
-    if (ok.length) enqueue(target, ok, { ...extras, fromDisposable: fromDisposable || undefined });
+    // Videos with a known length over the limit are stopped before uploading (the server checks again).
+    const tooLong = assets.filter((a) => a.kind === "video" && a.durationS != null && a.durationS > maxVideoSeconds + 1);
+    const ok = assets.filter((a) => !tooLong.includes(a));
+    if (tooLong.length) Alert.alert(t("upload.videoTooLongTitle"), t("upload.videoTooLongBody", { n: maxVideoSeconds, count: tooLong.length }));
+    if (ok.length) enqueue(target, ok, { ...extras, fromDisposable: fromDisposable || undefined }, maxVideoSeconds);
   };
 
   const pick = async () => {
     try {
-      const assets = await pickFromLibrary({ allowVideo: true });
+      const assets = await pickFromLibrary({ allowVideo: true, maxVideoSeconds });
       addAssets(assets);
     } catch {
       Alert.alert(t("errors.permissionPhotos"), undefined, [

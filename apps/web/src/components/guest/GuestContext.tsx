@@ -14,6 +14,8 @@ export type GuestCtx = {
 type Full = GuestCtx & { uploader: Uploader; lockedDayId: string | null; api: (p: string) => string };
 
 const Ctx = createContext<Full | null>(null);
+export const uploadCountKey = (slug: string) => `op_up_${slug}`;
+export const UPLOAD_COUNT_EVENT = "op-upload-count";
 const uploaders = new Map<string, Uploader>();
 
 export function GuestProvider({ value, children }: { value: GuestCtx; children: ReactNode }) {
@@ -44,6 +46,15 @@ export function GuestProvider({ value, children }: { value: GuestCtx; children: 
   useEffect(() => {
     if (value.guest) void uploader.restore();
   }, [uploader, value.guest]);
+
+  // Successful uploads on this device (any screen), for the "email me the photos" card after the 3rd one.
+  useEffect(() => uploader.onDone(() => {
+    try {
+      const key = uploadCountKey(value.slug);
+      localStorage.setItem(key, String(Number(localStorage.getItem(key) || 0) + 1));
+      window.dispatchEvent(new Event(UPLOAD_COUNT_EVENT));
+    } catch { /* private mode */ }
+  }), [uploader, value.slug]);
 
   const full = useMemo<Full>(() => ({ ...value, uploader, lockedDayId, api: (p: string) => `/api/v1/g/${value.slug}${p}` }), [value, uploader, lockedDayId]);
   return <Ctx.Provider value={full}>{children}</Ctx.Provider>;

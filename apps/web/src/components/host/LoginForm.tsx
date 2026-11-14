@@ -5,6 +5,7 @@ import { Field } from "@/components/app/Field";
 import { Notice } from "@/components/app/Notice";
 import { useLocale, useT } from "@/i18n/client";
 import { api, errorMessage } from "@/lib/client/api";
+import { BRANDS } from "@/lib/config";
 
 export function LoginForm({ next }: { next: string }) {
   const t = useT("host");
@@ -16,6 +17,8 @@ export function LoginForm({ next }: { next: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  // Separate, unticked opt-in; recorded only once the code is verified.
+  const [marketing, setMarketing] = useState(false);
   const codeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -46,7 +49,7 @@ export function LoginForm({ next }: { next: string }) {
     setBusy(true);
     setError(null);
     try {
-      await api("/api/v1/auth/verify", { body: { email, code } });
+      await api("/api/v1/auth/verify", { body: { email, code, ...(marketing ? { marketingConsent: true, locale } : {}) } });
       window.location.assign(next);
     } catch (err) {
       setError(errorMessage(t, err));
@@ -60,6 +63,10 @@ export function LoginForm({ next }: { next: string }) {
         <h2 className="m-0 text-2xl font-extrabold tracking-tight">{t("login.emailHeading")}</h2>
         <Field id="email" type="email" required autoComplete="email" inputMode="email" label={t("login.email")} placeholder={t("login.emailPlaceholder")}
           value={email} onChange={(e) => setEmail(e.target.value)} />
+        <label className="flex min-h-11 cursor-pointer items-start gap-3 text-[15px] leading-snug text-text-2">
+          <input type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} className="mt-0.5 h-5 w-5 flex-none accent-[#2347E0]" />
+          <span>{t("marketing.optIn", { brand: BRANDS[brand].name })}</span>
+        </label>
         {error ? <Notice tone="error">{error}</Notice> : null}
         <Button type="submit" size="lg" disabled={busy || !email}>{busy ? t("login.sending") : t("login.sendCode")}</Button>
         <p className="m-0 text-sm text-muted">{t("login.noPassword")}</p>

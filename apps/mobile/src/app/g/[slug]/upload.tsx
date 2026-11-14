@@ -30,6 +30,7 @@ export default function GuestUpload() {
           shotsLeft={shotsLeft}
           missionId={missionId}
           onDisposableShot={consumeShot}
+          maxVideoSeconds={occasion.videoMaxSeconds ?? 60}
           disabledReason={guestUploadsClosed(occasion) ? t("upload.closed") : null}
         />
       )}

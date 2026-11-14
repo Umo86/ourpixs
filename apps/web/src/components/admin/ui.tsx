@@ -113,9 +113,10 @@ export function Pagination({ path, params, page, hasNext, param = "page", labels
 const inputCls = "min-h-11 w-full rounded-full border-[1.5px] border-[#D5D8E2] bg-white px-4 text-[15px] text-ink outline-none focus-visible:border-sky focus-visible:ring-2 focus-visible:ring-sky";
 
 /** GET filter form: a search box and optional selects. Works without JavaScript. */
-export function FilterBar({ path, q, searchLabel, searchPlaceholder, selects = [], labels, hidden }: {
+export function FilterBar({ path, q, searchLabel, searchPlaceholder, selects = [], dates = [], labels, hidden }: {
   path: string; q?: string; searchLabel?: string; searchPlaceholder?: string; hidden?: Record<string, string>;
   selects?: { name: string; label: string; value: string; options: { value: string; label: string }[] }[];
+  dates?: { name: string; label: string; value: string }[];
   labels: { apply: string; clear: string };
 }) {
   return (
@@ -133,6 +134,12 @@ export function FilterBar({ path, q, searchLabel, searchPlaceholder, selects = [
           <select name={s.name} defaultValue={s.value} className={`${inputCls} appearance-auto`}>
             {s.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
+        </label>
+      ))}
+      {dates.map((d) => (
+        <label key={d.name} className="flex min-w-[150px] flex-1 flex-col gap-1.5">
+          <span className="text-[13px] font-semibold text-text-2">{d.label}</span>
+          <input type="date" name={d.name} defaultValue={d.value} className={inputCls} />
         </label>
       ))}
       <div className="flex gap-2">

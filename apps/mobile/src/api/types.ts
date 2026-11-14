@@ -3,30 +3,40 @@ import type { Brand, Locale, OccasionType } from "@/config";
 
 export type Host = { id: string; email: string; name: string | null; locale: Locale; brand: Brand };
 
-export type SubscriptionStatus = "none" | "trialing" | "active" | "past_due" | "cancelled" | "expired";
+/**
+ * Effective event package state (one payment per event, made on the website; the app never sells it).
+ * setup → paid (gallery not open yet) → live (opensAt ≤ now < closesAt) → ended → expired (files deleted), or refunded.
+ */
+export type PackageStatus = "setup" | "paid" | "live" | "ended" | "expired" | "refunded";
 
-/** Account subscription, returned by GET /api/v1/me. */
-export type Subscription = {
-  status: SubscriptionStatus;
-  interval: "month" | "year" | null;
-  trialEndsAt: string | null;
-  currentPeriodEnd: string | null;
-  cancelAtPeriodEnd: boolean;
-  /** When read-only events are deleted (trial ended unpaid: 30 days; cancelled: 90 days). */
-  deleteAfter: string | null;
-  canCreateEvents: boolean;
-  canDownload: boolean;
-  readOnly: boolean;
-  showUpgradePrompt: boolean;
-  daysLeft: number | null;
-};
-
-/** What the host can do with one event right now. */
+/** What the host can do with one event right now (derived from the event package; server-enforced). */
 export type OccasionAccess = {
   canUpload: boolean;
   canDownload: boolean;
   readOnly: boolean;
-  reason: "trial" | "trial_ended" | "cancelled" | "past_due" | null;
+  reason: "setup" | "not_open" | "ended" | "expired" | "refunded" | "suspended" | "locked" | null;
+};
+
+/** The event package as shown to members. The app shows status and dates only: never a price or a pay button. */
+export type EventPackage = {
+  status: PackageStatus;
+  /** Present in the API; the store builds never display it. */
+  pricePence: number;
+  paidAt: string | null;
+  comped: boolean;
+  opensAt: string | null;
+  closesAt: string | null;
+  timeZone: string;
+  deleteAfter: string | null;
+  testMode: boolean;
+  testUploadLimit: number;
+  canEditWindow: boolean;
+  canEndEarly: boolean;
+  canPay: boolean;
+  windowDays: number;
+  /** Longest video in seconds (default 60). */
+  videoMaxSeconds?: number;
+  daysLeft: number | null;
 };
 
 export type OccasionSummary = {
@@ -40,6 +50,12 @@ export type OccasionSummary = {
   mediaCount: number;
   guestCount: number;
   role: "owner" | "cohost";
+  packageStatus: PackageStatus;
+  opensAt: string | null;
+  closesAt: string | null;
+  deleteAfter: string | null;
+  testMode: boolean;
+  timeZone: string;
 };
 
 export type OccasionDay = { id: string; name: string; date: string | null; sortOrder: number };
@@ -63,6 +79,8 @@ export type Occasion = OccasionSummary & {
   guestUrl: string;
   wallUrl: string;
   access: OccasionAccess;
+  vanitySlug?: string | null;
+  package: EventPackage;
 };
 
 export type Stats = { guests: number; photos: number; videos: number; messages: number; bytes: number; pendingApproval: number };
@@ -85,12 +103,19 @@ export type PublicOccasion = {
   voiceGuestbook: boolean;
   /** Upload window (host schedule). */
   uploadOpen: boolean;
-  /** False while the host's account can't accept uploads (read-only events). */
+  /** True only while the gallery is live. */
   uploadsOpen: boolean;
-  /** False while the host's account has downloads locked (free trial / unpaid). */
+  /** False when the event's originals can't be downloaded (not paid, expired, refunded). */
   downloadsOpen?: boolean;
   revealMode: RevealMode;
   revealAt: string | null;
+  /** not_open → "opens on …"; live → join and upload; ended → look only; unavailable → refunded / deleted. */
+  galleryState?: "not_open" | "live" | "ended" | "unavailable";
+  opensAt?: string | null;
+  closesAt?: string | null;
+  timeZone?: string;
+  /** Longest video in seconds (checked before upload and on the server). */
+  videoMaxSeconds?: number;
 };
 
 export type MediaKind = "photo" | "video" | "voice";
@@ -98,11 +123,17 @@ export type MediaKind = "photo" | "video" | "voice";
 export type MediaItem = {
   id: string;
   kind: MediaKind;
+  /** Compressed copies (clean for hosts and a guest's own uploads, watermarked for other guests). Null while processing. */
   thumbUrl: string | null;
   displayUrl: string | null;
-  originalUrl?: string;
-  /** Videos only: playable URL, present even while downloads are locked. */
+  /** Always null in lists: originals only come from the download endpoints (signed links, ≤ 1 hour). */
+  originalUrl?: string | null;
+  /** Videos only: the transcoded MP4 (1080p clean for hosts). Null until processing is ready. */
   playbackUrl?: string | null;
+  /** "pending": copies are being made (show a processing tile); "failed": no preview (placeholder). */
+  processing?: "pending" | "ready" | "failed";
+  /** Guest feed: uploaded by this device. */
+  mine?: boolean;
   width: number | null;
   height: number | null;
   durationS: number | null;
@@ -184,6 +215,10 @@ export type OccasionCreate = {
   city?: string;
   theme?: string;
   days?: { name: string; date?: string }[];
+  /** IANA zone the gallery window is entered in (default Europe/London). */
+  timeZone?: string;
+  opensAt?: string;
+  closesAt?: string;
 };
 
 export type OccasionPatch = Partial<{
@@ -200,4 +235,8 @@ export type OccasionPatch = Partial<{
   uploadClosesAt: string | null;
   pin: string | null;
   disposableShots: number | null;
+  /** Gallery window (ISO instants), entered as local time in `timeZone`; closesAt − opensAt ≤ package.windowDays. */
+  opensAt: string;
+  closesAt: string;
+  timeZone: string;
 }>;

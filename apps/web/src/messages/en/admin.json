@@ -14,7 +14,9 @@
   "enquiries": "Enquiries",
   "audit": "Audit log",
   "system": "System",
-  "settings": "Settings"
+  "settings": "Settings",
+  "payments": "Payments",
+  "consents": "Consents"
  },
  "common": {
   "all": "All",
@@ -488,6 +490,55 @@
    "body2": "Uploads keep working. Have a look and decide whether to get in touch with the host.",
    "cta": "Open the event in admin",
    "footer": "Internal alert for admins (ADMIN_EMAILS). Sent once per event."
+  }
+ },
+ "payments": {
+  "title": "Every",
+  "accent": "payment",
+  "from": "From",
+  "to": "To",
+  "totals": "Totals for these filters",
+  "packagesPaid": "Event packages paid",
+  "guestsPaid": "Guest downloads paid",
+  "refunded": "Refunded",
+  "testCount": "Test-mode payments",
+  "testHint": "Stripe test keys; included in the totals",
+  "countHint": "{n} payment(s)",
+  "totalsNote": "Totals include test-mode payments: set Mode to Live to see real money only. Amounts include VAT.",
+  "date": "Date",
+  "event": "Event",
+  "payer": "Payer",
+  "seeAll": "All payments"
+ },
+ "consents": {
+  "title": "Marketing",
+  "accent": "consents",
+  "export": "Download CSV",
+  "search": "Search",
+  "searchPlaceholder": "Email address",
+  "brand": "Brand",
+  "statuses": {
+   "current": "Current",
+   "withdrawn": "Withdrawn"
+  },
+  "total": "Records",
+  "note": "Opt-in only. Each record keeps the exact wording shown, the language, where and when. Withdrawn records are kept for 2 years, then deleted. CSV downloads are written to the audit log.",
+  "empty": "No consents yet.",
+  "email": "Email",
+  "source": "Where",
+  "wording": "Wording shown",
+  "consentedAt": "Opted in",
+  "sources": {
+   "guest_upload": "Guest email card",
+   "host_signup": "Host sign-in",
+   "host_settings": "Host dashboard"
+  },
+  "via": {
+   "unsubscribe_link": "Unsubscribe link",
+   "list_unsubscribe": "One-click (mail app)",
+   "host_settings": "Host dashboard",
+   "admin": "Admin",
+   "account_deleted": "Account deleted"
   }
  }
 }

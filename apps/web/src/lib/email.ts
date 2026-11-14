@@ -2,6 +2,7 @@ import "server-only";
 import { BRANDS, CONTACT_EMAIL, MAIN_BRAND, brandBaseUrl, type Brand, type Locale } from "./config";
 import { makeT } from "@/i18n/shared";
 import { ApiError } from "./http";
+import { formatGBP } from "@/components/marketing/format";
 
 export function emailConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
@@ -23,7 +24,7 @@ function esc(s: string) {
 }
 
 /** Minimal brand-styled HTML email: Bodoni wordmark, big black headline, royal-blue button. */
-function layout(brand: Brand, opts: { heading: string; body: string[]; code?: string; cta?: { href: string; label: string }; footer: string }) {
+function layout(brand: Brand, opts: { heading: string; body: string[]; code?: string; cta?: { href: string; label: string }; footer: string; unsubscribe?: { href: string; label: string } }) {
   const name = BRANDS[brand].name;
   const paras = opts.body.map((p) => `<p style="margin:0 0 14px;font-size:16px;line-height:1.5;color:#3A3A3A">${esc(p)}</p>`).join("");
   const code = opts.code
@@ -38,16 +39,17 @@ function layout(brand: Brand, opts: { heading: string; body: string[]; code?: st
 <h1 style="margin:0 0 16px;font-size:30px;line-height:1.05;font-weight:900;letter-spacing:-1px">${esc(opts.heading)}</h1>
 ${paras}${code}${cta}
 <p style="margin:28px 0 0;font-size:12px;line-height:1.5;color:#6B6B6B">${esc(opts.footer)}</p>
+${opts.unsubscribe ? `<p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:#6B6B6B"><a href="${esc(opts.unsubscribe.href)}" style="color:#2347E0">${esc(opts.unsubscribe.label)}</a></p>` : ""}
 </div></body></html>`;
 }
 
-async function send(brand: Brand, to: string, subject: string, html: string, text: string) {
+async function send(brand: Brand, to: string, subject: string, html: string, text: string, headers?: Record<string, string>) {
   const key = process.env.RESEND_API_KEY;
   if (!key) throw new ApiError(503, "email_unavailable", "Email is not configured");
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: fromAddress(brand), to: [to], subject, html, text }),
+    body: JSON.stringify({ from: fromAddress(brand), to: [to], subject, html, text, ...(headers ? { headers } : {}) }),
   });
   if (!res.ok) {
     console.error("[email] resend failed", res.status, await res.text().catch(() => ""));
@@ -136,4 +138,35 @@ export async function sendGuestDownloadEmail(to: string, opts: { locale: Locale;
   const body = [t("email.purchase.body", vars), t("email.purchase.body2", vars)];
   const html = layout(opts.brand, { heading: t("email.purchase.heading", vars), body, cta: { href: opts.url, label: t("email.purchase.cta") }, footer: t("email.purchase.footer", vars) });
   await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${opts.url}\n\n${t("email.purchase.footer", vars)}`);
+}
+
+/**
+ * "The gallery has closed, here are the photos": one email to a guest who asked for it on the event page (guest_contacts).
+ * Transactional (requested by the guest): the gallery link and, when it can be bought, the event's own £3 offer. Nothing else.
+ */
+export async function sendGuestGalleryEmail(to: string, opts: { locale: Locale; brand: Brand; title: string; url: string; offerPence: number | null }) {
+  const t = makeT(opts.locale, "guest");
+  const price = opts.offerPence != null ? formatGBP(opts.offerPence) : "";
+  const vars = { brand: BRANDS[opts.brand].name, title: opts.title, price };
+  const subject = t("email.gallery.subject", vars);
+  const body = [t("email.gallery.body", vars), ...(opts.offerPence != null ? [t("email.gallery.offer", vars)] : []), t("email.gallery.body2", vars)];
+  const html = layout(opts.brand, { heading: t("email.gallery.heading", vars), body, cta: { href: opts.url, label: t("email.gallery.cta") }, footer: t("email.gallery.footer", vars) });
+  await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${opts.url}\n\n${t("email.gallery.footer", vars)}`);
+}
+
+/**
+ * Low-level sender for MARKETING email. Only src/lib/consent.ts → sendMarketingEmail() may call it: that checks for a
+ * current consent first and supplies the unsubscribe links. Every marketing email carries a visible unsubscribe link plus
+ * RFC 8058 one-click headers (List-Unsubscribe + List-Unsubscribe-Post), passed to Resend as custom headers.
+ */
+export async function sendMarketingRaw(to: string, opts: {
+  brand: Brand; subject: string; heading: string; body: string[]; cta?: { href: string; label: string }; footer: string;
+  unsubscribe: { pageUrl: string; oneClickUrl: string; label: string };
+}) {
+  const html = layout(opts.brand, { heading: opts.heading, body: opts.body, cta: opts.cta, footer: opts.footer, unsubscribe: { href: opts.unsubscribe.pageUrl, label: opts.unsubscribe.label } });
+  const text = [opts.subject, ...opts.body, opts.cta?.href ?? "", opts.footer, `${opts.unsubscribe.label}: ${opts.unsubscribe.pageUrl}`].filter(Boolean).join("\n\n");
+  await send(opts.brand, to, opts.subject, html, text, {
+    "List-Unsubscribe": `<${opts.unsubscribe.oneClickUrl}>, <mailto:${CONTACT_EMAIL}?subject=unsubscribe>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  });
 }

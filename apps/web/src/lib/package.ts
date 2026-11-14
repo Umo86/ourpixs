@@ -7,10 +7,12 @@ import { adminEmails } from "./admin";
 import { getSettings } from "./settings";
 import { addMonths } from "./window";
 import type { Access } from "./access-rules";
+import { sendGuestGalleryEmails } from "./consent";
 
 /**
  * Event package lifecycle side effects (the rules themselves are in access.ts):
- *  - the "gallery has ended" email, claimed once (cron daily, plus lazily whenever an ended event is touched);
+ *  - the "gallery has ended" email, claimed once (cron daily, plus lazily whenever an ended event is touched), and the
+ *    guests' "here are the photos" emails for guests who asked (src/lib/consent.ts);
  *  - ending a gallery early;
  *  - the fair-use flag and admin alert.
  */
@@ -66,7 +68,10 @@ export async function sendDueEndedEmails(opts: { ids?: string[]; max?: number } 
 export function touchEnded(o: Pick<OccasionRow, "id" | "endedEmailSentAt">, a: Access) {
   if (a.state !== "ended" || o.endedEmailSentAt) return;
   try {
-    after(() => sendDueEndedEmails({ ids: [o.id] }).catch((e) => console.error("[package] lazy ended email", e)));
+    after(async () => {
+      await sendDueEndedEmails({ ids: [o.id] }).catch((e) => console.error("[package] lazy ended email", e));
+      await sendGuestGalleryEmails({ occasionIds: [o.id] }).catch((e) => console.error("[package] lazy guest emails", e));
+    });
   } catch {
     // Outside a request scope (scripts): nothing to do.
   }
@@ -79,9 +84,13 @@ export async function endGalleryNow(o: OccasionRow) {
   await db.update(O).set({ closesAt: now, packageStatus: "ended", deleteAfter: addMonths(now, s.retentionMonths) })
     .where(and(eq(O.id, o.id), inArray(O.packageStatus, ["paid", "live"])));
   try {
-    after(() => sendDueEndedEmails({ ids: [o.id] }).catch((e) => console.error("[package] end-now email", e)));
+    after(async () => {
+      await sendDueEndedEmails({ ids: [o.id] }).catch((e) => console.error("[package] end-now email", e));
+      await sendGuestGalleryEmails({ occasionIds: [o.id] }).catch((e) => console.error("[package] end-now guest emails", e));
+    });
   } catch {
     await sendDueEndedEmails({ ids: [o.id] }).catch(() => {});
+    await sendGuestGalleryEmails({ occasionIds: [o.id] }).catch(() => {});
   }
 }
 

@@ -442,7 +442,7 @@
   },
   "legal": {
     "updated": "Son güncelleme: 14 Kasım 2026",
-    "review": "Etkinlik paketi için güncellendi · kontrol edilecek"
+    "review": "Güncellendi · kontrol edilecek"
   },
   "privacy": {
     "title": "Gizlilik",
@@ -460,7 +460,9 @@
         "h": "Hangi verileri topluyoruz",
         "list": [
           "Ev sahipleri: e-posta adresiniz, adınız, oluşturduğunuz etkinliklerin bilgileri (galeri tarihleri dahil) ve etkinlik paketlerine ait ödeme kayıtlarınız (tutar, tarih, durum). Kart bilgileriniz Stripe tarafından işlenir, bize ulaşmaz.",
-          "Misafirler: yazdığınız ad ile yüklediğiniz fotoğraf, video, sesli mesaj ve tepkiler.",
+          "Misafirler: yazdığınız ad ile yüklediğiniz fotoğraf, video, sesli mesaj ve tepkiler. E-posta adresiniz yalnızca vermeyi seçerseniz (aşağıya bakın). Yükleme yapmak için hiçbir zaman e-posta adresi gerekmez.",
+          "Fotoğrafları satın alan misafirler: ödeme sırasında Stripe'a verdiğiniz e-posta adresi, satın alma kaydı (tutar, tarih, durum, test ya da canlı), indirmenin hemen başlamasını kabul ettiğiniz zaman ve indirme bağlantınızın şifrelenmiş (hash) bir kopyası.",
+          "Pazarlama tercihleri: kampanya ve haberleri almak için bir kutuyu işaretlerseniz e-posta adresinizi, kabul ettiğiniz metnin aynısını, dili, kutuyu nerede işaretlediğinizi, tarih ve saati, IP adresinizin şifrelenmiş (hash) bir kopyasını, tarayıcı türünüzü ve abonelikten çıktığınız tarihi saklarız.",
           "Talepler: bizimle iletişime geçtiğinizde bize ilettiğiniz bilgiler.",
           "Teknik veriler: IP adresi, cihaz türü ve temel kullanım kayıtları. Hizmetin güvenli ve çalışır durumda kalması için kullanılır."
         ],
@@ -472,11 +474,43 @@
           "Birleşik Krallık GDPR'ının 6. maddesi uyarınca aşağıdaki hukuki dayanaklardan yararlanırız:"
         ],
         "list": [
-          "Sözleşme (m. 6(1)(b)): etkinlikleri oluşturmak ve yürütmek, yüklenenleri ev sahibinin seçtiği kişilere saklayıp göstermek, giriş kodları ve makbuzlar göndermek ve ödemeyi almak için.",
+          "Sözleşme (m. 6(1)(b)): etkinlikleri oluşturmak ve yürütmek, yüklenenleri ev sahibinin seçtiği kişilere saklayıp göstermek, giriş kodları ve makbuzlar göndermek, ödemeyi almak, misafirin satın aldığı indirmeyi sunmak ve misafirin istediği tek galeri e-postasını göndermek için.",
           "Meşru menfaat (m. 6(1)(f)): hizmetin güvenliğini sağlamak, kötüye kullanımı önlemek, sorunları gidermek ve hizmeti geliştirmek için. Misafirler açısından bu, katılmayı seçtiğiniz albümün yürütülmesini de kapsar. Bu menfaatleri haklarınızla dengeleriz.",
-          "Hukuki yükümlülük (m. 6(1)(c)): muhasebe ve vergi kayıtlarını tutmak ve yasal taleplere yanıt vermek için.",
-          "Açık rıza (m. 6(1)(a)): yalnızca ayrıca rızanızı istediğimizde; rızanızı dilediğiniz zaman geri alabilirsiniz."
-        ]
+          "Hukuki yükümlülük (m. 6(1)(c)): muhasebe ve vergi kayıtlarını ve pazarlama izni kayıtlarını tutmak ve yasal taleplere yanıt vermek için.",
+          "Açık rıza (m. 6(1)(a)) ve Gizlilik ve Elektronik İletişim Yönetmeliği (PECR): kampanya ve haberleri e-postayla göndermek için; yalnızca bunun için kutuyu işaretlediyseniz. Rızanızı dilediğiniz zaman geri alabilirsiniz; bu, daha önce gönderilenleri etkilemez."
+        ],
+        "review": true
+      },
+      {
+        "h": "Misafir olarak e-posta adresiniz",
+        "p": [
+          "Birkaç fotoğraf yükledikten sonra, etkinliğin fotoğraflarının sonradan size e-postayla gönderilmesini isteyip istemediğinizi sorabiliriz. Bu isteğe bağlıdır ve yükleme yapmak için hiçbir zaman gerekmez. E-posta adresinizi verirseniz onu tek bir iş için kullanırız: galeri kapandığında, galeri bağlantısını ve etkinlikte sunuluyorsa tüm fotoğraf ve videoları tam kalitede satın alma seçeneğini içeren tek bir e-posta. Bu e-postayı siz istediğiniz için gönderiyoruz; pazarlama değildir.",
+          "Adresi etkinlikle birlikte saklar, etkinliğin dosyaları silindiğinde (galeri kapandıktan {retentionMonths} ay sonra) ya da siz isterseniz daha önce sileriz."
+        ],
+        "review": true
+      },
+      {
+        "h": "Kampanya ve haberler (pazarlama)",
+        "p": [
+          "Kampanya ve haberleri yalnızca evet dediyseniz e-postayla göndeririz. Bu kutu diğer her şeyden ayrıdır, sizin yerinize asla işaretlenmez ve hayır demek hizmeti kullanmanıza hiçbir zaman engel olmaz. Misafirler bu kutuyu galeri e-postası sorusunun yanında, ev sahipleri ise giriş yaparken ve panellerinde görür.",
+          "Almayı bırakmak için: bu e-postaların herhangi birindeki abonelikten çık bağlantısını kullanın (tek tık yeterlidir), e-posta uygulamanızdaki abonelikten çık seçeneğini kullanın, ev sahibiyseniz panelinizden kapatın ya da {email} adresine yazın. Hemen durdururuz. Giriş kodları, makbuzlar ve indirme bağlantıları gibi gerekli e-postalar gelmeye devam eder.",
+          "Her iznin kaydını (metin, ne zaman ve nerede verildiği) izin geçerli olduğu sürece ve geri alındıktan sonra 2 yıl boyunca, izninizin olduğunu gösterebilmek için saklarız. Sonra sileriz."
+        ],
+        "review": true
+      },
+      {
+        "h": "Önizlemeler ve filigranlar",
+        "p": [
+          "Misafirler etkinliğin fotoğraf ve videolarını filigranlı (adımız ve etkinliğin adı), daha küçük önizlemeler olarak görür. Ev sahipleri, canlı slayt gösterisi ve kendi yüklemelerine bakan misafirler temiz kopyaları görür. Tam kaliteli orijinaller yalnızca ev sahiplerine ve onları satın alan misafirlere, bir saat içinde süresi dolan bağlantılarla (ve 30 gün geçerli bir e-posta indirme bağlantısıyla) verilir."
+        ],
+        "review": true
+      },
+      {
+        "h": "Misafir olarak fotoğrafları satın almak",
+        "p": [
+          "Misafirler bir etkinliğin tüm fotoğraf ve videolarını tam kalitede indirmek için {guestPrice} ödeyebilir. Ödemeyi ve makbuz için e-posta adresini Stripe alır; kart bilgilerini hiçbir zaman görmeyiz. Bu e-posta adresini, 30 gün geçerli indirme bağlantınızı göndermek için kullanırız. Satın alma, satın aldığınız telefon ya da bilgisayara bağlıdır; orada galeri de temiz önizlemelerle görünür."
+        ],
+        "review": true
       },
       {
         "h": "Otomatik görsel denetim",
@@ -496,26 +530,31 @@
           "Aşağıdaki sağlayıcılar, yalnızca hizmeti çalıştırmak için ve bizim adımıza veri işler:"
         ],
         "list": [
-          "Vercel: barındırma",
+          "Vercel: barındırma (Londra bölgesi)",
           "Neon: veritabanı (Londra)",
-          "Vercel Blob: fotoğraf, video ve ses depolama (Londra)",
+          "Cloudflare R2: fotoğraf, video ve ses depolama (Batı Avrupa). Geçiş yapana kadar medyayı Vercel Blob (Londra) saklar",
           "Resend: e-posta gönderimi",
-          "Stripe: ödemeler",
+          "Stripe: ödemeler (Stripe, ödeme verileri için ayrıca bağımsız veri sorumlusudur)",
           "OpenAI: otomatik görsel denetim"
-        ]
+        ],
+        "review": true
       },
       {
         "h": "Uluslararası aktarımlar",
         "p": [
-          "Veritabanımız ve medya depolamamız Londra'dadır. Ödeme, e-posta gönderimi ya da görsel denetim gibi alanlardaki bazı sağlayıcılar sınırlı verileri Birleşik Krallık dışında işleyebilir. Bu durumda yalnızca Birleşik Krallık yeterlilik düzenlemelerinin kapsadığı sağlayıcıları kullanırız ya da Birleşik Krallık Uluslararası Veri Aktarım Sözleşmesi (IDTA) veya AB standart sözleşme maddelerine ek Birleşik Krallık Eki gibi güvenceler uygularız."
-        ]
+          "Veritabanımız Londra'da, medya depolamamız Londra'da ya da Batı Avrupa'dadır. Ödeme, e-posta gönderimi ya da görsel denetim gibi alanlardaki bazı sağlayıcılar sınırlı verileri Birleşik Krallık dışında işleyebilir. Bu durumda yalnızca Birleşik Krallık yeterlilik düzenlemelerinin kapsadığı sağlayıcıları kullanırız ya da Birleşik Krallık Uluslararası Veri Aktarım Sözleşmesi (IDTA) veya AB standart sözleşme maddelerine ek Birleşik Krallık Eki gibi güvenceler uygularız."
+        ],
+        "review": true
       },
       {
         "h": "Ne kadar süre saklıyoruz",
         "list": [
           "Etkinlik fotoğrafları, videoları ve mesajları: etkinliğin galerisi açıkken ve kapandıktan sonraki {retentionMonths} ay boyunca saklanır, sonra silinir. Ev sahibine 30 gün ve 7 gün önce e-posta göndeririz. Ödemesi hiç yapılmayan bir etkinlikteki deneme yüklemeleri, ev sahibi etkinliği ya da hesabı silene kadar saklanır. Ev sahipleri bir etkinliği ya da tek tek yüklemeleri dilediği zaman silebilir.",
+          "Galeri e-postası için verilen misafir e-posta adresleri: etkinliğin dosyalarıyla birlikte (galeri kapandıktan {retentionMonths} ay sonra) silinir.",
+          "Misafir indirme bağlantıları: ödemeden 30 gün sonra, ödeme iade edilirse hemen çalışmaz olur.",
           "Hesap bilgileri: hesabınız açık olduğu sürece; hesabınızı sildiğinizde ya da talep üzerine silinir.",
-          "Ödeme kayıtları: Birleşik Krallık vergi ve muhasebe kuralları gereği bizim ve Stripe tarafından altı yıl saklanır. Stripe ayrıca kendi gizlilik politikası kapsamında bağımsız veri sorumlusu olarak kendi kayıtlarını tutar.",
+          "Ödeme kayıtları (etkinlik paketleri ve misafir satın almaları): Birleşik Krallık vergi ve muhasebe kuralları gereği bizim ve Stripe tarafından altı yıl saklanır. Stripe ayrıca kendi gizlilik politikası kapsamında bağımsız veri sorumlusu olarak kendi kayıtlarını tutar.",
+          "Pazarlama izni kayıtları: izniniz geçerli olduğu sürece ve geri aldıktan sonra 2 yıl boyunca saklanır, sonra silinir.",
           "Talepler: ilgili talebi sonuçlandırmak için gereken süre boyunca."
         ],
         "review": true
@@ -575,7 +614,8 @@
       {
         "h": "Hizmet",
         "p": [
-          "{brand}, ev sahibinin bir etkinlik sayfası ve QR kod oluşturmasını, misafirlerin de fotoğraf, video ve mesaj yükleyip görüntülemesini sağlar. Her etkinlik için bir kez, etkinlik paketiyle ödeme yapılır. Ev sahibi, ödemeden önce etkinliği ücretsiz olarak hazırlayabilir ve deneme modunda deneyebilir."
+          "{brand}, ev sahibinin bir etkinlik sayfası ve QR kod oluşturmasını, misafirlerin de fotoğraf, video ve mesaj yükleyip görüntülemesini sağlar. Her etkinlik için bir kez, etkinlik paketiyle ödeme yapılır. Ev sahibi, ödemeden önce etkinliği ücretsiz olarak hazırlayabilir ve deneme modunda deneyebilir.",
+          "Misafirler başkalarının fotoğraf ve videolarını daha küçük, filigranlı önizlemeler olarak görür. Ev sahipleri her şeyi tam kalitede alır. Misafirler kendi yüklemelerini her zaman indirebilir, geri kalan her şeyi de tam kalitede satın alabilir (bkz. Misafir indirmeleri)."
         ],
         "review": true
       },
@@ -607,16 +647,26 @@
           "Bir paket tek bir etkinliği kapsar: sınırsız misafir, fotoğraf ve video (adil kullanım koşuluyla), {windowDays} güne kadar canlı galeri ve ev sahibi için tüm orijinallerin indirilmesi.",
           "Galerinin ne zaman açılıp ne zaman kapanacağını, aralarında en fazla {windowDays} gün olacak şekilde siz seçersiniz. Tarihleri galeri açılana kadar değiştirebilir, istediğiniz zaman erkenden kapatabilirsiniz. Misafirler yalnızca galeri açıkken katılıp yükleme yapabilir.",
           "Ödemeden önce etkinliği hazırlayabilir, QR kartlarını yazdırabilir ve deneme modunda {testLimit} fotoğraf ya da videoya kadar kendiniz yükleyebilirsiniz. Etkinliğin ödemesi yapılıp galerisi açılana kadar misafirler katılamaz.",
-          "Misafirler bir etkinliğin tüm fotoğraf ve videolarını tam kalitede {guestPrice} karşılığında satın alabilir. Bu, misafirin yaptığı ayrı bir satın almadır.",
+          "Misafirler bir etkinliğin tüm fotoğraf ve videolarını tam kalitede {guestPrice} karşılığında satın alabilir. Bu, misafirin yaptığı ayrı bir satın almadır (bkz. Misafir indirmeleri).",
           "Fiyatı değiştirirsek yeni fiyat yalnızca değişiklikten sonra ödemesi yapılan etkinliklere uygulanır."
         ]
+      },
+      {
+        "h": "Misafir indirmeleri",
+        "list": [
+          "Misafir, Stripe aracılığıyla kart, Apple Pay ya da Google Pay ile bir kez {guestPrice} ödeyerek o etkinliğin tüm fotoğraf ve videolarını filigransız, tam kalitede alır: tek bir ZIP olarak (büyük etkinliklerde her gün için ayrı ZIP) ve ödemeden itibaren 30 gün çalışan, e-postayla gönderdiğimiz bir bağlantıyla.",
+          "İndirdiğiniz anda ev sahiplerinin galeride gösterdiği her şeyi kapsar; ödemeden sonra eklenen fotoğraflar da dahildir. Ev sahiplerinin gizlediği ya da kaldırdığı içerikler dahil değildir. Etkinliğin dosyaları silinirse ya da satın alma iade edilirse indirmeler sona erer.",
+          "Bu, hemen sunulan dijital içeriktir. Ödemeden önce, indirmenin hemen başlamasını istediğinizi ve bu durumda 2013 tarihli Tüketici Sözleşmeleri (Bilgilendirme, İptal ve Ek Ücretler) Yönetmeliği kapsamındaki {cancelDays} günlük cayma hakkınızı kaybettiğinizi anladığınızı bir kutuyu işaretleyerek onaylarsınız.",
+          "İndirme çalışmazsa ya da anlatıldığı gibi değilse {email} adresinden bize bildirin: 2015 tarihli Tüketici Hakları Yasası kapsamında haklarınız vardır; sorunu gideririz ya da ücretinizi iade ederiz. Tam iade, indirmelere erişimi sona erdirir."
+        ],
+        "review": true
       },
       {
         "h": "İptal ve iadeler",
         "list": [
           "Para iade sözümüz: fikrinizi değiştirirseniz galeriniz açılmadan önce istediğiniz zaman hesabınızdaki e-posta adresinden {email} adresine yazın; paketin tamamını Stripe aracılığıyla ilk ödeme yönteminize iade ederiz. Etkinlik bundan sonra salt okunur olur ve misafirler artık açamaz.",
           "Yasal cayma hakkınız: Birleşik Krallık'ta 2013 tarihli Tüketici Sözleşmeleri (Bilgilendirme, İptal ve Ek Ücretler) Yönetmeliği uyarınca ödemeden itibaren {cancelDays} gün içinde cayma hakkınız vardır. Galeri tarihlerini seçerek hizmetin galeri açıldığında başlamasını talep etmiş olursunuz; bu tarih o {cancelDays} günün içinde olabilir. Galeri açıldıktan sonra ama {cancelDays} gün dolmadan iptal ederseniz, ödediğiniz tutardan o ana kadar sunulan hizmetin orantılı bedeli düşülerek iade yapılır. Galeri kapandığında hizmetin tamamen sunulmuş olacağını ve cayma hakkının artık geçerli olmayacağını kabul edersiniz.",
-          "Misafirlerin satın aldıkları, ödemenin hemen ardından sunulan dijital içeriktir. Misafir, satın alarak içeriğe hemen erişmek istediğini ve indirme açıldığında cayma hakkını kaybedeceğini kabul eder.",
+          "Misafir indirmeleri, ödemenin hemen ardından sunulan dijital içeriktir. Misafir, ödemeden önce içeriğe hemen erişmek istediğini ve indirme açıldığında cayma hakkını kaybedeceğini onaylar. Bu, indirmenin kusurlu olması durumundaki haklarını etkilemez.",
           "İadeleri destek ekibimiz yapar. Bu bölüm, hizmetin kusurlu olması durumundaki haklarınızı etkilemez."
         ],
         "review": true
@@ -629,6 +679,13 @@
           "Ödemesi hiç yapılmayan bir etkinlikteki deneme yüklemeleri, etkinliği ya da hesabınızı silene kadar saklanır.",
           "Bir paket iade edilirse etkinlik salt okunur olur ve misafirler artık açamaz. Etkinliği dilediğiniz zaman silebilirsiniz.",
           "Kesintisiz hizmet garantisi veremeyiz; bu yüzden önemli içeriklerin kendi kopyalarını saklayın."
+        ],
+        "review": true
+      },
+      {
+        "h": "Misafirlere gönderilen e-postalar",
+        "p": [
+          "Bir misafir etkinlik sayfasında bize e-posta adresini verirse, galeri kapandığında ona galerinin bağlantısını içeren tek bir e-posta göndeririz. Kampanya ve haberleri yalnızca bunu kabul edenlere göndeririz ve bu e-postaların her birinde abonelikten çık bağlantısı bulunur. Ayrıntılar gizlilik politikamızdadır."
         ],
         "review": true
       },

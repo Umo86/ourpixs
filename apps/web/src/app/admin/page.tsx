@@ -32,7 +32,7 @@ export default async function AdminOverviewPage() {
           <StatTile label={t("overview.testPayments")} value={n(s.revenue.testCount)} hint={t("overview.testPaymentsHint")} />
           <StatTile label={t("overview.refunds")} value={n(s.revenue.refunded)} hint={s.revenue.duplicates ? t("overview.duplicates", { n: n(s.revenue.duplicates) }) : undefined} />
         </div>
-        <Card title={t("overview.recentPayments")} id="ov-payments">
+        <Card title={t("overview.recentPayments")} id="ov-payments" actions={<Link href="/admin/payments" className={linkCls}>{t("payments.seeAll")}</Link>}>
           {payments.length === 0 ? <Empty>{t("event.noPayments")}</Empty> : (
             <TableWrap label={t("overview.recentPayments")}>
               <thead>

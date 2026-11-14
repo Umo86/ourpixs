@@ -21,6 +21,7 @@ export default function HostUpload() {
           body={t("upload.hostBody")}
           disabledReason={occasion.access?.canUpload === false ? t("upload.hostReadOnly") : null}
           days={occasion.days.map((d) => ({ id: d.id, name: d.name }))}
+          maxVideoSeconds={occasion.package?.videoMaxSeconds ?? 60}
         />
       )}
     </Screen>

@@ -1,31 +1,50 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Download, Sparkles, X } from "lucide-react";
 import { useLocale, useT } from "@/i18n/client";
 import { api, errorMessage } from "@/lib/client/api";
 import { formatDate } from "@/lib/client/format";
 import { formatGBP } from "@/components/marketing/format";
 import { useGuest } from "./GuestContext";
+import { CANCELLATION_DAYS } from "@/lib/config";
 
-/** Starts Stripe Checkout for "download everything" and leaves for it. */
+/**
+ * Starts Stripe Checkout for "download everything" and leaves for it. The guest must first tick the immediate-supply
+ * box (digital content: they ask for the download now and lose the 14-day cancellation right); the server refuses without it.
+ */
 function useBuy() {
   const t = useT("guest");
+  const { locale } = useLocale();
   const { api: url } = useGuest();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accepted, setAccepted] = useState(false);
   async function buy() {
+    if (!accepted) return;
     setBusy(true);
     setError(null);
     try {
-      const r = await api<{ url: string }>(url("/purchase"), { body: {} });
+      const r = await api<{ url: string }>(url("/purchase"), { body: { acceptImmediateSupply: true, locale } });
       window.location.assign(r.url);
     } catch (e) {
       setError(errorMessage(t, e));
       setBusy(false);
     }
   }
-  return { buy, busy, error };
+  return { buy, busy, error, accepted, setAccepted };
+}
+
+/** "Start my download now. I understand I lose my 14-day right to cancel." Unticked; required before Checkout. */
+function Waiver({ checked, onChange, tone }: { checked: boolean; onChange: (v: boolean) => void; tone: "royal" | "dark" }) {
+  const t = useT("guest");
+  const id = useId();
+  return (
+    <label htmlFor={id} className={`flex min-h-11 cursor-pointer items-start gap-3 text-[13px] leading-snug ${tone === "royal" ? "text-white" : "text-muted-dark"}`}>
+      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-0.5 h-5 w-5 flex-none accent-[#0A0A0A]" />
+      <span>{t("purchase.waiver", { days: CANCELLATION_DAYS })} <Link href="/terms" className="font-bold underline">{t("purchase.terms")}</Link></span>
+    </label>
+  );
 }
 
 const btn = "inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 font-extrabold no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky disabled:opacity-60";
@@ -38,7 +57,7 @@ export function PurchaseCard() {
   const t = useT("guest");
   const { locale } = useLocale();
   const { occasion: o, path } = useGuest();
-  const { buy, busy, error } = useBuy();
+  const { buy, busy, error, accepted, setAccepted } = useBuy();
   const g = o.guestDownload;
   if (g.purchased) {
     return (
@@ -57,8 +76,9 @@ export function PurchaseCard() {
       <span className="rotate-[-3deg] self-start rounded-full bg-white px-3 py-1.5 text-xs font-extrabold text-royal">{t("purchase.sticker")}</span>
       <p className="m-0 text-2xl font-black leading-tight tracking-tight">{t("purchase.title", { price: formatGBP(g.pricePence) })}</p>
       <p className="m-0 text-[15px] text-[#E3E8FF]">{t("purchase.body")}</p>
+      <Waiver checked={accepted} onChange={setAccepted} tone="royal" />
       {error ? <p role="alert" className="m-0 rounded-2xl bg-white/15 p-3 text-sm">{error}</p> : null}
-      <button type="button" onClick={buy} disabled={busy} className={`${btn} self-start bg-white text-royal`}>
+      <button type="button" onClick={buy} disabled={busy || !accepted} className={`${btn} self-start bg-white text-royal`}>
         <Sparkles size={18} aria-hidden />{busy ? t("purchase.opening") : t("purchase.cta", { price: formatGBP(g.pricePence) })}
       </button>
     </div>
@@ -69,7 +89,7 @@ export function PurchaseCard() {
 export function PurchaseDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useT("guest");
   const { occasion: o } = useGuest();
-  const { buy, busy, error } = useBuy();
+  const { buy, busy, error, accepted, setAccepted } = useBuy();
   const ref = useRef<HTMLDivElement>(null);
   const g = o.guestDownload;
   useEffect(() => {
@@ -91,9 +111,12 @@ export function PurchaseDialog({ open, onClose }: { open: boolean; onClose: () =
         <p className="m-0 text-muted-dark">{t("purchase.dialogBody")}</p>
         {error ? <p role="alert" className="m-0 rounded-2xl bg-surface-2 p-3 text-sm">{error}</p> : null}
         {g.available ? (
-          <button type="button" onClick={buy} disabled={busy} className={`${btn} bg-royal text-white hover:bg-royal-dark`}>
-            {busy ? t("purchase.opening") : t("purchase.cta", { price: formatGBP(g.pricePence) })}
-          </button>
+          <>
+            <Waiver checked={accepted} onChange={setAccepted} tone="dark" />
+            <button type="button" onClick={buy} disabled={busy || !accepted} className={`${btn} bg-royal text-white hover:bg-royal-dark`}>
+              {busy ? t("purchase.opening") : t("purchase.cta", { price: formatGBP(g.pricePence) })}
+            </button>
+          </>
         ) : (
           <p className="m-0 rounded-2xl bg-surface-2 p-4 text-sm font-bold">{g.payments ? t("purchase.unavailable") : t("purchase.comingSoon")}</p>
         )}

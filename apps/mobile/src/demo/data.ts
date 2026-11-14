@@ -4,7 +4,7 @@
  */
 import { Asset } from "expo-asset";
 
-import type { GuestMission, Host, MediaItem, Message, Occasion, OccasionAccess, OccasionSummary, PublicOccasion, ShareLink, Stats, Subscription } from "@/api/types";
+import type { EventPackage, GuestMission, Host, MediaItem, Message, Occasion, OccasionAccess, OccasionSummary, PublicOccasion, ShareLink, Stats } from "@/api/types";
 
 const IMAGES = {
   wedding: require("../../assets/demo/wedding.jpg"),
@@ -39,17 +39,30 @@ const days = [
 
 export const demoAccess: OccasionAccess = { canUpload: true, canDownload: true, readOnly: false, reason: null };
 
-/** Demo account: an active yearly plan, so every feature works in screenshots. */
-export const demoSubscription: Subscription = {
-  status: "active", interval: "year", trialEndsAt: null, currentPeriodEnd: "2027-11-11T00:00:00.000Z", cancelAtPeriodEnd: false,
-  deleteAfter: null, canCreateEvents: true, canDownload: true, readOnly: false, showUpgradePrompt: false, daysLeft: null,
-};
+/** Demo events: one live wedding gallery (every feature works in screenshots), one ended, one still in setup. */
+const hours = (h: number) => new Date(now + h * 3600_000).toISOString();
+const LIVE = { packageStatus: "live" as const, opensAt: hours(-20), closesAt: hours(24 * 5), deleteAfter: hours(24 * 370), testMode: false, timeZone: "Europe/London" };
+
+export function demoPackage(s: Pick<OccasionSummary, "packageStatus" | "opensAt" | "closesAt" | "deleteAfter" | "testMode" | "timeZone">): EventPackage {
+  return {
+    status: s.packageStatus, pricePence: 0, paidAt: s.packageStatus === "setup" ? null : hours(-24 * 30), comped: false,
+    opensAt: s.opensAt, closesAt: s.closesAt, timeZone: s.timeZone, deleteAfter: s.deleteAfter, testMode: s.testMode, testUploadLimit: 20,
+    canEditWindow: s.packageStatus === "setup" || s.packageStatus === "paid", canEndEarly: s.packageStatus === "live", canPay: false,
+    windowDays: 7, videoMaxSeconds: 60, daysLeft: 5,
+  };
+}
 
 export function demoOccasions(): OccasionSummary[] {
   return [
-    { id: DEMO_ID, slug: DEMO_SLUG, type: "dugun", title: "Elif & Can's Wedding", startsOn: "2027-06-14", access: demoAccess, coverUrl: demoImage("wedding"), mediaCount: 1284, guestCount: 212, role: "owner" },
-    { id: "demo-henna", slug: "elif-kina", type: "kina", title: "Elif's Henna Night", startsOn: "2027-06-12", access: demoAccess, coverUrl: demoImage("henna"), mediaCount: 342, guestCount: 64, role: "owner" },
-    { id: "demo-bday", slug: "deniz-30", type: "dogum_gunu", title: "Deniz's Birthday", startsOn: "2026-12-05", access: demoAccess, coverUrl: demoImage("birthday"), mediaCount: 58, guestCount: 23, role: "cohost" },
+    { id: DEMO_ID, slug: DEMO_SLUG, type: "dugun", title: "Elif & Can's Wedding", startsOn: "2027-06-14", access: demoAccess, coverUrl: demoImage("wedding"), mediaCount: 1284, guestCount: 212, role: "owner", ...LIVE },
+    {
+      id: "demo-henna", slug: "elif-kina", type: "kina", title: "Elif's Henna Night", startsOn: "2027-06-12", coverUrl: demoImage("henna"), mediaCount: 342, guestCount: 64, role: "owner",
+      access: { ...demoAccess, reason: "ended" }, packageStatus: "ended", opensAt: hours(-24 * 4), closesAt: hours(-24 * 2), deleteAfter: hours(24 * 360), testMode: false, timeZone: "Europe/London",
+    },
+    {
+      id: "demo-bday", slug: "deniz-30", type: "dogum_gunu", title: "Deniz's Birthday", startsOn: "2026-12-05", coverUrl: demoImage("birthday"), mediaCount: 6, guestCount: 0, role: "cohost",
+      access: { canUpload: true, canDownload: false, readOnly: false, reason: "setup" }, packageStatus: "setup", opensAt: null, closesAt: null, deleteAfter: null, testMode: true, timeZone: "Europe/London",
+    },
   ];
 }
 
@@ -73,7 +86,8 @@ export function demoOccasion(id: string): Occasion {
     days,
     guestUrl: `https://bizimresimler.com/g/${s.slug}`,
     wallUrl: `https://bizimresimler.com/wall/${s.slug}`,
-    access: demoAccess,
+    access: s.access ?? demoAccess,
+    package: demoPackage(s),
   };
 }
 
@@ -90,9 +104,12 @@ export function demoMedia(count = 36): MediaItem[] {
     return {
       id: `m${i + 1}`,
       kind: video ? "video" : "photo",
-      thumbUrl: img,
-      displayUrl: video ? null : img,
-      originalUrl: img,
+      thumbUrl: i === 2 || i === 9 ? null : img,
+      displayUrl: i === 2 || i === 9 ? null : img,
+      originalUrl: null,
+      playbackUrl: null,
+      // A couple of fresh uploads are still being processed (placeholder tile).
+      processing: i === 2 || i === 9 ? "pending" : "ready",
       width: 600,
       height: 800,
       durationS: video ? 14 + (i % 30) : null,
@@ -133,5 +150,6 @@ export function demoPublic(): PublicOccasion {
     slug: o.slug, type: o.type, title: "Elif & Can", honorees: o.honorees, startsOn: o.startsOn, venueName: o.venueName, city: o.city,
     theme: o.theme, brand: o.brand, days, moments: ["Halay", "First dance", "Gold ceremony", "Cake", "Family"],
     liveWall: true, missionsEnabled: true, disposableShots: null, voiceGuestbook: true, uploadOpen: true, uploadsOpen: true, revealMode: "live", revealAt: null,
+    downloadsOpen: true, galleryState: "live", opensAt: o.opensAt, closesAt: o.closesAt, timeZone: o.timeZone, videoMaxSeconds: 60,
   };
 }

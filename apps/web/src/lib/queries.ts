@@ -125,3 +125,26 @@ export async function missionLeaderboard(occasionId: string, limit = 10) {
     .limit(limit);
   return rows.map((r) => ({ guestId: r.guestId!, guestName: r.guestName, done: Number(r.done) }));
 }
+
+/**
+ * Live wall media: visible, approved, revealed photos and videos whose copies are READY (never a "processing" item:
+ * the wall only shows finished clean copies). Without `since`: the newest 40 by upload time. With `since` (the
+ * previous response's cursor): items that became ready after it, oldest first, so a video that finishes transcoding
+ * after newer photos still reaches the screen. Returns the new cursor (max processed_at, Postgres text precision).
+ */
+export async function wallMedia(o: OccasionRow, revealed: SQL, since?: string) {
+  const where = [...liveMedia(o.id), eq(media.visibility, "visible"), eq(media.approved, true), inArray(media.kind, ["photo", "video"]),
+    eq(media.processingStatus, "ready"), revealed];
+  const processedText = sql<string | null>`${media.processedAt}::text`;
+  const [rows, [max]] = await Promise.all([
+    since
+      ? db.select({ media, guestName: guests.displayName, processed: processedText }).from(media).leftJoin(guests, eq(guests.id, media.guestId))
+        .where(and(...where, sql`${media.processedAt} > ${since}::timestamptz`)).orderBy(asc(media.processedAt), asc(media.id)).limit(100)
+      : db.select({ media, guestName: guests.displayName, processed: processedText }).from(media).leftJoin(guests, eq(guests.id, media.guestId))
+        .where(and(...where)).orderBy(desc(media.createdAt), desc(media.id)).limit(40),
+    since ? Promise.resolve([{ v: null as string | null }]) : db.select({ v: sql<string | null>`max(${media.processedAt})::text` }).from(media).where(and(...where)),
+  ]);
+  const cursor = since ? (rows.length ? rows[rows.length - 1]!.processed : since) : max?.v ?? null;
+  // Newest first for the client (it puts new arrivals at the front of its queue).
+  return { rows: since ? [...rows].reverse() : rows, cursor };
+}

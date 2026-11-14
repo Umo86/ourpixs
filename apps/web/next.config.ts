@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 /**
+ * The QR card PDFs (/api/v1/occasions/:id/cards.pdf) read the TTFs in assets/fonts at runtime, added the same way.
+ *
  * Server-side media processing (src/lib/media-processing.ts) needs two things that file tracing can't discover on its own:
  * the ffmpeg-static binary (≈80 MB) and the pre-rendered watermark PNGs (assets/watermark). They are added only to the
  * functions that process media, which keeps every other function small (Vercel limit: 250 MB unzipped per function).
@@ -20,6 +22,8 @@ const nextConfig: NextConfig = {
     "/api/admin/cron/*": MEDIA_FILES,
     "/api/v1/g/*/uploads/complete": MEDIA_FILES,
     "/api/v1/occasions/*/uploads/complete": MEDIA_FILES,
+    // Printable QR cards (pdf-lib): the embedded fonts (DejaVu, full Turkish coverage).
+    "/api/v1/occasions/*/cards.pdf": ["./assets/fonts/**/*"],
   },
   async redirects() {
     // The venue / Partner plan was retired: one account subscription for everyone.

@@ -37,7 +37,8 @@
   "purchase_required": "Get every photo and video in full quality to download this one.",
   "already_paid": "You already have every photo and video from this event.",
   "cannot_pay": "Full-quality downloads can't be bought for this gallery right now.",
-  "payments_unavailable": "Payments are coming soon."
+  "payments_unavailable": "Payments are coming soon.",
+  "waiver_required": "Please tick the box to confirm you want the download straight away."
  },
  "demo": {
   "banner": "Demo event: try everything, nothing is saved."
@@ -234,7 +235,9 @@
   "fine": "One-off payment by card, Apple Pay or Google Pay. No account needed.",
   "haveTitle": "You have every photo and video",
   "until": "Your downloads are ready until {date}.",
-  "open": "Open downloads"
+  "open": "Open downloads",
+  "waiver": "Start my download straight away. I understand that once it starts I lose my {days}-day right to cancel.",
+  "terms": "Terms"
  },
  "download": {
   "title": "Your",
@@ -274,6 +277,28 @@
    "body2": "This link works until {date}. Open it on a computer for the biggest downloads.",
    "cta": "Download everything",
    "footer": "You bought this on {brand}. Keep this email: the link is only sent once."
+  },
+  "gallery": {
+   "subject": "The photos from {title} are ready to see",
+   "heading": "{title}: the gallery has closed",
+   "body": "You asked us to let you know when the gallery for {title} closed. Everyone's photos and videos are in one place: have a look.",
+   "offer": "Want them all in full quality, without the watermark? Get every photo and video for {price}, ready to download for 30 days.",
+   "body2": "On a new phone or computer, just type your first name to open the gallery again.",
+   "cta": "See the photos",
+   "footer": "You're getting this one email because you asked for it on the event page on {brand}. We won't email you about this event again."
   }
+ },
+ "emailOffer": {
+  "title": "Want all the photos from this event emailed to you afterwards?",
+  "body": "Leave your email and we'll send you a link to the gallery when it closes.",
+  "emailLabel": "Your email",
+  "emailPlaceholder": "you@example.com",
+  "marketing": "Send me offers and news from {brand}.",
+  "submit": "Email me the photos",
+  "sending": "Saving…",
+  "thanks": "Done! We'll email you the gallery link when it closes.",
+  "dismiss": "No thanks",
+  "fine": "Optional, and never needed to upload. We only send offers if you tick the box, and you can unsubscribe any time.",
+  "privacy": "Privacy policy"
  }
 }

@@ -34,6 +34,14 @@ export function guestMayDownloadOriginal(opts: {
   return opts.event.canDownload && purchaseActive(opts.purchase, opts.now);
 }
 
+/**
+ * A paying guest's feed shows CLEAN display copies instead of watermarked ones: an active purchase (paid, not refunded,
+ * inside its 30 days) and the event's downloads still open. Everyone else stays watermarked.
+ */
+export function guestSeesClean(purchase: PurchaseLike | null | undefined, event: EventDownloadState, now = new Date()): boolean {
+  return event.canDownload && purchaseActive(purchase, now);
+}
+
 /** Guests can buy "download everything" only for a paid event that is live or ended (not expired, refunded or suspended). */
 export function guestPurchaseOffered(event: EventDownloadState & { paid: boolean }): boolean {
   return event.paid && event.guestsCanView && event.canDownload;

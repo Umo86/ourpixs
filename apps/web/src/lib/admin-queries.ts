@@ -1,10 +1,12 @@
 import "server-only";
 import { and, asc, desc, eq, ilike, isNotNull, isNull, ne, or, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/db";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { computeAccess, packageStateSql, type Access } from "./access";
 import { getSettings } from "./settings";
 import { privateGetUrl, signMany, storageDriver } from "./storage";
 import { likePattern, PAGE } from "./admin";
+import { consentWhere } from "./consent";
 
 /**
  * Read-only queries behind /admin. Lists are paginated (PAGE = 50, one extra row tells us whether there is a next page)
@@ -389,3 +391,90 @@ export async function recentCronRuns(name: string, n = 10) {
 }
 
 export type { Access };
+
+// ── Payments (/admin/payments) ─────────────────────────────────────────────────────────────────────
+
+export const PAYMENT_KINDS = ["event_package", "guest_download"] as const;
+export type PaymentKind = (typeof PAYMENT_KINDS)[number];
+export const PAYMENT_STATUSES = ["paid", "refunded", "duplicate", "pending"] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+export const PAYMENT_MODES = ["live", "test"] as const;
+export type PaymentMode = (typeof PAYMENT_MODES)[number];
+export type PaymentFilters = { kind: PaymentKind | null; status: PaymentStatus | null; mode: PaymentMode | null; from: string | null; to: string | null };
+
+/** YYYY-MM-DD (London calendar day) bounds on coalesce(paid_at, created_at). */
+function paymentWhere(paidAt: AnyPgColumn, createdAt: AnyPgColumn, status: AnyPgColumn, livemode: AnyPgColumn, f: PaymentFilters): SQL[] {
+  const at = sql`coalesce(${paidAt}, ${createdAt})`;
+  const w: SQL[] = [];
+  if (f.status) w.push(eq(status, f.status));
+  if (f.mode) w.push(eq(livemode, f.mode === "live"));
+  if (f.from) w.push(sql`${at} >= (${f.from}::date at time zone 'Europe/London')`);
+  if (f.to) w.push(sql`${at} < ((${f.to}::date + 1) at time zone 'Europe/London')`);
+  return w;
+}
+
+/**
+ * Every payment of both kinds (event packages from `orders`, guests' "download everything" from `guest_purchases`),
+ * filtered, newest first, plus totals for the same filters (paid amount, refunds, live vs test).
+ */
+export async function listPayments(f: PaymentFilters, page: number) {
+  const take = page * PAGE + 1;
+  const pkgWhere = and(eq(orders.kind, "event_package"), ...paymentWhere(orders.paidAt, orders.createdAt, orders.status, orders.livemode, f));
+  const gp = guestPurchases;
+  const gWhere = and(...paymentWhere(gp.paidAt, gp.createdAt, gp.status, gp.livemode, f));
+  const wantPkg = f.kind !== "guest_download";
+  const wantGuest = f.kind !== "event_package" && f.status !== "duplicate";
+  const totalsOf = (amount: AnyPgColumn, status: AnyPgColumn, livemode: AnyPgColumn) => ({
+    count: sql<number>`count(*)::int`,
+    paidCount: sql<number>`(count(*) filter (where ${status} = 'paid'))::int`,
+    paidPence: sql<number>`coalesce(sum(${amount}) filter (where ${status} = 'paid'), 0)::bigint`,
+    refundedCount: sql<number>`(count(*) filter (where ${status} = 'refunded'))::int`,
+    refundedPence: sql<number>`coalesce(sum(${amount}) filter (where ${status} = 'refunded'), 0)::bigint`,
+    testCount: sql<number>`(count(*) filter (where not ${livemode}))::int`,
+  });
+  const [pkgRows, guestRows, [pt], [gt]] = await Promise.all([
+    wantPkg ? db.select({
+      id: orders.id, kind: sql<PaymentKind>`'event_package'`, occasionId: orders.occasionId, title: occasions.title, email: hosts.email,
+      amountPence: orders.amountPence, status: orders.status, livemode: orders.livemode, paidAt: orders.paidAt, createdAt: orders.createdAt, ref: orders.stripeSessionId,
+    }).from(orders).innerJoin(occasions, eq(occasions.id, orders.occasionId)).innerJoin(hosts, eq(hosts.id, orders.hostId))
+      .where(pkgWhere).orderBy(desc(sql`coalesce(${orders.paidAt}, ${orders.createdAt})`), desc(orders.id)).limit(take) : Promise.resolve([]),
+    wantGuest ? db.select({
+      id: gp.id, kind: sql<PaymentKind>`'guest_download'`, occasionId: gp.occasionId, title: occasions.title, email: gp.email,
+      amountPence: gp.amountPence, status: gp.status, livemode: gp.livemode, paidAt: gp.paidAt, createdAt: gp.createdAt, ref: gp.stripeCheckoutSessionId,
+    }).from(gp).innerJoin(occasions, eq(occasions.id, gp.occasionId))
+      .where(gWhere).orderBy(desc(sql`coalesce(${gp.paidAt}, ${gp.createdAt})`), desc(gp.id)).limit(take) : Promise.resolve([]),
+    wantPkg ? db.select(totalsOf(orders.amountPence, orders.status, orders.livemode)).from(orders).where(pkgWhere) : Promise.resolve([undefined]),
+    wantGuest ? db.select(totalsOf(gp.amountPence, gp.status, gp.livemode)).from(gp).where(gWhere) : Promise.resolve([undefined]),
+  ]);
+  const at = (r: { paidAt: Date | null; createdAt: Date }) => (r.paidAt ?? r.createdAt).getTime();
+  const merged = [...pkgRows, ...guestRows].sort((a, b) => at(b) - at(a));
+  const slice = merged.slice((page - 1) * PAGE, page * PAGE + 1);
+  const tot = (x: Record<string, unknown> | undefined) => ({
+    count: int(x?.count), paidCount: int(x?.paidCount), paidPence: int(x?.paidPence), refundedCount: int(x?.refundedCount),
+    refundedPence: int(x?.refundedPence), testCount: int(x?.testCount),
+  });
+  return { ...paged(slice, page), totals: { packages: tot(pt), guests: tot(gt) } };
+}
+
+// ── Marketing consents (/admin/consents) ───────────────────────────────────────────────────────────
+
+export async function listConsents(f: Parameters<typeof consentWhere>[0], page: number) {
+  const c = schema.marketingConsents;
+  const where = consentWhere(f);
+  const [rows, [n]] = await Promise.all([
+    db.select({ consent: c, occasionTitle: occasions.title }).from(c).leftJoin(occasions, eq(occasions.id, c.occasionId))
+      .where(where).orderBy(desc(c.consentedAt), desc(c.id)).limit(PAGE + 1).offset(offsetOf(page)),
+    db.select({
+      total: sql<number>`count(*)::int`,
+      current: sql<number>`(count(*) filter (where ${c.withdrawnAt} is null and ${c.consented}))::int`,
+      withdrawn: sql<number>`(count(*) filter (where ${c.withdrawnAt} is not null))::int`,
+    }).from(c).where(where),
+  ]);
+  return { ...paged(rows, page), counts: { total: int(n?.total), current: int(n?.current), withdrawn: int(n?.withdrawn) } };
+}
+
+/** Rows for the CSV export (capped at 50,000). */
+export async function exportConsents(f: Parameters<typeof consentWhere>[0]) {
+  const c = schema.marketingConsents;
+  return db.select().from(c).where(consentWhere(f)).orderBy(desc(c.consentedAt), desc(c.id)).limit(50_000);
+}

@@ -44,7 +44,8 @@ export default async function TokenDownloadPage({ params }: { params: Promise<{ 
 
 async function Body({ token, r, title, accent }: { token: string; r: NonNullable<Awaited<ReturnType<typeof purchaseFromToken>>>; title: string; accent: string }) {
   const [summary, page] = await Promise.all([purchaseSummary(r.occasion), purchaseItems(r.occasion, 300)]);
-  const items = await toMediaItems(page.rows, { kind: "share" });
+  // The buyer's own link (active purchase checked by purchaseFromToken): clean previews.
+  const items = await toMediaItems(page.rows, { kind: "buyer" });
   return (
     <>
       <header className="flex flex-col gap-2 pt-2">

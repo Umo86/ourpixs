@@ -14,7 +14,9 @@
   "enquiries": "Talepler",
   "audit": "İşlem kaydı",
   "system": "Sistem",
-  "settings": "Ayarlar"
+  "settings": "Ayarlar",
+  "payments": "Ödemeler",
+  "consents": "İzinler"
  },
  "common": {
   "all": "Tümü",
@@ -488,6 +490,55 @@
    "body2": "Yüklemeler devam ediyor. Göz atın ve ev sahibiyle iletişime geçip geçmemeye karar verin.",
    "cta": "Etkinliği yönetim panelinde aç",
    "footer": "Yöneticiler (ADMIN_EMAILS) için iç uyarı. Her etkinlik için bir kez gönderilir."
+  }
+ },
+ "payments": {
+  "title": "Tüm",
+  "accent": "ödemeler",
+  "from": "Başlangıç",
+  "to": "Bitiş",
+  "totals": "Bu filtrelerin toplamı",
+  "packagesPaid": "Ödenen etkinlik paketleri",
+  "guestsPaid": "Ödenen misafir indirmeleri",
+  "refunded": "İade edilen",
+  "testCount": "Test modu ödemeleri",
+  "testHint": "Stripe test anahtarları; toplamlara dahil",
+  "countHint": "{n} ödeme",
+  "totalsNote": "Toplamlara test modu ödemeleri de dahil: yalnızca gerçek parayı görmek için Mod alanını Canlı yapın. Tutarlara KDV dahildir.",
+  "date": "Tarih",
+  "event": "Etkinlik",
+  "payer": "Ödeyen",
+  "seeAll": "Tüm ödemeler"
+ },
+ "consents": {
+  "title": "Pazarlama",
+  "accent": "izinleri",
+  "export": "CSV indir",
+  "search": "Ara",
+  "searchPlaceholder": "E-posta adresi",
+  "brand": "Marka",
+  "statuses": {
+   "current": "Geçerli",
+   "withdrawn": "Geri çekildi"
+  },
+  "total": "Kayıt",
+  "note": "Yalnızca açık rıza. Her kayıt gösterilen metnin aynısını, dili, nerede ve ne zaman verildiğini saklar. Geri çekilen kayıtlar 2 yıl saklanır, sonra silinir. CSV indirmeleri işlem kaydına yazılır.",
+  "empty": "Henüz izin yok.",
+  "email": "E-posta",
+  "source": "Nerede",
+  "wording": "Gösterilen metin",
+  "consentedAt": "İzin tarihi",
+  "sources": {
+   "guest_upload": "Misafir e-posta kartı",
+   "host_signup": "Ev sahibi girişi",
+   "host_settings": "Ev sahibi paneli"
+  },
+  "via": {
+   "unsubscribe_link": "Abonelikten çık bağlantısı",
+   "list_unsubscribe": "Tek tık (e-posta uygulaması)",
+   "host_settings": "Ev sahibi paneli",
+   "admin": "Yönetici",
+   "account_deleted": "Hesap silindi"
   }
  }
 }

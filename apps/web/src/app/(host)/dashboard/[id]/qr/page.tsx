@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
-import { Download } from "lucide-react";
+import { Download, FileDown } from "lucide-react";
 import { Container } from "@/components/ui";
 import { getT } from "@/i18n";
 import { makeT } from "@/i18n/shared";
@@ -24,6 +24,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("qr.metaTitle") };
 }
 
+const pdfBtn = "inline-flex min-h-12 items-center gap-2 rounded-full bg-royal px-6 text-[15px] font-extrabold text-white no-underline hover:bg-royal-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky focus-visible:ring-offset-2";
+const pdfBtnAlt = "inline-flex min-h-12 items-center gap-2 rounded-full border-[1.5px] border-ink px-6 text-[15px] font-extrabold text-ink no-underline hover:bg-ink hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky focus-visible:ring-offset-2";
+
 const PRINT_CSS = `
 @page { size: A4 portrait; margin: 0; }
 .qr-sheet { width: 210mm; height: 297mm; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -36,7 +39,7 @@ const PRINT_CSS = `
   .qr-sheet { box-shadow: none; border-radius: 0; }
 }`;
 
-export default async function QrPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ format?: string; day?: string; template?: string }> }) {
+export default async function QrPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ format?: string; day?: string; template?: string; marks?: string }> }) {
   const { id } = await params;
   const m = await requireMemberPage(id);
   if (!m) notFound();
@@ -73,12 +76,22 @@ export default async function QrPage({ params, searchParams }: { params: Promise
     qr, copy, cover, logo: null,
     theme: THEMES[template.theme], layout: template.layout,
   };
+  const marks = sp.marks === "1";
   const q = (patch: Record<string, string | undefined>) => {
     const v = new URLSearchParams();
-    const merged = { format, day: day?.id, template: template.id, ...patch };
+    const merged = { format, day: day?.id, template: template.id, marks: marks ? "1" : undefined, ...patch };
     Object.entries(merged).forEach(([k, val]) => val && v.set(k, val));
     return `?${v}`;
   };
+  // Print-ready PDFs (pdf-lib, one card per page at trim size): the current design and day, in either language.
+  const pdf = (size: "a6" | "a5", opts: { lang?: "en" | "tr"; each?: boolean } = {}) => {
+    const v = new URLSearchParams({ size, template: template.id, lang: opts.lang ?? locale });
+    if (opts.each) v.set("day", "each");
+    else if (day) v.set("day", day.id);
+    if (marks) v.set("marks", "1");
+    return `/api/v1/occasions/${o.id}/cards.pdf?${v}`;
+  };
+  const other = locale === "tr" ? "en" : "tr";
   const tab = "inline-flex min-h-11 items-center rounded-full px-5 text-[14px] font-bold no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky";
 
   return (
@@ -117,6 +130,29 @@ export default async function QrPage({ params, searchParams }: { params: Promise
           </nav>
         ) : null}
         <p className="m-0 text-sm text-muted">{format === "cards" ? t("qr.cardsHint") : t("qr.posterHint")}{day ? ` ${t("qr.dayHint", { day: day.name })}` : ""}</p>
+        <section aria-labelledby="pdf-h" className="flex flex-col gap-3 rounded-[24px] border border-[#E6E8EF] p-5">
+          <h3 id="pdf-h" className="m-0 text-lg font-black">{t("cards.pdfTitle")}</h3>
+          <p className="m-0 text-sm text-text-2">{t("cards.pdfLead")}</p>
+          <div className="flex flex-wrap gap-2">
+            <a href={pdf("a6")} className={pdfBtn}><FileDown size={18} aria-hidden />{t("cards.a6")}</a>
+            <a href={pdf("a5")} className={pdfBtn}><FileDown size={18} aria-hidden />{t("cards.a5")}</a>
+            {days.length > 1 && !day ? (
+              <>
+                <a href={pdf("a6", { each: true })} className={pdfBtnAlt}><FileDown size={18} aria-hidden />{t("cards.a6Each")}</a>
+                <a href={pdf("a5", { each: true })} className={pdfBtnAlt}><FileDown size={18} aria-hidden />{t("cards.a5Each")}</a>
+              </>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+            <span className="text-text-2">{t("cards.otherLang", { lang: t(`cards.langName.${other}`) })}</span>
+            <a href={pdf("a6", { lang: other })} className="font-bold text-royal">A6</a>
+            <a href={pdf("a5", { lang: other })} className="font-bold text-royal">A5</a>
+            <Link href={q({ marks: marks ? undefined : "1" })} aria-pressed={marks} className="inline-flex min-h-11 items-center font-bold text-royal">
+              {marks ? t("cards.marksOn") : t("cards.marksOff")}
+            </Link>
+          </div>
+          <p className="m-0 text-xs text-muted">{t("cards.pdfHint")}</p>
+        </section>
         <div className="flex flex-col gap-3 rounded-[24px] bg-tint p-4">
           <code className="break-all text-[15px] font-semibold">{url}</code>
           <ShareButtons url={url} text={p("share.guestMessage", { title: o.title })} title={o.title}

@@ -11,7 +11,6 @@ import { Card } from "@/components/Card";
 import { Footer, openSite } from "@/components/Footer";
 import { Segmented } from "@/components/Form";
 import { Icon, type IconName } from "@/components/Icon";
-import { PlanCard } from "@/components/PlanStatus";
 import { Screen } from "@/components/Screen";
 import { Heading, Txt } from "@/components/Text";
 import { siteUrl, supportEmail } from "@/config";
@@ -34,7 +33,7 @@ function Row({ icon, label, onPress, danger }: { icon: IconName; label: string; 
 
 export default function AppSettings() {
   const { t, locale, setLocale, brand } = useI18n();
-  const { token, host, subscription, refreshMe, signOut } = useAuth();
+  const { token, host, refreshMe, signOut } = useAuth();
   const [joined, setJoined] = useState<GuestSession[]>([]);
   const [push, setPush] = useState(false);
 
@@ -84,7 +83,6 @@ export default function AppSettings() {
         {t("appSettings.title")}
       </Heading>
 
-      {token ? <PlanCard sub={subscription} /> : null}
 
       <Card style={{ gap: 12 }}>
         <Txt weight="extrabold">{t("appSettings.language")}</Txt>

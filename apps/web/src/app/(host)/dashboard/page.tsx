@@ -3,13 +3,15 @@ import Link from "next/link";
 import { MEDIA } from "@/components/marketing/constants";
 import { Plus } from "lucide-react";
 import { Button, Container, Sticker } from "@/components/ui";
-import { getT } from "@/i18n";
+import { getBrand, getT } from "@/i18n";
 import { requireHostPage } from "@/lib/auth";
 import { summariesFor } from "@/lib/occasion-service";
 import { OCCASIONS } from "@/lib/config";
 import { formatDate, formatNumber } from "@/lib/client/format";
 import { coverFallback } from "@/components/host/occasion-art";
 import { DeleteAccountButton } from "@/components/host/DeleteAccountButton";
+import { MarketingPreference } from "@/components/host/MarketingPreference";
+import { currentConsent } from "@/lib/consent";
 import { formatInZone } from "@/lib/tz";
 import type { OccasionSummary } from "@/lib/api-types";
 
@@ -42,7 +44,8 @@ const TONE = {
 export default async function DashboardPage() {
   const host = await requireHostPage("/dashboard");
   const { t, locale } = await getT("host");
-  const list = await summariesFor(host.id);
+  const [list, brand] = await Promise.all([summariesFor(host.id), getBrand()]);
+  const marketing = !!(await currentConsent(host.email, brand).catch(() => null));
 
   return (
     <Container className="flex flex-col gap-10 py-8 sm:py-12">
@@ -100,6 +103,10 @@ export default async function DashboardPage() {
           <h2 id="acct-h" className="m-0 text-xl font-black">{t("dashboard.accountTitle")}</h2>
           <p className="m-0 text-sm text-text-2">{t("dashboard.accountBody", { email: host.email })}</p>
           <DeleteAccountButton />
+        </div>
+        <div className="flex flex-col gap-3 rounded-[28px] border border-[#E6E8EF] p-6">
+          <h2 className="m-0 text-xl font-black">{t("marketing.title")}</h2>
+          <MarketingPreference initial={marketing} />
         </div>
       </section>
     </Container>

@@ -105,9 +105,11 @@ export default function GuestFeed() {
   };
 
   const save = async (it: MediaItem) => {
-    if (occasion?.downloadsOpen === false) return Alert.alert(t("guest.downloadsClosed"));
+    // From the app a guest saves their OWN uploads (free). Anyone else's need a purchase on the website, which the
+    // store builds never sell or link to: a 402 shows the neutral "not available" message.
+    if (!it.mine && occasion?.downloadsOpen === false) return Alert.alert(t("guest.downloadsClosed"));
     try {
-      await saveToCameraRoll([it]);
+      await saveToCameraRoll([it], async (m) => (await guestApi.downloadUrl(slug, auth, m.id)).url);
       Alert.alert(t("album.saved"));
     } catch (e) {
       if (e instanceof PermissionDeniedError) {
