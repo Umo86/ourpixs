@@ -194,12 +194,19 @@ export function watch(page: Page) {
   // Hydration errors are minified in the production build: keep the served HTML of the last document and, on one,
   // write it with the DOM after React's recovery and both clocks to <work>/hydration/ so the two can be diffed.
   let served = "";
+  // The document's parse state at the moment React reports the error (mid-parse hydration vs a real render difference).
+  page.addInitScript(() => {
+    addEventListener("error", () => {
+      const w = window as unknown as { __hydState?: string };
+      w.__hydState ??= `${document.readyState}, ${document.body?.getElementsByTagName("*").length ?? 0} body elements, at ${performance.now().toFixed(0)} ms`;
+    }, true);
+  }).catch(() => {});
   page.on("response", (r) => { if (r.request().resourceType() === "document" && r.request().frame() === page.mainFrame()) r.text().then((t) => { served = t; }).catch(() => {}); });
   page.on("pageerror", (e) => {
     if (!/#418|#423|#425|Hydration/.test(e.message)) return;
     const n = Date.now();
     const at = page.url();
-    const browserNow = page.evaluate(() => new Date().toISOString()).catch(() => "?");
+    const browserNow = page.evaluate(() => `${new Date().toISOString()}\nat error: ${(window as unknown as { __hydState?: string }).__hydState}`).catch(() => "?");
     setTimeout(async () => {
       try {
         const dir = join(paths.emails, "..", "hydration");
