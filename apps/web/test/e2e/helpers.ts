@@ -189,8 +189,27 @@ export function watch(page: Page) {
     if (/fonts\.gstatic|Failed to load resource: the server responded with a status of 4\d\d/.test(t)) return;
     problems.push(`console: ${t}`);
   });
-  page.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
+  page.on("pageerror", (e) => problems.push(`pageerror: ${e.message} (on ${page.url()})`));
   page.on("response", (r) => { if (r.status() >= 500) problems.push(`HTTP ${r.status()} ${r.url()}`); });
+  // Hydration errors are minified in the production build: keep the served HTML of the last document and, on one,
+  // write it with the DOM after React's recovery and both clocks to <work>/hydration/ so the two can be diffed.
+  let served = "";
+  page.on("response", (r) => { if (r.request().resourceType() === "document" && r.request().frame() === page.mainFrame()) r.text().then((t) => { served = t; }).catch(() => {}); });
+  page.on("pageerror", (e) => {
+    if (!/#418|#423|#425|Hydration/.test(e.message)) return;
+    const n = Date.now();
+    const at = page.url();
+    const browserNow = page.evaluate(() => new Date().toISOString()).catch(() => "?");
+    setTimeout(async () => {
+      try {
+        const dir = join(paths.emails, "..", "hydration");
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(join(dir, `${n}-served.html`), served);
+        writeFileSync(join(dir, `${n}-dom.html`), await page.content().catch(() => ""));
+        writeFileSync(join(dir, `${n}-info.txt`), `${at}\nbrowser now ${await browserNow}\ntest now ${new Date().toISOString()} offset ${clockOffset}\n`);
+      } catch { /* diagnostics only */ }
+    }, 300);
+  });
   return {
     problems,
     assertClean() { expect(problems, problems.join("\n")).toEqual([]); },

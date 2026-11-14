@@ -49,13 +49,14 @@ export function utcToZonedFields(iso: string | null | undefined, tz: string): { 
 }
 
 /** "12 June, 10:00" in the app language, shown in the event's zone. */
-export function formatInZone(iso: string | null | undefined, tz: string, locale: Locale, opts: { year?: boolean } = {}): string {
+export function formatInZone(iso: string | null | undefined, tz: string, locale: Locale, opts: { year?: boolean; time?: boolean } = {}): string {
   if (!iso) return "";
   const x = new Date(iso);
   if (Number.isNaN(x.getTime())) return "";
   try {
     return new Intl.DateTimeFormat(locale === "tr" ? "tr-TR" : "en-GB", {
-      timeZone: tz, day: "numeric", month: "long", ...(opts.year ? { year: "numeric" } : {}), hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+      timeZone: tz, day: "numeric", month: "long", ...(opts.year ? { year: "numeric" } : {}),
+      ...(opts.time === false ? {} : { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }),
     }).format(x);
   } catch {
     return x.toLocaleString();

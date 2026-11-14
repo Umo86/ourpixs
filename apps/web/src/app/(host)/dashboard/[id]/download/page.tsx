@@ -39,7 +39,7 @@ export default async function DownloadPage({ params }: { params: Promise<{ id: s
         <p className="m-0 text-text-2">{t("download.lead", { size: formatBytes(stats.bytes, locale) })}</p>
         {access.deleteAfter && !access.deleted ? (
           <p className="m-0 text-sm font-semibold text-royal">
-            {t(access.unpaid ? "download.unpaidDelete" : "download.keptUntil", { date: formatDate(access.deleteAfter.toISOString(), locale) })}
+            {t(access.unpaid ? "download.unpaidDelete" : "download.keptUntil", { date: formatDate(access.deleteAfter.toISOString(), locale, { day: "numeric", month: "long", year: "numeric", timeZone: m.occasion.timeZone }) })}
           </p>
         ) : null}
       </div>

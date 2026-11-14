@@ -54,14 +54,14 @@ export function utcToZoned(d: Date | string | null | undefined, tz: string): str
   return `${p.y}-${pad(p.m)}-${pad(p.d)}T${pad(p.h)}:${pad(p.mi)}`;
 }
 
-/** "Saturday 12 June 2027, 10:00" in the viewer's language, shown in the event's zone. */
-export function formatInZone(d: Date | string | null | undefined, tz: string, locale: "en" | "tr", opts: { weekday?: boolean; year?: boolean } = {}): string {
+/** "Saturday 12 June 2027, 10:00" in the viewer's language, shown in the event's zone (`time: false`: "12 June 2027"). */
+export function formatInZone(d: Date | string | null | undefined, tz: string, locale: "en" | "tr", opts: { weekday?: boolean; year?: boolean; time?: boolean } = {}): string {
   if (!d) return "";
   const x = typeof d === "string" ? new Date(d) : d;
   if (Number.isNaN(x.getTime())) return "";
   return new Intl.DateTimeFormat(locale === "tr" ? "tr-TR" : "en-GB", {
     timeZone: tz, day: "numeric", month: "long", ...(opts.year === false ? {} : { year: "numeric" }),
-    ...(opts.weekday ? { weekday: "long" } : {}), hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    ...(opts.weekday ? { weekday: "long" } : {}), ...(opts.time === false ? {} : { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }),
   }).format(x);
 }
 

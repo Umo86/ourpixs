@@ -503,7 +503,8 @@
    "heading": "Etkinliğiniz yakında silinecek",
    "body": "{title} için henüz ödeme yapılmadı. Ödenmeyen etkinlikler oluşturulduktan {limit} gün sonra silinir; bu etkinlik de deneme yüklemeleriyle birlikte {days} gün sonra, {date} tarihinde silinecek.",
    "body2": "Saklamak istiyorsanız bu tarihten önce ödemeyi yapın. Galeri açıldığında misafirleriniz katılabilir.",
-   "body3": "Deneme fotoğraf ve videolarınızı saklamak mı istiyorsunuz? Buradan indirin: {url}",
+   "body3": "Deneme fotoğraf ve videolarınızı saklamak mı istiyorsunuz? Bu tarihten önce indirebilirsiniz.",
+   "downloadLink": "Deneme yüklemelerini indirin",
    "cta": "Etkinliğinizi açın",
    "footer": "Bu e-postayı, {brand} üzerinde {title} etkinliğini oluşturduğunuz için alıyorsunuz. Artık ihtiyacınız yoksa bir şey yapmanıza gerek yok."
   }

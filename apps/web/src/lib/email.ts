@@ -36,10 +36,24 @@ function esc(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
+type Link = { href: string; label: string };
+/** A body paragraph; with `link`, the text is followed by a labelled link (never a raw URL in the HTML body). */
+type Para = string | { text: string; link: Link };
+
+/** Plain-text version: links are written as "Label: https://…" (text/plain has no anchors). */
+function textOf(subject: string, body: Para[], cta?: Link, footer?: string) {
+  const paras = body.map((p) => (typeof p === "string" ? p : `${p.text} ${p.link.label}: ${p.link.href}`));
+  return [subject, ...paras, cta ? `${cta.label}: ${cta.href}` : "", footer ?? ""].filter(Boolean).join("\n\n");
+}
+
 /** Minimal brand-styled HTML email: Bodoni wordmark, big black headline, royal-blue button. */
-function layout(brand: Brand, opts: { heading: string; body: string[]; code?: string; cta?: { href: string; label: string }; footer: string; unsubscribe?: { href: string; label: string } }) {
+function layout(brand: Brand, opts: { heading: string; body: Para[]; code?: string; cta?: Link; footer: string; unsubscribe?: Link }) {
   const name = BRANDS[brand].name;
-  const paras = opts.body.map((p) => `<p style="margin:0 0 14px;font-size:16px;line-height:1.5;color:#3A3A3A">${esc(p)}</p>`).join("");
+  const paras = opts.body.map((p) => {
+    const inner = typeof p === "string" ? esc(p)
+      : `${esc(p.text)} <a href="${esc(p.link.href)}" style="color:#2347E0;font-weight:700;text-decoration:underline">${esc(p.link.label)}</a>`;
+    return `<p style="margin:0 0 14px;font-size:16px;line-height:1.5;color:#3A3A3A">${inner}</p>`;
+  }).join("");
   const code = opts.code
     ? `<div style="margin:22px 0;padding:20px;border-radius:20px;background:#F2F4FB;text-align:center;font-size:40px;font-weight:900;letter-spacing:10px;color:#0A0A0A">${esc(opts.code)}</div>`
     : "";
@@ -93,8 +107,9 @@ export async function sendCohostInvite(to: string, opts: { inviter: string; titl
   const vars = { inviter: opts.inviter, title: opts.title, brand: BRANDS[opts.brand].name };
   const subject = t("email.invite.subject", vars);
   const body = [t("email.invite.body", vars)];
-  const html = layout(opts.brand, { heading: t("email.invite.heading", vars), body, cta: { href: url, label: t("email.invite.cta") }, footer: t("email.invite.footer") });
-  await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n")}\n\n${url}`);
+  const cta = { href: url, label: t("email.invite.cta") };
+  const html = layout(opts.brand, { heading: t("email.invite.heading", vars), body, cta, footer: t("email.invite.footer") });
+  await send(opts.brand, to, subject, html, textOf(subject, body, cta, t("email.invite.footer")));
 }
 
 export function formatEmailDate(d: Date, locale: Locale) {
@@ -111,8 +126,9 @@ export async function sendGalleryEndedEmail(to: string, opts: { locale: Locale; 
   const vars = { brand: BRANDS[opts.brand].name, title: opts.title, date: opts.deleteAfter ? formatEmailDate(opts.deleteAfter, opts.locale) : "" };
   const subject = t("email.ended.subject", vars);
   const body = [t("email.ended.body", vars), t(opts.deleteAfter ? "email.ended.body2" : "email.ended.body2NoDate", vars)];
-  const html = layout(opts.brand, { heading: t("email.ended.heading", vars), body, cta: { href: url, label: t("email.ended.cta") }, footer: t("email.ended.footer", vars) });
-  await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${url}`);
+  const cta = { href: url, label: t("email.ended.cta") };
+  const html = layout(opts.brand, { heading: t("email.ended.heading", vars), body, cta, footer: t("email.ended.footer", vars) });
+  await send(opts.brand, to, subject, html, textOf(subject, body, cta, t("email.ended.footer", vars)));
 }
 
 /** Reminder before an event's files are deleted (30 and 7 days before delete_after). */
@@ -122,8 +138,9 @@ export async function sendDeletionReminder(to: string, opts: { locale: Locale; b
   const vars = { brand: BRANDS[opts.brand].name, title: opts.title, date: formatEmailDate(opts.date, opts.locale), days: opts.days };
   const subject = t("email.deletionSoon.subject", vars);
   const body = [t("email.deletionSoon.body", vars), t("email.deletionSoon.body2", vars)];
-  const html = layout(opts.brand, { heading: t("email.deletionSoon.heading", vars), body, cta: { href: url, label: t("email.deletionSoon.cta") }, footer: t("email.ended.footer", vars) });
-  await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${url}`);
+  const cta = { href: url, label: t("email.deletionSoon.cta") };
+  const html = layout(opts.brand, { heading: t("email.deletionSoon.heading", vars), body, cta, footer: t("email.ended.footer", vars) });
+  await send(opts.brand, to, subject, html, textOf(subject, body, cta, t("email.ended.footer", vars)));
 }
 
 /**
@@ -136,9 +153,13 @@ export async function sendUnpaidDeletionReminder(to: string, opts: { locale: Loc
   const downloadUrl = `${brandBaseUrl(opts.brand)}/dashboard/${opts.occasionId}/download`;
   const vars = { brand: BRANDS[opts.brand].name, title: opts.title, date: formatEmailDate(opts.date, opts.locale), days: opts.days, limit: opts.limitDays };
   const subject = t("email.unpaidDeletion.subject", vars);
-  const body = [t("email.unpaidDeletion.body", vars), t("email.unpaidDeletion.body2", vars), t("email.unpaidDeletion.body3", { ...vars, url: downloadUrl })];
-  const html = layout(opts.brand, { heading: t("email.unpaidDeletion.heading", vars), body, cta: { href: url, label: t("email.unpaidDeletion.cta") }, footer: t("email.unpaidDeletion.footer", vars) });
-  await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${url}\n\n${t("email.unpaidDeletion.footer", vars)}`);
+  const body: Para[] = [
+    t("email.unpaidDeletion.body", vars), t("email.unpaidDeletion.body2", vars),
+    { text: t("email.unpaidDeletion.body3", vars), link: { href: downloadUrl, label: t("email.unpaidDeletion.downloadLink") } },
+  ];
+  const cta = { href: url, label: t("email.unpaidDeletion.cta") };
+  const html = layout(opts.brand, { heading: t("email.unpaidDeletion.heading", vars), body, cta, footer: t("email.unpaidDeletion.footer", vars) });
+  await send(opts.brand, to, subject, html, textOf(subject, body, cta, t("email.unpaidDeletion.footer", vars)));
 }
 
 /** Internal alert to admins (ADMIN_EMAILS): an event passed the fair-use storage limit. English only. */
@@ -150,8 +171,9 @@ export async function sendFairUseAlert(to: string[], opts: { title: string; occa
   const vars = { title: opts.title, owner: opts.ownerEmail, gb: opts.gb.toFixed(1), limit: opts.limitGb };
   const subject = t("fairUse.email.subject", vars);
   const body = [t("fairUse.email.body", vars), t("fairUse.email.body2", vars)];
-  const html = layout(brand, { heading: t("fairUse.email.heading", vars), body, cta: { href: url, label: t("fairUse.email.cta") }, footer: t("fairUse.email.footer") });
-  for (const addr of to) await send(brand, addr, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${url}`);
+  const cta = { href: url, label: t("fairUse.email.cta") };
+  const html = layout(brand, { heading: t("fairUse.email.heading", vars), body, cta, footer: t("fairUse.email.footer") });
+  for (const addr of to) await send(brand, addr, subject, html, textOf(subject, body, cta, t("fairUse.email.footer")));
 }
 
 export async function sendReportEmail(to: string, opts: { title: string; occasionId: string; reason: string; locale: Locale; brand: Brand }) {
@@ -159,8 +181,9 @@ export async function sendReportEmail(to: string, opts: { title: string; occasio
   const url = `${brandBaseUrl(opts.brand)}/dashboard/${opts.occasionId}`;
   const subject = t("email.report.subject", { title: opts.title });
   const body = [t("email.report.body", { title: opts.title }), ...(opts.reason ? [t("email.report.reason", { reason: opts.reason })] : [])];
-  const html = layout(opts.brand, { heading: t("email.report.heading"), body, cta: { href: url, label: t("email.report.cta") }, footer: t("email.report.footer") });
-  await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n")}\n\n${url}`);
+  const cta = { href: url, label: t("email.report.cta") };
+  const html = layout(opts.brand, { heading: t("email.report.heading"), body, cta, footer: t("email.report.footer") });
+  await send(opts.brand, to, subject, html, textOf(subject, body, cta, t("email.report.footer")));
 }
 
 /**
@@ -172,8 +195,9 @@ export async function sendGuestDownloadEmail(to: string, opts: { locale: Locale;
   const vars = { brand: BRANDS[opts.brand].name, title: opts.title, date: formatEmailDate(opts.expiresAt, opts.locale) };
   const subject = t("email.purchase.subject", vars);
   const body = [t("email.purchase.body", vars), t("email.purchase.body2", vars)];
-  const html = layout(opts.brand, { heading: t("email.purchase.heading", vars), body, cta: { href: opts.url, label: t("email.purchase.cta") }, footer: t("email.purchase.footer", vars) });
-  await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${opts.url}\n\n${t("email.purchase.footer", vars)}`);
+  const cta = { href: opts.url, label: t("email.purchase.cta") };
+  const html = layout(opts.brand, { heading: t("email.purchase.heading", vars), body, cta, footer: t("email.purchase.footer", vars) });
+  await send(opts.brand, to, subject, html, textOf(subject, body, cta, t("email.purchase.footer", vars)));
 }
 
 /**
@@ -186,8 +210,9 @@ export async function sendGuestGalleryEmail(to: string, opts: { locale: Locale; 
   const vars = { brand: BRANDS[opts.brand].name, title: opts.title };
   const subject = t("email.gallery.subject", vars);
   const body = [t("email.gallery.body", vars), t("email.gallery.body2", vars)];
-  const html = layout(opts.brand, { heading: t("email.gallery.heading", vars), body, cta: { href: opts.url, label: t("email.gallery.cta") }, footer: t("email.gallery.footer", vars) });
-  await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${opts.url}\n\n${t("email.gallery.footer", vars)}`);
+  const cta = { href: opts.url, label: t("email.gallery.cta") };
+  const html = layout(opts.brand, { heading: t("email.gallery.heading", vars), body, cta, footer: t("email.gallery.footer", vars) });
+  await send(opts.brand, to, subject, html, textOf(subject, body, cta, t("email.gallery.footer", vars)));
 }
 
 /**
@@ -200,7 +225,7 @@ export async function sendMarketingRaw(to: string, opts: {
   unsubscribe: { pageUrl: string; oneClickUrl: string; label: string };
 }) {
   const html = layout(opts.brand, { heading: opts.heading, body: opts.body, cta: opts.cta, footer: opts.footer, unsubscribe: { href: opts.unsubscribe.pageUrl, label: opts.unsubscribe.label } });
-  const text = [opts.subject, ...opts.body, opts.cta?.href ?? "", opts.footer, `${opts.unsubscribe.label}: ${opts.unsubscribe.pageUrl}`].filter(Boolean).join("\n\n");
+  const text = `${textOf(opts.subject, opts.body, opts.cta, opts.footer)}\n\n${opts.unsubscribe.label}: ${opts.unsubscribe.pageUrl}`;
   await send(opts.brand, to, opts.subject, html, text, {
     "List-Unsubscribe": `<${opts.unsubscribe.oneClickUrl}>, <mailto:${CONTACT_EMAIL}?subject=unsubscribe>`,
     "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

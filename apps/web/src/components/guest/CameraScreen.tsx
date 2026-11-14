@@ -5,6 +5,7 @@ import { SwitchCamera } from "lucide-react";
 import { useLocale, useT } from "@/i18n/client";
 import { formatDateTime } from "@/lib/client/format";
 import { useGuest } from "./GuestContext";
+import { emptyQueue } from "@/lib/client/uploader";
 
 /** Draws the frame with a film look + grain, returns a JPEG (no EXIF, so nothing to strip). */
 async function develop(video: HTMLVideoElement, mirror: boolean): Promise<Blob | null> {
@@ -44,7 +45,7 @@ export function CameraScreen() {
   const { locale } = useLocale();
   const { occasion: o, guest, uploader, lockedDayId, path } = useGuest();
   const total = o.disposableShots ?? 0;
-  const queue = useSyncExternalStore(uploader.subscribe, uploader.getSnapshot, () => []);
+  const queue = useSyncExternalStore(uploader.subscribe, uploader.getSnapshot, emptyQueue);
   const [taken, setTaken] = useState(guest?.shotsTaken ?? 0);
   const [facing, setFacing] = useState<"environment" | "user">("environment");
   const [flash, setFlash] = useState(false);

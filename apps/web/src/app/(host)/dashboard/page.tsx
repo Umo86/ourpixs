@@ -29,7 +29,7 @@ function statusOf(o: OccasionSummary, t: (k: string, v?: Record<string, string |
   if (o.access.reason === "locked") return { label: t("dashboard.status.locked"), tone: "red" as const };
   switch (o.packageStatus) {
     // Unpaid events are deleted unpaidDeleteDays after they were created (deleteAfter); say so on every card.
-    case "setup": return { label: o.deleteAfter ? t("dashboard.status.setupDelete", { date: formatInZone(o.deleteAfter, o.timeZone, locale) }) : t("dashboard.status.setup"), tone: "amber" as const };
+    case "setup": return { label: o.deleteAfter ? t("dashboard.status.setupDelete", { date: formatInZone(o.deleteAfter, o.timeZone, locale, { time: false }) }) : t("dashboard.status.setup"), tone: "amber" as const };
     case "paid": return { label: o.opensAt ? t("dashboard.status.paid", { date: d(o.opensAt) }) : t("dashboard.status.paidNoDate"), tone: "blue" as const };
     case "live": return { label: t("dashboard.status.live", { date: d(o.closesAt) }), tone: "green" as const };
     case "ended": return { label: o.deleteAfter ? t("dashboard.status.ended", { date: d(o.deleteAfter) }) : t("dashboard.status.endedNoDate"), tone: "ink" as const };

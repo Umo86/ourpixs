@@ -503,7 +503,8 @@
    "heading": "Your event will be deleted soon",
    "body": "{title} hasn't been paid for yet. Unpaid events are deleted {limit} days after they're created, so it will be deleted on {date}, in {days} days, together with its test uploads.",
    "body2": "To keep it, pay for the event before then. Your guests can join once the gallery opens.",
-   "body3": "Want to keep your test photos and videos? Download them here: {url}",
+   "body3": "Want to keep your test photos and videos? You can download them before then.",
+   "downloadLink": "Download your test uploads",
    "cta": "Open your event",
    "footer": "You're getting this because you created {title} on {brand}. If you don't need it any more, you don't have to do anything."
   }

@@ -29,7 +29,7 @@ export function packageLine(o: Pick<OccasionSummary, "packageStatus" | "opensAt"
   if (o.access?.reason === "locked") return { label: t("package.locked"), icon: "lock" };
   switch (o.packageStatus) {
     // Unpaid events are deleted on the API's deleteAfter (created_at + 90 days) unless paid on the web. Neutral wording, no prices.
-    case "setup": return o.deleteAfter ? { label: t("package.setupUnpaid", { date: d(o.deleteAfter) }), icon: "clock" } : { label: t("package.setup"), icon: "settings" };
+    case "setup": return o.deleteAfter ? { label: t("package.setupUnpaid", { date: formatInZone(o.deleteAfter, o.timeZone || "Europe/London", locale, { year: true, time: false }) }), icon: "clock" } : { label: t("package.setup"), icon: "settings" };
     case "paid": return { label: o.opensAt ? t("package.opens", { date: d(o.opensAt) }) : t("package.paidNoDate"), icon: "clock" };
     case "live": return { label: t("package.live", { date: d(o.closesAt) }), icon: "sparkles" };
     case "ended": return { label: o.deleteAfter ? t("package.ended", { date: d(o.deleteAfter) }) : t("package.endedNoDate"), icon: "download" };

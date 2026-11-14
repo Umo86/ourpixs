@@ -9,6 +9,7 @@ import type { GuestMission } from "@/lib/api-types";
 import { useGuest } from "./GuestContext";
 import { ScreenHeader } from "./ScreenHeader";
 import { EmailOffer } from "./EmailOffer";
+import { emptyQueue } from "@/lib/client/uploader";
 
 export function UploadScreen() {
   const t = useT("guest");
@@ -16,7 +17,7 @@ export function UploadScreen() {
   const { occasion: o, path, uploader, lockedDayId, api: url } = useGuest();
   const sp = useSearchParams();
   const missionId = sp.get("mission");
-  const queue = useSyncExternalStore(uploader.subscribe, uploader.getSnapshot, () => []);
+  const queue = useSyncExternalStore(uploader.subscribe, uploader.getSnapshot, emptyQueue);
   const today = new Date().toISOString().slice(0, 10);
   const openDays = o.days.filter((d) => d.uploadOpen !== false);
   const [dayId, setDayId] = useState<string | null>(null);

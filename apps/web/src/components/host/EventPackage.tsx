@@ -91,7 +91,7 @@ export function PackageCard({ occasionId, pkg, isOwner, payments, testUsed }: {
       <p className={`m-0 max-w-2xl text-[17px] ${dark ? "text-muted-dark" : "text-text-2"}`}>{body}</p>
       {pkg.status === "setup" && pkg.deleteAfter ? (
         <p role="note" className="m-0 self-start rounded-2xl bg-[#FFF3D6] px-4 py-3 text-[15px] font-bold leading-snug text-[#7A4B00]">
-          {t("package.unpaidDelete", { date: formatInZone(pkg.deleteAfter, pkg.timeZone, locale) })}
+          {t("package.unpaidDelete", { date: formatInZone(pkg.deleteAfter, pkg.timeZone, locale, { time: false }) })}
         </p>
       ) : null}
       {pkg.status === "setup" ? (

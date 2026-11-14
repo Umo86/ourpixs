@@ -10,7 +10,7 @@ import { Spinner } from "@/components/app/Spinner";
 import { useT } from "@/i18n/client";
 import { api, ApiClientError, errorMessage } from "@/lib/client/api";
 import { formatDuration } from "@/lib/client/format";
-import { Uploader } from "@/lib/client/uploader";
+import { Uploader, emptyQueue } from "@/lib/client/uploader";
 import { openSaveTarget, safeName, saveZip } from "@/lib/client/zip";
 import { ProcessingTile } from "@/components/app/ProcessingTile";
 import { useProcessingRefresh } from "@/components/app/useProcessingRefresh";
@@ -70,7 +70,7 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
   const fileInput = useRef<HTMLInputElement>(null);
 
   const uploader = useMemo(() => hostUploader(occasionId, videoMaxSeconds), [occasionId, videoMaxSeconds]);
-  const queue = useSyncExternalStore(uploader.subscribe, uploader.getSnapshot, () => []);
+  const queue = useSyncExternalStore(uploader.subscribe, uploader.getSnapshot, emptyQueue);
   const activeUploads = queue.filter((q) => q.status !== "done" && q.status !== "error").length;
   const failedUploads = queue.filter((q) => q.status === "error");
 

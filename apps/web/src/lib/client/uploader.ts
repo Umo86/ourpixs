@@ -53,6 +53,10 @@ function putWithProgress(target: PresignedPut | { url: string; headers: Record<s
  * Upload queue: concurrency 3, retries with exponential backoff, resumes after refresh (IndexedDB),
  * waits for the network to come back. Works for any endpoint pair with the /uploads contract.
  */
+/** Server snapshot for useSyncExternalStore: one stable empty queue (a new [] per call loops in React). */
+export const EMPTY_QUEUE: readonly QueueItem[] = Object.freeze([]);
+export const emptyQueue = () => EMPTY_QUEUE as QueueItem[];
+
 export class Uploader {
   private entries = new Map<string, Entry>();
   private order: string[] = [];
