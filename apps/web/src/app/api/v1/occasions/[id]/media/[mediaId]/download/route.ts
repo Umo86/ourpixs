@@ -5,7 +5,7 @@ import { requireMember } from "@/lib/auth";
 import { accessForOccasion, assertCanDownload } from "@/lib/access";
 import { EXT_BY_MIME, presignGet } from "@/lib/storage";
 
-/** Signed download URL for one original. 402 `plan_required` while downloads are locked. */
+/** Signed download URL for one original. 402 `payment_required` before the event is paid. */
 export const GET = route<{ id: string; mediaId: string }>(async (_req, { id, mediaId }) => {
   const { occasion } = await requireMember(id);
   assertUuid(mediaId, "photo");

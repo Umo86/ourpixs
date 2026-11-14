@@ -13,7 +13,7 @@ import { formatDuration } from "@/lib/client/format";
 import { Uploader } from "@/lib/client/uploader";
 import { EXT, openSaveTarget, safeName, saveZip } from "@/lib/client/zip";
 import type { MediaItem } from "@/lib/api-types";
-import { UpgradeDialog } from "./Billing";
+import { DownloadLockedDialog } from "./EventPackage";
 
 type Filters = { dayId?: string; moment?: string; guestId?: string; kind?: "photo" | "video"; filter?: "favourites" | "hidden" | "pending" | "flagged" | "duplicates" | "blurry" };
 type Action = "hide" | "show" | "delete" | "favourite" | "unfavourite" | "approve";
@@ -25,24 +25,30 @@ type Props = {
   guests: { id: string; name: string }[];
   pendingCount: number;
   approvalMode: boolean;
-  /** The owner's access: downloads locked on the trial / unpaid; uploads closed while read-only. */
+  /** The event package: downloads locked before paying; uploads closed while read-only. */
   canDownload: boolean;
   canUpload: boolean;
   isOwner: boolean;
   payments: boolean;
+  /** Longest video (admin setting); checked in the browser before uploading. */
+  videoMaxSeconds: number;
+  /** Test mode upload limit (before paying), for the error copy. */
+  testUploadLimit: number;
+  pricePence: number;
+  canPay: boolean;
 };
 
 const uploaders = new Map<string, Uploader>();
-function hostUploader(id: string) {
+function hostUploader(id: string, maxVideoSeconds: number) {
   let u = uploaders.get(id);
   if (!u) {
-    u = new Uploader({ ns: `host:${id}`, createUrl: `/api/v1/occasions/${id}/uploads`, completeUrl: `/api/v1/occasions/${id}/uploads/complete` });
+    u = new Uploader({ ns: `host:${id}`, createUrl: `/api/v1/occasions/${id}/uploads`, completeUrl: `/api/v1/occasions/${id}/uploads/complete`, maxVideoSeconds });
     uploaders.set(id, u);
   }
   return u;
 }
 
-export function AlbumClient({ occasionId, days, moments, guests, pendingCount, approvalMode, canDownload, canUpload, isOwner, payments }: Props) {
+export function AlbumClient({ occasionId, days, moments, guests, pendingCount, approvalMode, canDownload, canUpload, isOwner, payments, videoMaxSeconds, testUploadLimit, pricePence, canPay }: Props) {
   const t = useT("host");
   const router = useRouter();
   const [filters, setFilters] = useState<Filters>({});
@@ -61,7 +67,7 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
   const reqId = useRef(0);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const uploader = useMemo(() => hostUploader(occasionId), [occasionId]);
+  const uploader = useMemo(() => hostUploader(occasionId, videoMaxSeconds), [occasionId, videoMaxSeconds]);
   const queue = useSyncExternalStore(uploader.subscribe, uploader.getSnapshot, () => []);
   const activeUploads = queue.filter((q) => q.status !== "done" && q.status !== "error").length;
   const failedUploads = queue.filter((q) => q.status === "error");
@@ -216,7 +222,7 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
     }
   }
 
-  const lbLabels = { close: t("common.close"), prev: t("common.previous"), next: t("common.next"), download: t("common.download"), by: (n: string) => t("album.by", { name: n }), videoLocked: t("billing.videoLocked") };
+  const lbLabels = { close: t("common.close"), prev: t("common.previous"), next: t("common.next"), download: t("common.download"), by: (n: string) => t("album.by", { name: n }), videoLocked: t("album.videoLocked") };
   const iconBtn = "inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky";
   const select = "min-h-10 rounded-full border-[1.5px] border-[#D5D8E2] bg-white px-4 text-[13px] font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky";
   const allSelected = items.length > 0 && items.every((i) => selected.has(i.id));
@@ -285,6 +291,12 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
           </button>
         ) : null}
       </div>
+      {failedUploads.length ? (() => {
+        // Errors the host has to act on (video too long, test limit…), each once.
+        const vars = { seconds: videoMaxSeconds, limit: testUploadLimit };
+        const msgs = [...new Set(failedUploads.map((f) => (f.errorCode ? t(`errors.${f.errorCode}`, vars) : "")).filter((m, i) => m && !m.startsWith("errors.") && failedUploads[i]?.errorCode !== "offline"))];
+        return msgs.length ? <Notice tone="error">{msgs.join(" ")}</Notice> : null;
+      })() : null}
 
       {filters.filter === "duplicates" || filters.filter === "blurry" ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] bg-tint px-5 py-4">
@@ -380,7 +392,7 @@ export function AlbumClient({ occasionId, days, moments, guests, pendingCount, a
         />
       ) : null}
 
-      <UpgradeDialog open={locked} onClose={() => setLocked(false)} isOwner={isOwner} payments={payments} />
+      <DownloadLockedDialog open={locked} onClose={() => setLocked(false)} isOwner={isOwner} payments={payments} occasionId={occasionId} pricePence={pricePence} canPay={canPay} />
       {zipping || toast ? (
         <div role="status" className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-full bg-ink px-5 py-3 text-sm font-bold text-white shadow-xl">{zipping || toast}</div>
       ) : null}

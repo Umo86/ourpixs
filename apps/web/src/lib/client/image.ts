@@ -90,11 +90,14 @@ function processVideo(file: File, mime: string): Promise<Processed> {
       video.load();
       resolve(p);
     };
-    const timer = setTimeout(() => done({ original: file, kind: "video", mime }), 10000);
+    // The length is kept as soon as metadata loads, so a poster frame failing later doesn't lose it.
+    let durationS: number | undefined;
+    const timer = setTimeout(() => done({ original: file, kind: "video", mime, durationS }), 10000);
     video.muted = true;
     video.playsInline = true;
     video.preload = "auto";
     video.onloadedmetadata = () => {
+      if (Number.isFinite(video.duration)) durationS = video.duration;
       video.currentTime = Math.min(1, (video.duration || 0) * 0.1);
     };
     video.onseeked = async () => {
@@ -112,7 +115,7 @@ function processVideo(file: File, mime: string): Promise<Processed> {
     };
     video.onerror = () => {
       clearTimeout(timer);
-      done({ original: file, kind: "video", mime });
+      done({ original: file, kind: "video", mime, durationS });
     };
     video.src = url;
   });

@@ -25,6 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { key: "events" as const, href: "/admin/events", label: t("nav.events") },
     { key: "moderation" as const, href: "/admin/moderation", label: t("nav.moderation") },
     { key: "enquiries" as const, href: "/admin/enquiries", label: t("nav.enquiries") },
+    { key: "settings" as const, href: "/admin/settings", label: t("nav.settings") },
     { key: "audit" as const, href: "/admin/audit", label: t("nav.audit") },
     { key: "system" as const, href: "/admin/system", label: t("nav.system") },
   ];

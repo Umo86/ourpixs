@@ -18,7 +18,7 @@ const safe = (s: string) => s.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, "_").replac
 
 /**
  * ZIP manifest: every visible original (photos + videos), oldest first, with signed download URLs.
- * 402 `plan_required` while downloads are locked (trial / unpaid account).
+ * 402 `payment_required` before the event is paid; 410 `event_expired` after deletion.
  */
 export const GET = route<{ id: string }>(async (req, { id }) => {
   const { occasion } = await requireMember(id);

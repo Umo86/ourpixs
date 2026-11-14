@@ -25,7 +25,14 @@
   "storage_not_configured": "Uploads are paused for a moment. Please try again later.",
   "storage_error": "The upload didn't finish. Trying again.",
   "guest_blocked": "The hosts have turned off uploads from this phone.",
-  "plan_required": "Downloads aren't available for this event yet."
+  "plan_required": "Downloads aren't available for this event yet.",
+  "video_too_long": "Videos can be up to {seconds} seconds. Trim it and try again.",
+  "video_unreadable": "We couldn't read this video. Try another one.",
+  "video_duration_required": "We couldn't read this video. Try another one.",
+  "not_open": "This gallery isn't open yet.",
+  "event_unavailable": "This gallery is no longer available.",
+  "payment_required": "Downloads aren't available for this event yet.",
+  "test_limit": "Uploads are closed right now."
  },
  "demo": {
   "banner": "Demo event: try everything, nothing is saved."
@@ -41,7 +48,7 @@
  "welcome": {
   "lead": "Drop your shots,",
   "leadAccent": "join the party.",
-  "closed": "Uploads aren't open right now, but you can still look around.",
+  "closed": "The gallery has closed, so it isn't taking new photos, but you can still look around.",
   "name": "Your name",
   "namePlaceholder": "e.g. Ayşe",
   "pin": "Event PIN",
@@ -52,7 +59,8 @@
   "cta": "Let me in",
   "joining": "Joining…",
   "small": "No app · No sign-up · 10 seconds",
-  "atVenue": "at {venue}"
+  "atVenue": "at {venue}",
+  "paused": "Uploads aren't open right now, but you can still look around."
  },
  "feed": {
   "hi": "Hi {name}",
@@ -197,5 +205,14 @@
   "by": "{name}'s shot",
   "empty": "Scan the QR code and be the first on the big screen.",
   "fullscreen": "Full screen"
+ },
+ "notOpen": {
+  "title": "This gallery opens soon.",
+  "body": "The hosts have set it to open on {date}. Come back then with the same link or QR code to join in and share your photos.",
+  "soonTitle": "This gallery isn't open yet.",
+  "soonBody": "The hosts are still getting it ready. Come back later with the same link or QR code.",
+  "unavailableTitle": "This gallery is closed.",
+  "unavailableBody": "It isn't available any more. If you think this is a mistake, ask the hosts.",
+  "keepLink": "Keep this link: nothing to install, no account needed."
  }
 }

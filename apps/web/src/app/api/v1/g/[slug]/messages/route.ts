@@ -3,7 +3,7 @@ import { db, schema } from "@/db";
 import { route, json, readJson, badRequest, planLimit } from "@/lib/http";
 import { occasionBySlug, requireGuest } from "@/lib/guest";
 import { limit } from "@/lib/rate-limit";
-import { accessForOccasion, assertCanUpload } from "@/lib/access";
+import { accessForOccasion, assertGuestCanUpload } from "@/lib/access";
 import { deleteObjects, headObject } from "@/lib/storage";
 import { toMessages } from "@/lib/serializers";
 import { notifyHosts } from "@/lib/push";
@@ -22,7 +22,7 @@ const body = z.object({
 export const POST = route<{ slug: string }>(async (req, { slug }) => {
   const o = await occasionBySlug(slug);
   const guest = await requireGuest(o);
-  assertCanUpload(await accessForOccasion(o));
+  assertGuestCanUpload(await accessForOccasion(o));
   await limit(`msg:${guest.id}`, 20, 3600);
   const b = await readJson(req, body);
   let mediaKey: string | null = null;

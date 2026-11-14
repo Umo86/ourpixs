@@ -3,14 +3,13 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { route, json, readJson } from "@/lib/http";
 import { requireHost, SESSION_COOKIE } from "@/lib/auth";
-import { toHost, toSubscription } from "@/lib/serializers";
-import { computeAccess } from "@/lib/access";
+import { toHost } from "@/lib/serializers";
 import { deleteAccount } from "@/lib/account";
 
 type HostRow = typeof schema.hosts.$inferSelect;
-const payload = (h: HostRow) => ({ host: { ...toHost(h), subscription: toSubscription(computeAccess(h)) } });
+const payload = (h: HostRow) => ({ host: toHost(h) });
 
-/** `host.subscription` = the account's subscription and what it allows right now. */
+/** The signed-in host. (No `subscription` any more: what an event can do is on each occasion's `access` / `package`.) */
 export const GET = route(async () => json(payload(await requireHost())));
 
 const body = z.object({ name: z.string().trim().max(80).nullable().optional(), locale: z.enum(["en", "tr"]).optional() });
@@ -24,7 +23,7 @@ export const PATCH = route(async (req) => {
   return json(payload(updated ?? host));
 });
 
-/** Deletes the host account, events they own (with all files) and memberships, and cancels any Stripe subscription immediately. */
+/** Deletes the host account, events they own (with all files) and memberships. */
 export const DELETE = route(async () => {
   const host = await requireHost();
   await deleteAccount(host.id);

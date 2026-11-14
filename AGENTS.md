@@ -20,7 +20,7 @@ apps/web/                Next.js 15 App Router, TypeScript, Tailwind v4
   src/app/admin/         superadmin dashboard (ADMIN_EMAILS only, 404 for everyone else); routes under /api/admin, helpers in src/lib/admin*.ts
   src/app/api/           route handlers; mobile API under /api/v1
   src/db/                Drizzle schema + client (Neon serverless HTTP)
-  src/lib/config.ts      brands, occasions, plans, themes — SINGLE SOURCE OF TRUTH
+  src/lib/config.ts      brands, occasions, package defaults, themes — SINGLE SOURCE OF TRUTH (live prices/limits: src/lib/settings.ts)
   src/i18n/              getT (server), useT (client), message files in src/messages/{en,tr}/*.json
   src/components/ui/     shared design-system components
 apps/mobile/             Expo SDK (latest), Expo Router, TypeScript
@@ -48,11 +48,11 @@ apps/mobile/             Expo SDK (latest), Expo Router, TypeScript
 - Guest identity: per-occasion httpOnly cookie `op_g_<slug>` holding an HMAC-signed random device token (`GUEST_TOKEN_SECRET`); DB stores only its hash.
 - Every host route/API checks membership in `occasion_members`.
 - Media storage is behind `src/lib/storage.ts` (presigned PUT/GET). Driver chosen by env: `R2_*` vars → Cloudflare R2 (S3 API); else `BLOB_READ_WRITE_TOKEN` → Vercel Blob; else a clear "storage not configured" error. Browser uploads go directly to storage, never through a Vercel function body.
-- Business model: account subscription (`SUBSCRIPTION` in `src/lib/config.ts`): 3-day free trial from the first event (downloads locked), then £9.99/month or £69.99/year, everything unlimited. Read-only 90 days after a cancelled plan ends, 30 days after an unpaid trial, then deleted. All checks go through `src/lib/access.ts`, enforced server-side; an event follows its owner's subscription. No venue/partner plan.
+- Business model: the **event package** — one price per event (default £69), paid once by the host via Stripe Checkout (mode `payment`). Prices and limits (guest download £3, window 7 days, fair use 50 GB, videos 60 s, retention 12 months, 20 test uploads) are admin-editable: read them through `src/lib/settings.ts` (`getSettings()`, defaults `PACKAGE_DEFAULTS` in `src/lib/config.ts`), never hard-code them. Event states: setup (free; host-only test mode) → paid → live (opens_at ≤ now < closes_at, the organiser's gallery window, ≤ windowDays) → ended (guest uploads closed; download email) → expired (closes_at + retentionMonths: files deleted), or refunded. All checks go through `src/lib/access.ts` (pure rules in `access-rules.ts`, exercised by `scripts/access-check.ts`), enforced server-side; an event's access derives from the event itself, not the account. The old `hosts` subscription columns are legacy and unused. No venue/partner plan.
 - Email via Resend (`RESEND_API_KEY`, `EMAIL_FROM_EN`, `EMAIL_FROM_TR`). If not configured and `PREVIEW_SHOW_CODE=1`, the login code is returned to the UI for testing (never in production).
-- Stripe Checkout in subscription mode, GBP, inline prices, plus the Customer Portal (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`; `src/lib/billing.ts`). If not configured, plan buttons show "Payments coming soon". The mobile store builds never sell or link to the subscription (App Store 3.1.1 / Play billing).
+- Stripe Checkout in payment mode, GBP, inline price from settings (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`; `src/lib/billing.ts`; webhook events `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`). Test keys only until live payments are approved. If not configured, Pay buttons show "Payments coming soon". The mobile store builds never sell or link to the event package (App Store 3.1.1 / Play billing).
 - `noindex` on `/g`, `/s`, `/wall`, `/dashboard`, `/admin`.
-- Admin (`/admin`, `/api/admin/*`): every page calls `requireAdmin()` and every route uses `adminRoute()` / `requireAdminApi()` from `src/lib/admin.ts`; every mutation is zod-validated, rate-limited and written to `admin_audit`. Admin overrides (complimentary access, suspension, event lock) live in `src/lib/access.ts` like every other access rule.
+- Admin (`/admin`, `/api/admin/*`): every page calls `requireAdmin()` and every route uses `adminRoute()` / `requireAdminApi()` from `src/lib/admin.ts`; every mutation is zod-validated, rate-limited and written to `admin_audit`. Admin overrides (event marked as paid, suspension, event lock) live in `src/lib/access.ts` like every other access rule; product settings are edited on `/admin/settings`.
 
 ## Code style
 - TypeScript strict. Server Components by default; `"use client"` only where needed.

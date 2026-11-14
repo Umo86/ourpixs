@@ -25,7 +25,14 @@
   "storage_not_configured": "Yüklemelere kısa bir ara verdik. Lütfen biraz sonra tekrar dene.",
   "storage_error": "Yükleme tamamlanmadı, tekrar deniyoruz.",
   "guest_blocked": "Ev sahipleri bu telefondan yüklemeyi kapattı.",
-  "plan_required": "Bu etkinlikte indirmeler henüz açık değil."
+  "plan_required": "Bu etkinlik için indirmeler henüz açık değil.",
+  "video_too_long": "Videolar en fazla {seconds} saniye olabilir. Kısaltıp tekrar deneyin.",
+  "video_unreadable": "Bu videoyu okuyamadık. Başka bir video deneyin.",
+  "video_duration_required": "Bu videoyu okuyamadık. Başka bir video deneyin.",
+  "not_open": "Bu galeri henüz açılmadı.",
+  "event_unavailable": "Bu galeri artık kullanılamıyor.",
+  "payment_required": "Bu etkinlik için indirmeler henüz açık değil.",
+  "test_limit": "Yüklemeler şu anda kapalı."
  },
  "demo": {
   "banner": "Demo etkinlik: her şeyi dene, hiçbir şey kaydedilmez."
@@ -41,7 +48,7 @@
  "welcome": {
   "lead": "Karelerini paylaş,",
   "leadAccent": "eğlenceye katıl.",
-  "closed": "Yüklemeler şu an kapalı ama yine de göz atabilirsin.",
+  "closed": "Galeri kapandığı için yeni fotoğraf alınmıyor, ama etrafa bakmaya devam edebilirsiniz.",
   "name": "Adın",
   "namePlaceholder": "ör. Ayşe",
   "pin": "Etkinlik PIN'i",
@@ -52,7 +59,8 @@
   "cta": "Hadi başlayalım",
   "joining": "Katılıyorsun…",
   "small": "Uygulama yok · Üyelik yok · 10 saniye",
-  "atVenue": "{venue}"
+  "atVenue": "{venue}",
+  "paused": "Yüklemeler şu anda kapalı, ama etrafa bakabilirsiniz."
  },
  "feed": {
   "hi": "Merhaba {name}",
@@ -197,5 +205,14 @@
   "by": "{name} çekti",
   "empty": "QR kodu okut, canlı ekranda ilk sen ol.",
   "fullscreen": "Tam ekran"
+ },
+ "notOpen": {
+  "title": "Bu galeri yakında açılıyor.",
+  "body": "Ev sahipleri galeriyi {date} tarihinde açılacak şekilde ayarladı. O zaman aynı bağlantı ya da QR kodla gelin, katılın ve fotoğraflarınızı paylaşın.",
+  "soonTitle": "Bu galeri henüz açılmadı.",
+  "soonBody": "Ev sahipleri hâlâ hazırlıyor. Daha sonra aynı bağlantı ya da QR kodla tekrar gelin.",
+  "unavailableTitle": "Bu galeri kapalı.",
+  "unavailableBody": "Artık kullanılamıyor. Bir yanlışlık olduğunu düşünüyorsanız ev sahiplerine sorun.",
+  "keepLink": "Bu bağlantıyı saklayın: indirilecek bir şey yok, hesap gerekmez."
  }
 }

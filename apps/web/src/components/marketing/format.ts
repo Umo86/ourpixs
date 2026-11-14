@@ -1,6 +1,6 @@
-import { MONEY_BACK_DAYS, SUBSCRIPTION, YEARLY_SAVING_PERCENT, type Locale } from "@/lib/config";
+import { CANCELLATION_DAYS, FEATURES, type Locale, type PackageSettings } from "@/lib/config";
 
-/** 1000 -> "£10", 999 -> "£9.99" */
+/** 6900 -> "£69", 350 -> "£3.50" */
 export function formatGBP(pence: number): string {
   return pence % 100 === 0 ? `£${pence / 100}` : `£${(pence / 100).toFixed(2)}`;
 }
@@ -19,15 +19,15 @@ export function formatStorage(days: number, locale: Locale): string {
   return locale === "tr" ? `${days} gün` : `${days} days`;
 }
 
-/** Variables for pricing copy ({monthly}, {yearly}, {saving}, {trialDays} …). Every number comes from SUBSCRIPTION in src/lib/config.ts. */
-export function pricingVars(email: string) {
-  const f = SUBSCRIPTION.features;
+/**
+ * Variables for pricing copy ({price}, {guestPrice}, {windowDays}, {retentionMonths}, {videoSeconds}, {fairUseGb}, {testLimit} …).
+ * Every number comes from the live admin settings (src/lib/settings.ts → getSettings()), passed in by the page.
+ */
+export function pricingVars(email: string, s: PackageSettings) {
   return {
-    monthly: formatGBP(SUBSCRIPTION.monthlyPence), yearly: formatGBP(SUBSCRIPTION.yearlyPence),
-    yearlyPerMonth: formatGBP(Math.round(SUBSCRIPTION.yearlyPence / 12)), saving: YEARLY_SAVING_PERCENT,
-    trialDays: SUBSCRIPTION.trialDays, maxDays: f.maxDays, minutes: Math.round(f.maxVideoSeconds / 60),
-    readOnlyDays: SUBSCRIPTION.cancelledReadOnlyDays, trialKeepDays: SUBSCRIPTION.trialGraceDeleteDays,
-    graceDays: SUBSCRIPTION.pastDueGraceDays, days: MONEY_BACK_DAYS, email,
+    price: formatGBP(s.eventPricePence), guestPrice: formatGBP(s.guestDownloadPence), windowDays: s.windowDays,
+    retentionMonths: s.retentionMonths, videoSeconds: s.videoMaxSeconds, fairUseGb: s.fairUseGb, testLimit: s.hostTestUploadLimit,
+    maxDays: FEATURES.maxDays, cancelDays: CANCELLATION_DAYS, email,
   };
 }
-
+export type PricingVars = ReturnType<typeof pricingVars>;

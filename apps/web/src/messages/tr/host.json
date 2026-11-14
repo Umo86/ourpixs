@@ -31,7 +31,7 @@
   "pin_invalid": "PIN hatalı.",
   "not_joined": "Önce etkinliğe katılın.",
   "upload_closed": "Bu etkinlik için yüklemeler kapalı.",
-  "plan_limit": "Dosya çok büyük (fotoğraflar 60 MB'a, videolar 10 dakika ya da 1 GB'a kadar).",
+  "plan_limit": "Dosya çok büyük (fotoğraflar en fazla 60 MB).",
   "storage_not_configured": "Fotoğraf depolama henüz hazır değil, yüklemeler beklemede. Lütfen daha sonra tekrar deneyin.",
   "storage_error": "Yükleme tamamlanmadı. Tekrar deneyeceğiz.",
   "payments_unavailable": "Ödemeler çok yakında.",
@@ -39,14 +39,28 @@
   "slug_taken": "Bu link adı alınmış. Başka bir ad deneyin.",
   "slug_invalid": "3–40 küçük harf, rakam veya tire kullanın.",
   "slug_reserved": "Bu link adı kullanılamıyor. Başka bir ad deneyin.",
-  "no_subscription": "Bu hesapta henüz bir abonelik yok.",
   "guest_blocked": "Bu misafir engellendi.",
-  "plan_required": "Bunun için aktif bir plan gerekiyor. İndirmek, yeni etkinlik oluşturmak ya da salt okunur bir etkinliği düzenlemek için abone olun.",
-  "already_subscribed": "Zaten bir aboneliğiniz var. Değiştirmek için “Ödemeleri yönet” bölümünü kullanın.",
-  "billing_error": "Aboneliğinizi iptal edemedik, bu yüzden hiçbir şey silinmedi. Lütfen tekrar deneyin ya da bize yazın.",
   "account_suspended": "Bu hesap askıya alındı. Bir yanlışlık olduğunu düşünüyorsanız lütfen bizimle iletişime geçin.",
   "event_locked": "Bu etkinlik ekibimiz tarafından kilitlendi. Lütfen bizimle iletişime geçin.",
-  "reauth_required": "Devam etmek için lütfen tekrar giriş yapın."
+  "reauth_required": "Devam etmek için lütfen tekrar giriş yapın.",
+  "test_limit": "Tüm deneme yüklemelerinizi kullandınız. Misafirlerinize açmak için etkinliğin ödemesini yapın.",
+  "video_too_long": "Videolar en fazla {seconds} saniye olabilir. Telefonunuzda kısaltıp tekrar deneyin.",
+  "video_unreadable": "Bu videonun süresini okuyamadık. Başka bir video deneyin ya da kısaltıp tekrar deneyin.",
+  "video_duration_required": "Bu videonun süresini okuyamadık. Başka bir video deneyin ya da kısaltıp tekrar deneyin.",
+  "not_open": "Bu galeri henüz açılmadı.",
+  "event_unavailable": "Bu galeri artık kullanılamıyor.",
+  "payment_required": "İndirmeler, etkinliğin ödemesini yaptıktan sonra açılır.",
+  "download_closed": "Bu etkinlik için indirme yapılamıyor.",
+  "event_refunded": "Bu etkinlik iade edildiği için değiştirilemez.",
+  "event_expired": "Bu etkinliğin dosyaları silindi.",
+  "window_locked": "Galeri açıldığı için tarihleri artık değişmez. Yine de erkenden kapatabilirsiniz.",
+  "window_order": "Galerinin açılış zamanı kapanıştan önce olmalı.",
+  "window_too_long": "Galeri en fazla izin verilen gün sayısı kadar açık kalabilir. Daha kısa bir süre seçin.",
+  "window_past": "Bu kapanış zamanı geçti. Yeni tarihler seçin.",
+  "window_incomplete": "Galerinin hem açılış hem kapanış zamanını seçin.",
+  "window_required": "Galerinin ne zaman açılıp kapanacağını seçin, sonra ödeyin.",
+  "already_paid": "Bu etkinliğin ödemesi zaten yapıldı. Görünmesi biraz sürebilir.",
+  "cannot_pay": "Bu etkinlik için şu anda ödeme yapılamıyor. Lütfen destekle iletişime geçin."
  },
  "login": {
   "metaTitle": "Giriş",
@@ -85,13 +99,26 @@
   "new": "Yeni etkinlik",
   "cohost": "Ortak ev sahibi",
   "counts": "{media} kare · {guests} misafir",
-  "emptySticker": "3 gün ücretsiz",
+  "emptySticker": "Kurulum ücretsiz",
   "emptyTitle": "İlk",
   "emptyAccent": "albümünüz.",
   "emptyBody": "Bir etkinlik oluşturun, QR kartları yazdırın; misafirlerin bütün fotoğrafları tek bir özel albümde toplansın.",
   "emptyCta": "İlk etkinliğinizi oluşturun",
   "accountTitle": "Hesabınız",
-  "accountBody": "{email} ile giriş yaptınız. Hesabınızı silerseniz sahibi olduğunuz etkinlikler ve içindeki bütün fotoğraflar silinir."
+  "accountBody": "{email} ile giriş yaptınız. Hesabınızı silerseniz sahibi olduğunuz etkinlikler ve içindeki bütün fotoğraflar silinir.",
+  "status": {
+   "setup": "Hazırlık · deneme modu",
+   "paid": "Ödendi · {date} açılıyor",
+   "paidNoDate": "Ödendi · tarihleri seçin",
+   "live": "{date} tarihine kadar açık",
+   "ended": "Kapandı · {date} tarihine kadar indirin",
+   "endedNoDate": "Kapandı",
+   "expired": "Dosyalar silindi",
+   "refunded": "İade edildi",
+   "locked": "Kilitli",
+   "suspended": "Askıya alındı"
+  },
+  "statusLabel": "Durum"
  },
  "wizard": {
   "metaTitle": "Yeni etkinlik",
@@ -129,17 +156,16 @@
   "themeAccent": "seçin.",
   "create": "Etkinliği oluştur",
   "creating": "Oluşturuluyor…",
-  "doneSticker": "Hazır",
+  "doneSticker": "Kurulum ücretsiz",
   "doneTitle": "Etkinliğiniz",
-  "doneAccent": "yayında.",
-  "doneBody": "Linki paylaşın ya da QR kartları yazdırın. Misafirler QR kodu okutur, adını yazar ve paylaşmaya başlar.",
+  "doneAccent": "hazır.",
+  "doneBody": "QR kartları yazdırın ve birkaç deneme yüklemesiyle deneyin. Hazır olduğunuzda galeriyi misafirlerinize açmak için {price} ödeyin.",
   "printQr": "QR kartları yazdır",
   "openAlbum": "Albümü aç",
-  "trialSticker": "{days} günlük ücretsiz denemeniz şimdi başladı",
-  "trialBody": "Video, canlı ekran ve anı defteri dahil her şey açık. İndirmeler abone olduğunuzda açılır.",
-  "blockedTitle": "Yeni etkinlikler için",
-  "blockedAccent": "abone olun.",
-  "blockedBody": "Ücretsiz denemenizi kullandınız. Tek plan sınırsız etkinliği kapsar: aylık {monthly} ya da yıllık {yearly}."
+  "doneWindow": "Galeriniz {from} tarihinde açılıp {to} tarihinde kapanacak. Galeri açılana kadar bunu Ayarlar'dan değiştirebilirsiniz.",
+  "doneNoWindow": "Galerinin ne zaman açılıp kapanacağını Ayarlar'dan seçin, sonra misafirlerinize açmak için ödeme yapın.",
+  "windowTitle": "Galeri ne zaman açık olsun?",
+  "windowHint": "Misafirler bu saatler arasında, en fazla {days} gün boyunca katılıp yükleme yapabilir. Galeriyi etkinlik günü saat 10:00'da başlatıyoruz; açılana kadar istediğiniz zaman değiştirebilirsiniz."
  },
  "themes": {
   "noir": "Noir",
@@ -160,7 +186,7 @@
   "wall": "Canlı ekran"
  },
  "occasion": {
-  "archived": "Hesabın planı sona erdiği için bu etkinliğin dosyaları silindi."
+  "archived": "Bu etkinliğin dosyaları saklama süresi dolunca silindi."
  },
  "stats": {
   "guests": "Misafir",
@@ -234,7 +260,8 @@
    "blurry": "Bulanık",
    "nsfw": "Kontrol edin",
    "reported": "Bildirildi"
-  }
+  },
+  "videoLocked": "Bu video, etkinliğin ödemesi yapıldıktan sonra burada oynatılır."
  },
  "qr": {
   "metaTitle": "QR kartlar",
@@ -332,11 +359,8 @@
   "pinOff": "PIN yok. Linki ya da QR kodu olan herkes katılabilir.",
   "pinNew": "Yeni PIN (4–8 rakam)",
   "pinSet": "PIN belirle",
-  "pinRemove": "PIN'i kaldır"
- },
- "plan": {
-  "comingSoon": "Ödemeler çok yakında",
-  "cancelledNotice": "Ödeme iptal edildi. Hiçbir ücret alınmadı."
+  "pinRemove": "PIN'i kaldır",
+  "gallery": "Galeri tarihleri"
  },
  "danger": {
   "title": "Etkinliği sil",
@@ -395,7 +419,11 @@
   "saved": "İndirme tamamlandı.",
   "failed": "İndirme durdu. Lütfen tekrar deneyin.",
   "nothing": "Henüz indirilecek bir şey yok.",
-  "browserNote": "Büyük albümler en iyi bilgisayarda Chrome ya da Edge ile iner, çünkü bu tarayıcılar dosyaları doğrudan diske kaydeder."
+  "browserNote": "Büyük albümler en iyi bilgisayarda Chrome ya da Edge ile iner, çünkü bu tarayıcılar dosyaları doğrudan diske kaydeder.",
+  "lockedSetup": "İndirmeler, etkinliğin ödemesini yaptıktan sonra açılır. O zamana kadar albümdeki her şeyi görüntüleyebilirsiniz.",
+  "lockedRefunded": "Bu etkinlik iade edildiği için indirmeler kapalı.",
+  "lockedExpired": "Bu etkinliğin dosyaları silindi.",
+  "lockedSuspended": "Bu hesap askıya alındığı için indirmeler kapalı. Lütfen destekle iletişime geçin."
  },
  "support": {
   "metaTitle": "Destek",
@@ -408,7 +436,7 @@
   "moreHelp": "Yardım merkezi",
   "deleteLink": "Hesabınızı silin",
   "privacy": "Gizlilik politikası",
-  "faq": "Misafirlerin uygulama indirmesi gerekiyor mu?::Hayır. Misafirler QR kodu okutur ve telefonlarının tarayıcısından yükler. Uygulama isteğe bağlı, daha çok ev sahipleri için.|Ne kadar tutar?::Her şeyin dahil olduğu tek plan, sınırsız etkinlik için: aylık {monthly} ya da yıllık {yearly}. İlk etkinliğiniz, kart bilgisi gerekmeden {trialDays} günlük ücretsiz denemeyi başlatır.|Fotoğraflar ne kadar saklanır?::Abone olduğunuz sürece. İptal ederseniz {readOnlyDays} gün boyunca her şeyi görüntüleyip indirebilirsiniz. Ödeme yapılmayan bir deneme, bittikten sonra {trialKeepDays} gün saklanır.|Ücret iadesi alabilir miyim?::Evet. İlk ödemenizde {days} gün para iade garantisi var. Kayıt olduğunuz adresten bize yazın.|Fotoğrafları kimler görebilir?::Albümün tamamını sadece ev sahipleri ve ortak ev sahipleri görür. Misafirler ortak akışı görür; isterseniz kareleri önce onaylayabilirsiniz."
+  "faq": "Misafirlerin uygulama indirmesi gerekiyor mu?::Hayır. Misafirler QR kodu okutur ve telefonlarının tarayıcısından yükler. Uygulama isteğe bağlı, daha çok ev sahipleri için.|Ne kadar tutar?::Etkinlik başına bir kez {price}. Kurulum ücretsiz; ödemeden önce {testLimit} deneme yüklemesine kadar kendiniz deneyebilirsiniz.|Fotoğraflar ne kadar saklanır?::Galeri açıkken ve kapandıktan sonraki {retentionMonths} ay boyunca. Galeri kapandığında ve bir şey silinmeden 30 ve 7 gün önce size e-posta göndeririz.|Ücret iadesi alabilir miyim?::Evet. Galeriniz açılmadan önce istediğiniz zaman kayıt olduğunuz adresten bize yazın, ücretin tamamını iade edelim.|Fotoğrafları kimler görebilir?::Albümün tamamını sadece ev sahipleri ve ortak ev sahipleri görür. Misafirler ortak akışı görür; isterseniz kareleri önce onaylayabilirsiniz."
  },
  "accountDelete": {
   "metaTitle": "Hesabınızı silin",
@@ -448,107 +476,95 @@
    "cta": "Albümde inceleyin",
    "footer": "Bu e-postayı, bu etkinliğin ev sahibi olduğunuz için aldınız."
   },
-  "billing": {
-   "footer": "Bu e-postayı {brand} hesabınız olduğu için aldınız.",
-   "trialPrompt": {
-    "subject": "{brand} ile fotoğraflarınızı tam kalitede saklayın",
-    "heading": "Denemeniz harika gidiyor",
-    "body": "Ücretsiz denemeniz indirmeler dışında her şeyi içeriyor. Abone olun, tüm orijinalleri ve ZIP dosyalarını istediğiniz zaman indirin.",
-    "body2": "Aylık plan ayda {monthly}; yıllık planı seçerseniz {yearly} ödersiniz ve %{saving} tasarruf edersiniz. İstediğiniz zaman iptal edebilirsiniz.",
-    "cta": "Aylık abone olun"
-   },
-   "trialEnded": {
-    "subject": "{brand} ücretsiz denemeniz sona erdi",
-    "heading": "Denemeniz sona erdi",
-    "body": "Etkinlikleriniz artık salt okunur: misafirler yeni fotoğraf ekleyemez ve indirmeler kapalı. Hiçbir şey silinmedi.",
-    "body2": "Dosyalarınızı {date} tarihine kadar saklıyoruz. Bu tarihten önce abone olursanız indirmeler dahil her şey hemen açılır.",
-    "cta": "Hemen abone olun"
-   },
-   "cancelled": {
-    "subject": "{brand} aboneliğiniz sona erdi",
-    "heading": "Aboneliğiniz sona erdi",
-    "body": "Etkinlikleriniz artık yeni yükleme almıyor. {date} tarihine kadar her şeyi görüntüleyip indirebilirsiniz.",
-    "body2": "Bu tarihten sonra dosyalar silinir. Daha önce yeniden abone olursanız etkinlikleriniz hemen yeniden açılır.",
-    "cta": "Fotoğraflarınızı indirin"
-   },
-   "deletionSoon": {
-    "subject": "{brand} fotoğraflarınız {date} tarihinde silinecek",
-    "heading": "Dosyalarınız yakında silinecek",
-    "body": "Etkinliklerinizdeki fotoğraf, video ve mesajlar {date} tarihinde, {days} gün sonra silinecek.",
-    "body2": "Her şeyi saklamak için bu tarihten önce abone olun. İndirme hakkınız devam ediyorsa albümlerinizi şimdi indirin.",
-    "cta": "Panelinizi açın"
-   }
+  "ended": {
+   "subject": "{title} galeriniz kapandı: her şeyi indirin",
+   "heading": "Galeriniz kapandı",
+   "body": "{title} için misafir yüklemeleri artık kapalı. Tüm fotoğraf ve videolar tam kalitede indirmeniz için hazır: tek bir ZIP ya da her gün için ayrı.",
+   "body2": "Dosyalarınız {date} tarihine kadar saklanır. O zamana kadar indirin ve güvenli bir yerde bir kopyasını tutun.",
+   "body2NoDate": "Kısa süre içinde indirin ve güvenli bir yerde bir kopyasını tutun.",
+   "cta": "Her şeyi indir",
+   "footer": "Bu e-postayı {brand} üzerinde bu etkinliğin ev sahibi olduğunuz için aldınız."
+  },
+  "deletionSoon": {
+   "subject": "{title}: fotoğraflarınız {date} tarihinde silinecek",
+   "heading": "Dosyalarınız yakında silinecek",
+   "body": "{title} etkinliğinin fotoğraf, video ve mesajları {days} gün sonra, {date} tarihinde silinecek.",
+   "body2": "Henüz indirmediyseniz her şeyi şimdi indirin. Bu tarihten sonra geri getirilemez.",
+   "cta": "Her şeyi indir"
   }
  },
  "billing": {
-  "monthly": "Aylık",
-  "yearly": "Yıllık",
-  "kicker": "Planınız",
-  "redirecting": "Açılıyor…",
-  "subscribeMonthly": "Aylık abone olun · {price}",
-  "subscribeYearly": "Yıllık · {price} (%{saving} tasarruf)",
-  "manage": "Ödemeleri yönet",
-  "fine": "Fiyatlara KDV dahildir. İstediğiniz zaman iptal edebilirsiniz; iptal, ödediğiniz dönemin sonunda geçerli olur. İlk ödemenizde 14 gün para iade garantisi.",
-  "subscribedNotice": "Abone oldunuz. Tüm etkinliklerinizde indirmeler açıldı.",
-  "readOnlyBadge": "Salt okunur",
-  "videoLocked": "Videolar, abone olduğunuzda burada oynatılır. Misafirlerinizin yüklemeleri güvende.",
-  "downloadsLocked": "İndirmeler abone olduğunuzda açılır. Ücretsiz denemede canlı ekran dahil her şeyi görüntüleyebilirsiniz.",
-  "downloadsLockedEnded": "Ücretsiz deneme sona erdiği için indirmeler kapalı. Her şeyi indirmek için abone olun.",
-  "status": {
-   "none": "{days} gün ücretsiz",
-   "noneBody": "Ücretsiz denemeniz ilk etkinliğinizi oluşturduğunuzda başlar. Kart bilgisi gerekmez.",
-   "trialing": "Ücretsiz deneme: {days} gün kaldı",
-   "trialingBody": "{date} tarihine kadar her şey çalışır. İndirmeler abone olduğunuzda açılır.",
-   "activeMonthly": "Aylık plan",
-   "activeYearly": "Yıllık plan",
-   "renews": "{date} tarihinde yenilenir.",
-   "cancelling": "İptal edildi. {date} tarihine kadar her şey çalışmaya devam eder.",
-   "pastDue": "Ödeme alınamadı",
-   "pastDueBody": "Lütfen kartınızı güncelleyin. Etkinlikleriniz {days} gün daha çalışmaya devam eder.",
-   "cancelled": "Aboneliğiniz sona erdi",
-   "cancelledBody": "Etkinlikleriniz salt okunur. {date} tarihine kadar her şeyi görüntüleyip indirebilirsiniz; sonra dosyalar silinir.",
-   "expired": "Ücretsiz denemeniz sona erdi",
-   "expiredBody": "Etkinlikleriniz salt okunur ve indirmeler kapalı. Dosyalar {date} tarihine kadar saklanır.",
-   "comped": "Ücretsiz erişim",
-   "compedBody": "{date} tarihine kadar her şey açık, bizden hediye."
-  },
   "readOnly": {
-   "trialEnded": "Ücretsiz deneme sona erdiği için bu etkinlik salt okunur ve indirmeler kapalı. Dosyalar {date} tarihine kadar saklanır.",
-   "cancelled": "Abonelik sona erdiği için bu etkinlik salt okunur. {date} tarihine kadar her şey indirilebilir.",
-   "cohost": "Yalnızca etkinlik sahibi abone olabilir.",
-   "locked": "Bu etkinlikte yüklemeler kapalı ve şu an düzenlenemiyor. Lütfen bizimle iletişime geçin.",
-   "suspended": "Bu hesap askıya alındığı için etkinlikleri salt okunur. Lütfen bizimle iletişime geçin."
-  },
-  "prompt": {
-   "trial": {
-    "sticker": "Denemenizin bitmesine {days} gün",
-    "title": "Her kareyi",
-    "accent": "tam kalitede saklayın.",
-    "body": "Denemeniz indirmeler dışında her şeyi içeriyor. Aylık {monthly} ile abone olun ya da yıllık {yearly} ile %{saving} tasarruf edin."
-   },
-   "expired": {
-    "sticker": "Deneme bitti",
-    "title": "Fotoğraflarınız",
-    "accent": "sizi bekliyor.",
-    "body": "Yüklemeler kapalı, indirmeler kilitli. Dosyalarınızı {date} tarihine kadar saklıyoruz. Abone olun, her şey hemen açılsın."
-   },
-   "cancelled": {
-    "sticker": "Salt okunur",
-    "title": "İstediğiniz zaman",
-    "accent": "geri dönün.",
-    "body": "Etkinlikleriniz artık yeni yükleme almıyor. {date} tarihine kadar her şeyi indirebilirsiniz. Yeniden açmak için tekrar abone olun."
-   },
-   "pastDue": {
-    "sticker": "Ödeme alınamadı",
-    "title": "Ödemenizi",
-    "accent": "birlikte çözelim.",
-    "body": "Son ödemenizi alamadık. Etkinliklerinizin açık kalması için kartınızı güncelleyin: {days} gün daha çalışmaya devam ederler."
-   }
+   "locked": "Bu etkinlik yüklemelere kapalı ve şu anda düzenlenemiyor. Lütfen destekle iletişime geçin.",
+   "suspended": "Bu hesap askıya alındığı için etkinlikleri salt okunur. Lütfen destekle iletişime geçin.",
+   "refunded": "Bu etkinlik iade edildiği için salt okunur ve misafirler açamaz.",
+   "expired": "Bu etkinliğin dosyaları saklama süresi dolunca silindi.",
+   "badge": "Salt okunur"
   },
   "dialog": {
-   "title": "İndirmeler abone olduğunuzda açılır",
-   "body": "Geri kalan her şey denemenize dahil. Orijinalleri ve ZIP dosyalarını indirmek için aylık {monthly} ya da yıllık {yearly} ile abone olun.",
-   "cohost": "İndirmeler, etkinlik sahibi abone olduğunda açılır."
+   "title": "İndirmeler ödemeden sonra açılır",
+   "body": "Tüm orijinalleri ve ZIP dosyalarını indirmek ve galeriyi misafirlerinize açmak için bu etkinlik için {price} ödeyin.",
+   "cohost": "İndirmeler, etkinlik sahibi ödemeyi yaptıktan sonra açılır."
   }
+ },
+ "window": {
+  "title": "Galeri tarihleri",
+  "hint": "Misafirler galeri açıkken katılıp yükleme yapabilir: seçtiğiniz saatler arasında, en fazla {days} gün. Galeri açılana kadar tarihleri değiştirebilirsiniz.",
+  "opens": "Galeri açılış",
+  "closes": "Galeri kapanış",
+  "timeZone": "Saat dilimi",
+  "timeZoneHint": "Saatler bu dilime göredir. Misafirler de aynı dilimde görür.",
+  "length": "{days} gün {hours} saat açık",
+  "lengthDays": "{days} gün açık",
+  "lengthHours": "{hours} saat açık",
+  "save": "Tarihleri kaydet",
+  "useDefault": "Etkinlik tarihini kullan",
+  "lockedLive": "Galeri açık olduğu için tarihleri artık değişmez. Gerekirse erkenden kapatabilirsiniz.",
+  "lockedEnded": "Galeri kapandı. Misafir yüklemeleri kapalı.",
+  "endNow": "Galeriyi şimdi kapat",
+  "endConfirm": "Galeri şimdi kapatılsın mı? Bundan sonra misafirler fotoğraf ekleyemez ve bu işlem geri alınamaz.",
+  "ending": "Kapatılıyor…",
+  "ended": "Galeri kapandı. Size bir indirme bağlantısı göndereceğiz.",
+  "notSet": "Henüz tarih yok",
+  "range": "{from} – {to}"
+ },
+ "pay": {
+  "productName": "Etkinlik paketi",
+  "checkoutNote": "Galeriniz açılmadan iptal ederseniz ücretin tamamı iade edilir. Galeriniz seçtiğiniz tarihlerde açılıp kapanır.",
+  "cta": "{price} öde",
+  "redirecting": "Ödeme sayfası açılıyor…",
+  "comingSoon": "Ödemeler çok yakında",
+  "ownerOnly": "Ödemeyi yalnızca etkinlik sahibi yapabilir.",
+  "cancelledNotice": "Ödeme iptal edildi. Sizden ücret alınmadı.",
+  "paidNotice": "Teşekkürler, ödemeniz alındı. Burada görünmesi biraz sürebilir.",
+  "fine": "Tek seferlik ödeme, KDV dahil. Kart, Apple Pay ya da Google Pay. Galeri açılmadan iptal ederseniz ücretin tamamı iade edilir."
+ },
+ "package": {
+  "kicker": "Etkinlik paketi",
+  "setupTitle": "Hazırlayın, deneyin,",
+  "setupAccent": "sonra ödeyin.",
+  "setupBody": "Misafirler henüz katılamaz; galerinin ne zaman açılacağını görürler. QR kartlarınızı yazdırın ve {limit} deneme yüklemesine kadar kendiniz deneyin (şu ana kadar {used}).",
+  "setupNoDates": "Galerinin ne zaman açılıp kapanacağını seçin, sonra misafirlerinize açmak için ödeme yapın.",
+  "setupDates": "Galeriniz: {range}.",
+  "paidTitle": "Ödendi. Açılış:",
+  "paidAccent": "{date}.",
+  "paidBody": "O zamandan önce QR kodu okutan misafirler galerinin ne zaman açılacağını görür. Galeri açılana kadar fotoğraf ekleyebilir ve tarihleri değiştirebilirsiniz.",
+  "liveTitle": "Açık:",
+  "liveAccent": "{date} tarihine kadar.",
+  "liveBody": "Misafirler şimdi katılıp yükleme yapabilir. Galeri kapandığında size her şeyi indirebileceğiniz bir bağlantı göndereceğiz.",
+  "endedTitle": "Kapandı. Son indirme:",
+  "endedAccent": "{date}.",
+  "endedBody": "Misafir yüklemeleri kapandı, misafirler bakmaya devam edebilir. Tüm fotoğraf ve videoları {date} tarihine kadar istediğiniz zaman tam kalitede indirin.",
+  "expiredTitle": "Dosyalar",
+  "expiredAccent": "silindi.",
+  "expiredBody": "Bu etkinliğin fotoğraf ve videoları saklama süresi dolunca silindi.",
+  "refundedTitle": "Tamamı",
+  "refundedAccent": "iade edildi.",
+  "refundedBody": "Bu etkinlik iade edildiği için salt okunur ve misafirler açamaz. Ayarlar'dan silebilirsiniz.",
+  "comped": "Bu etkinliğin ücretini ekibimiz karşıladı.",
+  "changeDates": "Tarihleri değiştir",
+  "download": "Her şeyi indir",
+  "testBanner": "Deneme modu: yalnızca siz ve ortak ev sahipleri yükleme yapabilir ({limit} yüklemenin {used} tanesi kullanıldı). Ödeme yapılıp galeri açılana kadar misafirler “yakında açılıyor” görür.",
+  "cohostPay": "Galeriyi açmak için ödemeyi etkinlik sahibi yapabilir."
  }
 }

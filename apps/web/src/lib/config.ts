@@ -1,5 +1,5 @@
 /**
- * Shared product config: brands, occasion types, subscription, themes.
+ * Shared product config: brands, occasion types, the event package, themes.
  * Single source of truth — never hard-code a brand name, price, limit or occasion wording in components.
  */
 
@@ -122,45 +122,62 @@ export const OCCASIONS: Record<OccasionType, { label: L; titlePattern: L; days: 
 };
 
 /**
- * Account subscription: one price list, every feature, unlimited events. Amounts in pence, GBP, VAT included.
- * Access rules (trial, read-only, retention) are computed in src/lib/access.ts from these numbers.
+ * The event package (replaces the old account subscriptions): one price per event, paid once by the host.
+ * These are DEFAULTS. Admins can change every number on /admin/settings (stored in the `settings` table);
+ * code reads the live values through src/lib/settings.ts, never these constants directly.
+ * Amounts in pence, GBP, VAT included.
  */
-export const SUBSCRIPTION = {
-  monthlyPence: 999,
-  yearlyPence: 6999,
-  /** Free trial length. It starts when the host creates their first event, and needs no card. */
-  trialDays: 3,
-  /** After this long into the trial, the dashboard and one email prompt the host to subscribe. */
-  trialPromptAfterHours: 24,
-  /** Unpaid trial: files are kept this long after the trial ends, then deleted. */
-  trialGraceDeleteDays: 30,
-  /** After a cancelled subscription's paid period ends: read-only (downloads allowed) this long, then deleted. */
-  cancelledReadOnlyDays: 90,
-  /** A failed renewal keeps working this long from the first failed payment, then behaves as cancelled. */
-  pastDueGraceDays: 7,
-  /** Deletion warning emails, days before files are deleted. */
-  trialDeletionWarningDays: 7,
-  cancelledDeletionWarningDays: 14,
-  /** What every event gets on the trial and on both plans (fair use applies; see the terms). */
-  features: {
-    maxDays: 5,
-    maxVideoSeconds: 600,
-    maxVideoBytes: 1024 * 1024 * 1024,
-    liveWall: true,
-    missions: true,
-    disposable: true,
-    voiceGuestbook: true,
-    shareLinks: true,
-    cohosts: true,
-    autoModeration: true,
-  },
+export const PACKAGE_DEFAULTS = {
+  /** One event package: unlimited guests, photos and videos, a live gallery window the host schedules. */
+  eventPricePence: 6900,
+  /** Guests can buy every photo and video of the event in full quality (later stage). */
+  guestDownloadPence: 300,
+  /** Longest gallery window (closes_at − opens_at), in days. */
+  windowDays: 7,
+  /** Fair-use storage per event; past it uploads keep working and admins get an alert. */
+  fairUseGb: 50,
+  /** Longest video a guest or host can upload, in seconds. */
+  videoMaxSeconds: 60,
+  /** After the gallery window ends, files are kept this many months, then deleted. */
+  retentionMonths: 12,
+  /** Test mode (before paying): the host and co-hosts can upload this many items to try it out. */
+  hostTestUploadLimit: 20,
 } as const;
-export type PlanInterval = "month" | "year";
-export const intervalPence = (i: PlanInterval): number => (i === "year" ? SUBSCRIPTION.yearlyPence : SUBSCRIPTION.monthlyPence);
-/** Yearly saving vs 12 × monthly, as a whole percentage (42). */
-export const YEARLY_SAVING_PERCENT = Math.round((1 - SUBSCRIPTION.yearlyPence / (SUBSCRIPTION.monthlyPence * 12)) * 100);
-/** 14-day money-back guarantee on a host's first subscription payment (refunded by support). */
-export const MONEY_BACK_DAYS = 14;
+export type PackageSettings = { -readonly [K in keyof typeof PACKAGE_DEFAULTS]: number };
+
+/** Reminder emails before an event's files are deleted, in days before delete_after. */
+export const DELETION_REMINDER_DAYS = [30, 7] as const;
+/** Default gallery window start (local time in the event's time zone) on the event date. */
+export const DEFAULT_WINDOW_START_HOUR = 10;
+/** Time zone the gallery window is entered in unless the host picks another. */
+export const DEFAULT_TIME_ZONE = "Europe/London";
+/** Time zones offered in the window editor (the host's own browser zone is added when it isn't listed). */
+export const TIME_ZONES = [
+  "Europe/London", "Europe/Dublin", "Europe/Istanbul", "Europe/Amsterdam", "Europe/Berlin", "Europe/Brussels", "Europe/Paris",
+  "Europe/Vienna", "Europe/Zurich", "Europe/Stockholm", "Europe/Copenhagen", "Europe/Athens", "Asia/Nicosia", "Asia/Dubai",
+  "America/New_York", "America/Toronto", "Australia/Sydney",
+] as const;
+/** Server-side byte cap per video, derived from the allowed length (a generous ~10 MB per second covers 4K). */
+export const VIDEO_BYTES_PER_SECOND = 10 * 1024 * 1024;
+
+/** What every event gets (fair use applies; see the terms). */
+export const FEATURES = {
+  maxDays: 5,
+  liveWall: true,
+  missions: true,
+  disposable: true,
+  voiceGuestbook: true,
+  shareLinks: true,
+  cohosts: true,
+  autoModeration: true,
+} as const;
+
+/**
+ * Refunds: a full refund any time before the gallery goes live (our money-back promise).
+ * After that the statutory 14-day cancellation period (Consumer Contracts Regulations) still applies,
+ * minus the part of the service already provided. Refunds are made by support from Stripe.
+ */
+export const CANCELLATION_DAYS = 14;
 /** One address for both brands: support inbox and email sender. */
 export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "hello@bizimresimler.com";
 export const SUPPORT_EMAIL: Record<Brand, string> = { bizimresimler: CONTACT_EMAIL, ourpixs: CONTACT_EMAIL };

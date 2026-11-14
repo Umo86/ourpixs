@@ -1,7 +1,7 @@
 import "server-only";
 import { sql, type SQL } from "drizzle-orm";
 import { schema } from "@/db";
-import { BRANDS, OCCASIONS, SUBSCRIPTION, brandBaseUrl, type Locale, type OccasionType } from "./config";
+import { BRANDS, FEATURES, OCCASIONS, brandBaseUrl, type Locale, type OccasionType } from "./config";
 import { hmac, requireEnv } from "./crypto";
 
 type OccasionRow = typeof schema.occasions.$inferSelect;
@@ -41,9 +41,12 @@ export function shareUrl(o: Pick<OccasionRow, "brand">, token: string) {
   return `${brandBaseUrl(o.brand)}/s/${token}`;
 }
 
-/** Event-level upload window. `accountCanUpload` = the owner's access (false while the account is read-only). */
-export function uploadOpen(o: OccasionRow, accountCanUpload: boolean, now = new Date()): boolean {
-  if (!accountCanUpload) return false;
+/**
+ * Guest uploads right now. `guestsCanUpload` comes from the event package (access.ts: live window, not locked);
+ * the optional legacy per-event upload window (upload_opens_at / upload_closes_at) can narrow it further.
+ */
+export function uploadOpen(o: OccasionRow, guestsCanUpload: boolean, now = new Date()): boolean {
+  if (!guestsCanUpload) return false;
   if (o.status !== "active") return false;
   if (o.uploadOpensAt && now < o.uploadOpensAt) return false;
   if (o.uploadClosesAt && now >= o.uploadClosesAt) return false;
@@ -84,9 +87,9 @@ export function isFeedRevealed(o: OccasionRow): boolean {
   return at ? Date.now() >= at.getTime() : false;
 }
 
-/** Days guests can use, in order (every account gets up to SUBSCRIPTION.features.maxDays). */
+/** Days guests can use, in order (every event gets up to FEATURES.maxDays). */
 export function activeDays(_o: OccasionRow, days: DayRow[]) {
-  return [...days].sort((a, b) => a.sortOrder - b.sortOrder).slice(0, SUBSCRIPTION.features.maxDays);
+  return [...days].sort((a, b) => a.sortOrder - b.sortOrder).slice(0, FEATURES.maxDays);
 }
 
 export function momentLabels(type: OccasionType, locale: Locale): string[] {

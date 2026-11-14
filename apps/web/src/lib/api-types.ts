@@ -2,18 +2,32 @@
 import type { Brand, Locale, OccasionType } from "./config";
 
 export type Host = { id: string; email: string; name: string | null; locale: Locale; brand: Brand };
-/** Account subscription as returned by GET /api/v1/me (`subscription`). */
-export type Subscription = {
-  status: "none" | "trialing" | "active" | "past_due" | "cancelled" | "expired";
-  interval: "month" | "year" | null;
-  trialEndsAt: string | null; currentPeriodEnd: string | null; cancelAtPeriodEnd: boolean; deleteAfter: string | null;
-  canCreateEvents: boolean; canDownload: boolean; readOnly: boolean; showUpgradePrompt: boolean; daysLeft: number | null;
-  /** Additive: set while the account has complimentary access (granted by our team); status is then "active". */
-  compUntil?: string | null;
+/** Effective event package state (src/lib/access-rules.ts). */
+export type PackageStatus = "setup" | "paid" | "live" | "ended" | "expired" | "refunded";
+/**
+ * Per-event access, derived from the event package (shape kept from the subscription era).
+ * reason: "setup" (not paid; test mode) | "not_open" (paid, window not started) | "ended" | "expired" | "refunded"
+ *         | "suspended" (owner suspended) | "locked" (event locked by our team) | null (live).
+ * canUpload is the host's (and co-hosts') upload right; guests follow PublicOccasion.uploadsOpen.
+ */
+export type OccasionAccess = { canUpload: boolean; canDownload: boolean; readOnly: boolean; reason: "setup" | "not_open" | "ended" | "expired" | "refunded" | "suspended" | "locked" | null };
+/** The event package as shown to members (host Occasion). */
+export type EventPackage = {
+  status: PackageStatus;
+  pricePence: number;
+  paidAt: string | null;
+  /** Marked as paid by our team (no payment). */
+  comped: boolean;
+  opensAt: string | null; closesAt: string | null; timeZone: string;
+  /** When files will be deleted (paid events); null before paying. */
+  deleteAfter: string | null;
+  /** Test mode (before paying): host/co-host uploads only, up to testUploadLimit items. */
+  testMode: boolean; testUploadLimit: number;
+  canEditWindow: boolean; canEndEarly: boolean; canPay: boolean;
+  /** Longest window in days (admin setting). */
+  windowDays: number;
+  daysLeft: number | null;
 };
-/** Per-event access (follows the event owner's subscription). */
-/** reason "suspended" (owner suspended) and "locked" (event locked by our team) are additive. */
-export type OccasionAccess = { canUpload: boolean; canDownload: boolean; readOnly: boolean; reason: "trial" | "trial_ended" | "cancelled" | "past_due" | "suspended" | "locked" | null };
 export type Theme = "noir" | "royal" | "ivory" | "dusk" | "mono" | "blush";
 export type Day = {
   id: string; name: string; date: string | null; sortOrder: number;
@@ -30,17 +44,21 @@ export type Day = {
 export type OccasionSummary = {
   id: string; slug: string; type: OccasionType; title: string; startsOn: string | null;
   coverUrl: string | null; mediaCount: number; guestCount: number; role: "owner" | "cohost";
-  /** What the event can do right now (follows the owner's subscription). */
+  /** What the event can do right now (follows the event package). */
   access: OccasionAccess;
+  /** Additive: effective package state and gallery window. */
+  packageStatus: PackageStatus; opensAt: string | null; closesAt: string | null; deleteAfter: string | null; testMode: boolean; timeZone: string;
 };
 export type Occasion = OccasionSummary & {
   honorees: string[]; venueName: string | null; city: string | null; theme: Theme; brand: Brand;
   approvalMode: boolean; revealMode: "live" | "next_morning"; revealAt: string | null;
   uploadOpensAt: string | null; uploadClosesAt: string | null; hasPin: boolean; disposableShots: number | null;
-  /** When the event's files will be deleted (the owner's account deleteAfter); null while the account is active or trialing. */
+  /** When the event's files will be deleted (same as deleteAfter); null before paying. */
   storageExpiresAt: string | null; days: Day[]; guestUrl: string; wallUrl: string;
   /** Additive: custom link name (null = random slug only). */
   vanitySlug: string | null;
+  /** Additive: the event package (price, window, test mode, what the organiser can do). */
+  package: EventPackage;
 };
 export type Stats = { guests: number; photos: number; videos: number; messages: number; bytes: number; pendingApproval: number };
 export type PublicOccasion = {
@@ -52,13 +70,21 @@ export type PublicOccasion = {
   coverUrl: string | null;
   /** Additive: whether a PIN is required. */
   hasPin: boolean;
-  /** False when the event is read-only (owner's account) or outside its upload window. Same value as `uploadOpen`. */
+  /** False unless the gallery is live (and inside any per-event upload window). Same value as `uploadOpen`. */
   uploadsOpen: boolean;
-  /** False while the owner's account has downloads locked (trial / unpaid). Media `originalUrl` is null then. */
+  /** False when the event's originals can't be downloaded (not paid, expired, refunded). Media `originalUrl` is null then. */
   downloadsOpen: boolean;
+  /**
+   * Additive: what a guest opening the link sees. "not_open" (not paid yet, or paid and before opensAt) → "opens on …" page;
+   * "live" → join and upload; "ended" → join and look, no uploads; "unavailable" → refunded / deleted.
+   */
+  galleryState: "not_open" | "live" | "ended" | "unavailable";
+  opensAt: string | null; closesAt: string | null; timeZone: string;
+  /** Additive: longest video in seconds (checked before upload and on the server). */
+  videoMaxSeconds: number;
 };
 export type MediaItem = {
-  /** `originalUrl` is null when downloads are locked for the event (trial / unpaid account). */
+  /** `originalUrl` is null when downloads are locked for the event (not paid / expired / refunded). */
   id: string; kind: "photo" | "video" | "voice"; thumbUrl: string | null; displayUrl: string | null; originalUrl?: string | null;
   /** Videos only: URL to play the video. Present even while downloads are locked (viewing is always allowed). */
   playbackUrl?: string | null;

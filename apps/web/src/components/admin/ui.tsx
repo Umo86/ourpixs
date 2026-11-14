@@ -66,9 +66,9 @@ export function Pill({ tone = "grey", children }: { tone?: PillTone; children: R
 }
 
 export const STATUS_TONE: Record<string, PillTone> = {
-  active: "green", trialing: "blue", past_due: "amber", cancelled: "red", expired: "red", none: "grey",
-  comped: "ink", suspended: "red", live: "green", readonly: "amber", archived: "grey", locked: "red",
-  visible: "green", hidden: "grey", pending: "amber", open: "amber", handled: "green",
+  setup: "amber", paid: "blue", live: "green", ended: "ink", expired: "grey", refunded: "red",
+  comped: "ink", suspended: "red", archived: "grey", locked: "red", fair_use: "amber",
+  visible: "green", hidden: "grey", pending: "amber", open: "amber", handled: "green", duplicate: "red",
 };
 
 /** Horizontal-scrolling table wrapper (tables stay real tables on mobile). */

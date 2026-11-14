@@ -83,7 +83,7 @@ export function adminRoute<P extends Record<string, string> = Record<string, nev
   });
 }
 
-export type AuditTarget = "host" | "occasion" | "media" | "guest" | "lead" | "cron";
+export type AuditTarget = "host" | "occasion" | "media" | "guest" | "lead" | "cron" | "settings";
 
 /** One row per mutating admin action, written once the action has succeeded (target ids are plain text, so rows outlive deleted targets). */
 export async function audit(admin: Pick<HostRow, "id" | "email">, action: string, targetType: AuditTarget, targetId: string | null, details: Record<string, unknown> = {}) {

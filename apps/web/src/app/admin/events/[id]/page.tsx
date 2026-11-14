@@ -10,7 +10,9 @@ import { guestUrl, wallUrl } from "@/lib/occasion";
 import { formatBytes, formatDate, formatDateTime, formatNumber } from "@/lib/client/format";
 import { Notice } from "@/components/app/Notice";
 import { Card, Empty, Facts, linkCls, PageHeader, Pagination, Pill, StatTile, TableWrap, td, th } from "@/components/admin/ui";
-import { EventPill } from "@/components/admin/plan";
+import { EventPill, FairUsePill } from "@/components/admin/plan";
+import { formatGBP } from "@/components/marketing/format";
+import { formatInZone } from "@/lib/tz";
 import { AuditList } from "@/components/admin/AuditList";
 import { AdminAction } from "@/components/admin/AdminAction";
 import { GuestBlockButton, MediaGrid } from "@/components/admin/MediaModeration";
@@ -33,7 +35,9 @@ export default async function AdminEventPage({ params, searchParams }: { params:
   const data = await eventDetail(id, { mediaPage, mediaFilter, guestPage });
   if (!data) notFound();
   const { t, locale } = await getT("admin");
-  const { occasion: o, owner, access, stats } = data;
+  const { occasion: o, owner, access, stats, settings } = data;
+  const zdt = (d: Date | null) => (d ? `${formatInZone(d, o.timeZone, locale)}` : "–");
+  const overFairUse = stats.bytes > settings.fairUseGb * 1024 ** 3;
   const dt = (d: Date | null) => (d ? formatDateTime(d.toISOString(), locale) : "–");
   const n = (v: number) => formatNumber(v, locale);
   const endpoint = `/api/admin/events/${o.id}`;
@@ -44,7 +48,9 @@ export default async function AdminEventPage({ params, searchParams }: { params:
     <>
       <PageHeader eyebrow={eyebrow} title={o.title}>
         <EventPill status={o.status} access={access} t={t} />
+        {o.fairUseAlertedAt ? <FairUsePill t={t} /> : null}
       </PageHeader>
+      {o.fairUseAlertedAt ? <Notice tone="error">{t("event.fairUseNotice", { date: dt(o.fairUseAlertedAt), gb: settings.fairUseGb })}</Notice> : null}
 
       {o.adminLockedAt ? <Notice tone="error">{t("event.lockedNotice", { date: dt(o.adminLockedAt) })}</Notice> : null}
       {access.suspended ? <Notice tone="error">{t("event.ownerSuspended")}</Notice> : null}
@@ -66,6 +72,40 @@ export default async function AdminEventPage({ params, searchParams }: { params:
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
+        <Card title={t("event.package")} id="e-package">
+          <Facts rows={[
+            { label: t("event.packageState"), value: <EventPill status={o.status} access={access} t={t} /> },
+            { label: t("event.storedState"), value: <code className="text-[13px]">{o.packageStatus}</code> },
+            { label: t("event.paidAt"), value: `${dt(o.paidAt)}${o.compedAt ? ` · ${t("status.comped")}` : ""}` },
+            { label: t("event.window"), value: o.opensAt || o.closesAt ? `${zdt(o.opensAt)} → ${zdt(o.closesAt)}` : t("event.noWindow") },
+            { label: t("event.timeZone"), value: o.timeZone },
+            { label: t("event.deleteAfter"), value: dt(access.deleteAfter) },
+            { label: t("event.endedEmail"), value: dt(o.endedEmailSentAt) },
+            { label: t("event.fairUse"), value: `${formatBytes(stats.bytes, locale)} / ${settings.fairUseGb} GB${overFairUse ? ` · ${t("status.fair_use")}` : ""}` },
+          ]} />
+          {data.orders.length ? (
+            <TableWrap label={t("event.payments")}>
+              <thead>
+                <tr>
+                  <th scope="col" className={th}>{t("event.payments")}</th>
+                  <th scope="col" className={th}>{t("event.amount")}</th>
+                  <th scope="col" className={th}>{t("events.status")}</th>
+                  <th scope="col" className={th}>{t("event.mode")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.orders.map((r) => (
+                  <tr key={r.id}>
+                    <td className={td}>{dt(r.paidAt ?? r.createdAt)}<span className="block break-all text-xs text-muted">{r.stripeSessionId}</span></td>
+                    <td className={td}>{formatGBP(r.amountPence)}</td>
+                    <td className={td}><Pill tone={r.status === "paid" ? "green" : r.status === "refunded" ? "grey" : "red"}>{t(`event.orderStatus.${r.status}`)}</Pill></td>
+                    <td className={td}>{r.livemode ? t("event.live") : t("event.test")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </TableWrap>
+          ) : <p className="m-0 text-sm text-muted">{t("event.noPayments")}</p>}
+        </Card>
         <Card title={t("event.summary")} id="e-summary">
           <Facts rows={[
             { label: t("event.owner"), value: <Link href={`/admin/users/${owner.id}`} className={`${linkCls} break-all`}>{owner.email}</Link> },
@@ -73,7 +113,7 @@ export default async function AdminEventPage({ params, searchParams }: { params:
             { label: t("user.brand"), value: BRANDS[o.brand].name },
             { label: t("users.created"), value: dt(o.createdAt) },
             { label: t("event.place"), value: [o.venueName, o.city].filter(Boolean).join(", ") || "–" },
-            { label: t("event.uploadWindow"), value: o.uploadOpensAt || o.uploadClosesAt ? `${dt(o.uploadOpensAt)} → ${dt(o.uploadClosesAt)}` : t("event.always") },
+            { label: t("event.uploadWindow"), value: o.uploadOpensAt || o.uploadClosesAt ? `${dt(o.uploadOpensAt)} → ${dt(o.uploadClosesAt)}` : t("event.noLegacyWindow") },
             { label: t("event.approval"), value: o.approvalMode ? t("common.yes") : t("common.no") },
             { label: t("event.pin"), value: o.pinHash ? t("common.yes") : t("common.no") },
             { label: t("event.id"), value: <code className="break-all text-[13px]">{o.id}</code> },
@@ -102,6 +142,18 @@ export default async function AdminEventPage({ params, searchParams }: { params:
 
       <Card title={t("event.actions")} id="e-actions">
         <div className="flex flex-wrap gap-3">
+          {o.packageStatus === "setup" ? (
+            <AdminAction label={t("event.markPaid")} title={t("event.markPaidTitle")} body={t("event.markPaidBody")} confirmLabel={t("event.markPaidConfirm")}
+              endpoint={endpoint} method="POST" payload={{ action: "mark_paid" }} tone="primary" />
+          ) : null}
+          {o.compedAt && ["paid", "live", "ended"].includes(o.packageStatus) ? (
+            <AdminAction label={t("event.resetSetup")} title={t("event.resetSetupTitle")} body={t("event.resetSetupBody")} confirmLabel={t("event.resetSetupConfirm")}
+              endpoint={endpoint} method="POST" payload={{ action: "reset_setup" }} />
+          ) : null}
+          {o.fairUseAlertedAt ? (
+            <AdminAction label={t("event.clearFairUse")} title={t("event.clearFairUseTitle")} body={t("event.clearFairUseBody")} confirmLabel={t("event.clearFairUseConfirm")}
+              endpoint={endpoint} method="POST" payload={{ action: "clear_fair_use" }} />
+          ) : null}
           {o.adminLockedAt ? (
             <AdminAction label={t("event.unlock")} title={t("event.unlockTitle")} body={t("event.unlockBody")} confirmLabel={t("event.unlockConfirm")}
               endpoint={endpoint} method="POST" payload={{ action: "unlock" }} />

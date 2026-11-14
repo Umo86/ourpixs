@@ -59,7 +59,7 @@ export function Welcome({ shareToken }: { shareToken?: string }) {
 
       <form onSubmit={join} className="flex flex-1 flex-col gap-5 px-5 pb-6 pt-6">
         <p className="m-0 text-2xl font-extrabold leading-tight tracking-[-0.03em]">{t("welcome.lead")} <span className="font-serif font-normal text-sky-soft">{t("welcome.leadAccent")}</span></p>
-        {!o.uploadOpen ? <Notice tone="info" className="!bg-surface !text-muted-dark">{t("welcome.closed")}</Notice> : null}
+        {!o.uploadOpen ? <Notice tone="info" className="!bg-surface !text-muted-dark">{o.galleryState === "ended" ? t("welcome.closed") : t("welcome.paused")}</Notice> : null}
         <Field id="g-name" tone="dark" label={t("welcome.name")} placeholder={t("welcome.namePlaceholder")} autoComplete="given-name" required maxLength={40}
           value={name} onChange={(e) => setName(e.target.value)} className="[&_input]:text-lg" />
         {needPin ? (

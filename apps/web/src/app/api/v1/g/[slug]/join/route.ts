@@ -4,7 +4,7 @@ import { db, schema } from "@/db";
 import { route, json, readJson, clientIp, ApiError } from "@/lib/http";
 import { checkPin, currentGuestToken, getGuest, guestCookie, mintGuestToken, occasionBySlug, pinCookie } from "@/lib/guest";
 import { limit } from "@/lib/rate-limit";
-import { accessForOccasion } from "@/lib/access";
+import { accessForOccasion, assertGuestsCanView } from "@/lib/access";
 import { uploadOpen } from "@/lib/occasion";
 
 const body = z.object({
@@ -20,6 +20,9 @@ export const POST = route<{ slug: string }>(async (req, { slug }) => {
   const ip = clientIp(req);
   const b = await readJson(req, body);
   const existing = await getGuest(o);
+  // Guests can join once the gallery is live (and keep looking after it ends); before that they see "opens on …".
+  const access = await accessForOccasion(o);
+  assertGuestsCanView(access);
   if (existing?.blockedAt) throw new ApiError(403, "guest_blocked", "The hosts have turned off uploads from this device");
 
   if (o.pinHash && !existing) {
@@ -51,9 +54,8 @@ export const POST = route<{ slug: string }>(async (req, { slug }) => {
     }).returning();
     token = minted.token;
   }
-  // Joining stays possible while the event is read-only (guests can still look); `uploadsOpen` tells the app.
-  const access = await accessForOccasion(o);
-  const res = json({ guestToken: token!, guest: { id: guest!.id, displayName: guest!.displayName }, uploadsOpen: uploadOpen(o, access.canUpload) });
+  // Joining stays possible after the gallery has ended (guests can still look); `uploadsOpen` tells the app.
+  const res = json({ guestToken: token!, guest: { id: guest!.id, displayName: guest!.displayName }, uploadsOpen: uploadOpen(o, access.guestsCanUpload) });
   res.cookies.set(guestCookie(o.slug, token!));
   if (o.pinHash) res.cookies.set(pinCookie(o));
   return res;

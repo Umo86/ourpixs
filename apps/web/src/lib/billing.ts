@@ -1,14 +1,32 @@
 import "server-only";
 import type Stripe from "stripe";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { BRANDS, MAIN_BRAND, brandBaseUrl, intervalPence, type Brand, type Locale, type PlanInterval } from "./config";
+import { BRANDS, MAIN_BRAND, brandBaseUrl, type Brand, type Locale } from "./config";
 import { ApiError } from "./http";
-import { subscriptionAccess } from "./access";
+import { accessForOccasion, assertCanPay } from "./access";
+import { getSettings } from "./settings";
 import { paymentsEnabled, stripe } from "./stripe";
+import { addMonths, windowError } from "./window";
 import { makeT } from "@/i18n/shared";
 
+/**
+ * The £69 event package (Stripe Checkout, mode "payment", GBP, inline price from admin settings).
+ * Checkout picks the payment methods itself (card, Apple Pay, Google Pay…: no payment_method_types),
+ * so nothing has to be set up in the Stripe dashboard. Test mode only until Umit says otherwise.
+ *
+ * Protections (kept from the subscription review):
+ *  - the webhook is signature-checked and every event re-reads the object from Stripe (payload never trusted);
+ *  - marking paid is one conditional UPDATE (setup → paid), so replays and duplicates are harmless;
+ *  - a refunded event (or a refunded charge) is never revived by a late or replayed "completed" event;
+ *  - the amount, currency, kind and owner are checked against the event before it's marked paid;
+ *  - starting a new Checkout expires the previous open one for the same event (no double payments by accident).
+ */
+
+type OccasionRow = typeof schema.occasions.$inferSelect;
 type HostRow = typeof schema.hosts.$inferSelect;
+
+export const EVENT_PACKAGE_KIND = "event_package";
 
 const idOf = (x: string | { id: string } | null | undefined) => (typeof x === "string" ? x : x?.id ?? null);
 
@@ -16,167 +34,142 @@ function requirePayments() {
   if (!paymentsEnabled()) throw new ApiError(503, "payments_unavailable", "Payments are coming soon");
 }
 
-/**
- * Stripe Checkout for the account subscription. Prices are inline (price_data), so nothing has to be set up
- * in the Stripe dashboard. Amounts are VAT-inclusive GBP from SUBSCRIPTION in config.ts.
- */
-export async function createSubscriptionCheckout(host: HostRow, interval: PlanInterval, brand: Brand, locale: Locale) {
+/** Owner only: Stripe Checkout for this event's package. Returns the Checkout URL. */
+export async function createEventCheckout(o: OccasionRow, host: HostRow, brand: Brand, locale: Locale): Promise<string> {
   requirePayments();
-  // The Stripe state, not admin overrides: a comped account may still subscribe for when the complimentary period ends.
-  const a = subscriptionAccess(host);
-  if (a.status === "active" || a.status === "past_due") {
-    throw new ApiError(409, "already_subscribed", "You already have a subscription. Use Manage billing to change it.");
+  if (o.ownerId !== host.id) throw new ApiError(403, "forbidden", "Only the event owner can pay for it");
+  const access = await accessForOccasion(o);
+  assertCanPay(access);
+  const s = await getSettings();
+  const err = windowError({ opensAt: o.opensAt, closesAt: o.closesAt }, s.windowDays);
+  if (err) throw new ApiError(409, err === "window_past" ? "window_past" : "window_required", err === "window_past"
+    ? "Your gallery dates have passed. Pick new dates, then pay."
+    : "Pick when your gallery opens and closes, then pay.");
+
+  // Expire the previous open session for this event, so two tabs can't both be paid.
+  if (o.stripeCheckoutSessionId) {
+    try {
+      const prev = await stripe().checkout.sessions.retrieve(o.stripeCheckoutSessionId);
+      if (prev.status === "open") await stripe().checkout.sessions.expire(prev.id);
+      if (prev.status === "complete") throw new ApiError(409, "already_paid", "This event is already paid for. It can take a minute to show.");
+    } catch (e) {
+      if (e instanceof ApiError) throw e;
+      console.warn("[billing] could not expire previous checkout", e);
+    }
   }
+
   const t = makeT(locale, "host");
   const base = brandBaseUrl(brand);
   const session = await stripe().checkout.sessions.create({
-    mode: "subscription",
-    ...(host.stripeCustomerId ? { customer: host.stripeCustomerId } : { customer_email: host.email }),
-    client_reference_id: host.id,
+    mode: "payment",
+    customer_email: host.email,
+    client_reference_id: o.id,
     locale: locale === "tr" ? "tr" : "en-GB",
     line_items: [{
       quantity: 1,
       price_data: {
         currency: "gbp",
-        unit_amount: intervalPence(interval),
+        unit_amount: s.eventPricePence,
         tax_behavior: "inclusive",
-        recurring: { interval },
         // One merchant on every domain: the product (and card statement wording) is always the main brand.
-        product_data: { name: `${BRANDS[MAIN_BRAND].name} — ${t(interval === "year" ? "billing.yearly" : "billing.monthly")}` },
+        product_data: { name: `${BRANDS[MAIN_BRAND].name} · ${t("pay.productName")}`, description: o.title.slice(0, 200) },
       },
     }],
-    metadata: { hostId: host.id, interval },
-    subscription_data: { metadata: { hostId: host.id } },
-    success_url: `${base}/dashboard?subscribed=1`,
-    cancel_url: `${base}/dashboard?checkout=cancelled`,
+    metadata: { kind: EVENT_PACKAGE_KIND, occasionId: o.id, hostId: host.id },
+    payment_intent_data: { metadata: { kind: EVENT_PACKAGE_KIND, occasionId: o.id, hostId: host.id } },
+    custom_text: { submit: { message: t("pay.checkoutNote") } },
+    success_url: `${base}/dashboard/${o.id}?paid=1`,
+    cancel_url: `${base}/dashboard/${o.id}?checkout=cancelled`,
   });
   if (!session.url) throw new ApiError(502, "payments_unavailable", "Could not start checkout");
+  await db.update(schema.occasions).set({ stripeCheckoutSessionId: session.id }).where(eq(schema.occasions.id, o.id));
   return session.url;
 }
 
-/** Stripe Customer Portal: change card, switch monthly/yearly, cancel at period end, invoices. */
-export async function createPortalSession(host: HostRow, brand: Brand, locale: Locale) {
-  requirePayments();
-  if (!host.stripeCustomerId) throw new ApiError(409, "no_subscription", "There is no subscription on this account yet");
-  const s = await stripe().billingPortal.sessions.create({
-    customer: host.stripeCustomerId,
-    locale: locale === "tr" ? "tr" : "en-GB",
-    return_url: `${brandBaseUrl(brand)}/dashboard`,
-  });
-  return s.url;
+/**
+ * checkout.session.completed / checkout.session.async_payment_succeeded.
+ * Re-reads the session (with its payment intent's charge) and marks the event paid exactly once.
+ */
+export async function fulfilCheckout(sessionId: string): Promise<{ applied: boolean; reason?: string; occasionId?: string }> {
+  const session = await stripe().checkout.sessions.retrieve(sessionId, { expand: ["payment_intent.latest_charge"] });
+  if (session.mode !== "payment" || session.metadata?.kind !== EVENT_PACKAGE_KIND) return { applied: false, reason: "not_event_package" };
+  if (session.payment_status !== "paid") return { applied: false, reason: "not_paid" };
+  const occasionId = session.metadata?.occasionId;
+  const hostId = session.metadata?.hostId;
+  if (!occasionId || !hostId) return { applied: false, reason: "no_metadata" };
+
+  const pi = typeof session.payment_intent === "object" ? session.payment_intent : null;
+  const charge = pi && typeof pi.latest_charge === "object" ? pi.latest_charge : null;
+  const piId = idOf(session.payment_intent);
+  const refunded = !!charge && (charge.refunded || charge.amount_refunded >= (charge.amount || 0));
+
+  const [o] = await db.select().from(schema.occasions).where(eq(schema.occasions.id, occasionId)).limit(1);
+  if (!o) {
+    console.error("[billing] paid checkout for a missing event — refund by hand", { sessionId, occasionId });
+    return { applied: false, reason: "no_event" };
+  }
+  if (o.ownerId !== hostId) {
+    console.error("[billing] checkout owner mismatch — refund by hand", { sessionId, occasionId });
+    return { applied: false, reason: "owner_mismatch" };
+  }
+  if (session.currency !== "gbp" || !session.amount_total || session.amount_total <= 0) {
+    console.error("[billing] unexpected amount/currency", { sessionId, amount: session.amount_total, currency: session.currency });
+    return { applied: false, reason: "bad_amount" };
+  }
+
+  const now = new Date();
+  const paidAt = now;
+  const s = await getSettings();
+  // Record the payment first (idempotent on the session id).
+  const [order] = await db.insert(schema.orders).values({
+    occasionId: o.id, hostId, stripeSessionId: session.id, kind: EVENT_PACKAGE_KIND, amountPence: session.amount_total,
+    currency: "gbp", status: refunded ? "refunded" : "paid", stripePaymentIntentId: piId, livemode: session.livemode,
+    paidAt, refundedAt: refunded ? now : null,
+  }).onConflictDoNothing({ target: schema.orders.stripeSessionId }).returning({ id: schema.orders.id });
+  if (refunded) {
+    // Refund already processed (out-of-order delivery): never open the event. If something else already paid for it,
+    // leave it alone (this was a second payment that has been refunded).
+    if (o.packageStatus === "setup") await markRefunded(o.id);
+    return { applied: false, reason: "refunded", occasionId: o.id };
+  }
+
+  const deleteAfter = o.closesAt ? addMonths(o.closesAt, s.retentionMonths) : null;
+  const updated = await db.update(schema.occasions)
+    .set({ packageStatus: "paid", paidAt, deleteAfter, stripeCheckoutSessionId: session.id })
+    .where(and(eq(schema.occasions.id, o.id), eq(schema.occasions.packageStatus, "setup")))
+    .returning({ id: schema.occasions.id });
+  if (!updated.length && order) {
+    // A new payment that didn't open anything: the event was already paid (another session, or marked as paid by
+    // an admin), refunded or expired. Flag it for a manual refund.
+    await db.update(schema.orders).set({ status: "duplicate" }).where(eq(schema.orders.id, order.id));
+    console.error("[billing] duplicate payment for an event — refund by hand", { sessionId, occasionId });
+    return { applied: false, reason: "duplicate", occasionId: o.id };
+  }
+  return { applied: updated.length > 0, occasionId: o.id };
 }
 
-/** Account deletion: stop billing straight away (no refund here; refunds are manual). */
-export async function cancelSubscriptionNow(subId: string | null) {
-  if (!subId || !paymentsEnabled()) return;
-  let sub: Stripe.Subscription;
-  try {
-    sub = await stripe().subscriptions.retrieve(subId);
-  } catch (e) {
-    if ((e as { code?: string }).code === "resource_missing") return;
-    throw e;
-  }
-  if (sub.status === "canceled" || sub.status === "incomplete_expired") return;
-  await stripe().subscriptions.cancel(subId);
+/** Event goes to "refunded" (read-only, closed to guests). Expired events stay expired. */
+async function markRefunded(occasionId: string) {
+  await db.update(schema.occasions).set({ packageStatus: "refunded" })
+    .where(and(eq(schema.occasions.id, occasionId), inArray(schema.occasions.packageStatus, ["setup", "paid", "live", "ended"])));
 }
 
 /**
- * Admin: cancel a host's subscription, either at the end of the paid period or immediately (no refund; refunds stay manual).
- * The host row is then re-synced from Stripe (the webhook would do the same, this just makes it instant).
+ * charge.refunded: only a FULL refund of an event-package payment closes the event. Partial refunds
+ * (e.g. a pro-rata refund in the cancellation period) just update the order record.
  */
-export async function adminCancelSubscription(host: Pick<HostRow, "id" | "stripeSubscriptionId">, mode: "period_end" | "now") {
-  requirePayments();
-  if (!host.stripeSubscriptionId) throw new ApiError(409, "no_subscription", "There is no subscription on this account");
-  try {
-    if (mode === "now") await cancelSubscriptionNow(host.stripeSubscriptionId);
-    else await stripe().subscriptions.update(host.stripeSubscriptionId, { cancel_at_period_end: true });
-    await syncSubscription(host.stripeSubscriptionId, { hostId: host.id });
-  } catch (e) {
-    if (e instanceof ApiError) throw e;
-    console.error("[billing] admin cancel failed", e);
-    throw new ApiError(502, "billing_error", "Stripe could not cancel the subscription");
-  }
-}
-
-function periodEnd(sub: Stripe.Subscription): Date | null {
-  // current_period_end lives on subscription items in current API versions.
-  const raw = sub as unknown as { current_period_end?: number; items?: { data?: { current_period_end?: number }[] } };
-  const end = raw.items?.data?.[0]?.current_period_end ?? raw.current_period_end;
-  return end ? new Date(end * 1000) : null;
-}
-function intervalOf(sub: Stripe.Subscription): PlanInterval | null {
-  const i = sub.items?.data?.[0]?.price?.recurring?.interval;
-  return i === "year" ? "year" : i === "month" ? "month" : null;
-}
-
-const LIVE = new Set<Stripe.Subscription.Status>(["active", "trialing", "past_due", "unpaid", "paused"]);
-
-/**
- * Mirrors a subscription onto its host. Always re-reads the subscription from Stripe, so replayed or
- * out-of-order webhook events can only ever apply the CURRENT state. Rules:
- *  - a host is matched by its current subscription id first;
- *  - a different subscription is adopted only while it is live in Stripe and the host has no other live one
- *    (so an old/cancelled subscription can never revive or overwrite the account);
- *  - incomplete subscriptions (first payment not done) are ignored.
- */
-export async function syncSubscription(subId: string, hint: { hostId?: string | null } = {}) {
-  const sub = await stripe().subscriptions.retrieve(subId);
-  const customerId = idOf(sub.customer);
-  let [host] = await db.select().from(schema.hosts).where(eq(schema.hosts.stripeSubscriptionId, sub.id)).limit(1);
-  if (!host) {
-    if (!LIVE.has(sub.status)) return { applied: false as const, reason: "not_live" };
-    const hostId = sub.metadata?.hostId || hint.hostId || null;
-    if (hostId) [host] = await db.select().from(schema.hosts).where(eq(schema.hosts.id, hostId)).limit(1);
-    if (!host && customerId) [host] = await db.select().from(schema.hosts).where(eq(schema.hosts.stripeCustomerId, customerId)).limit(1);
-    if (!host) return { applied: false as const, reason: "no_host" };
-    const local = subscriptionAccess(host).status;
-    if (host.stripeSubscriptionId && (local === "active" || local === "past_due")) {
-      console.error("[billing] host already has a live subscription; not adopting", { hostId: host.id, sub: sub.id });
-      return { applied: false as const, reason: "has_live_subscription" };
-    }
-  }
-
-  const common = {
-    stripeSubscriptionId: sub.id,
-    ...(customerId ? { stripeCustomerId: customerId } : {}),
-    ...(intervalOf(sub) ? { planInterval: intervalOf(sub) } : {}),
-  };
-  const restore = { readOnlySince: null, deleteAfter: null, deletionWarningSentAt: null, pastDueSince: null };
-  let set: Partial<typeof schema.hosts.$inferInsert> | null = null;
-  if (sub.status === "active" || sub.status === "trialing") {
-    set = { ...common, ...restore, planStatus: "active", currentPeriodEnd: periodEnd(sub), cancelAtPeriodEnd: sub.cancel_at_period_end || !!sub.cancel_at };
-  } else if (sub.status === "past_due" || sub.status === "unpaid" || sub.status === "paused") {
-    // Our cron may already have ended the grace period (status cancelled); Stripe saying "past_due" must not reopen it.
-    set = host.planStatus === "cancelled" || host.planStatus === "expired"
-      ? { ...common }
-      : { ...common, planStatus: "past_due", currentPeriodEnd: periodEnd(sub), cancelAtPeriodEnd: sub.cancel_at_period_end || !!sub.cancel_at,
-          pastDueSince: host.pastDueSince ?? new Date() };
-  } else if (sub.status === "canceled") {
-    if (host.planStatus !== "cancelled") {
-      const ended = sub.ended_at ? new Date(sub.ended_at * 1000) : new Date();
-      // read_only_since / delete_after are recorded by the daily cron (it also sends the "cancelled" email).
-      set = { ...common, planStatus: "cancelled", cancelAtPeriodEnd: false, currentPeriodEnd: ended };
-    }
-  }
-  if (!set) return { applied: false as const, reason: "no_change" };
-  await db.update(schema.hosts).set(set).where(eq(schema.hosts.id, host.id));
-  return { applied: true as const, hostId: host.id };
-}
-
-/** invoice.payment_failed: start the past-due grace period at the first failed renewal (if still unpaid). */
-export async function markPaymentFailed(invoiceId: string) {
-  const inv = await stripe().invoices.retrieve(invoiceId);
-  if (inv.status === "paid" || inv.status === "void") return;
-  const subId = invoiceSubscriptionId(inv);
-  if (!subId) return;
-  await syncSubscription(subId);
-  await db.update(schema.hosts)
-    .set({ planStatus: "past_due", pastDueSince: sql`coalesce(${schema.hosts.pastDueSince}, now())` })
-    .where(sql`${schema.hosts.stripeSubscriptionId} = ${subId} and ${schema.hosts.planStatus} = 'active'`);
-}
-
-export function invoiceSubscriptionId(inv: Stripe.Invoice): string | null {
-  const parent = inv.parent?.subscription_details?.subscription;
-  const legacy = (inv as unknown as { subscription?: string | { id: string } | null }).subscription;
-  return idOf(parent ?? legacy ?? null);
+export async function handleChargeRefunded(chargeId: string): Promise<{ applied: boolean; reason?: string }> {
+  const charge: Stripe.Charge = await stripe().charges.retrieve(chargeId);
+  const piId = idOf(charge.payment_intent);
+  if (!piId) return { applied: false, reason: "no_payment_intent" };
+  const [order] = await db.select().from(schema.orders).where(eq(schema.orders.stripePaymentIntentId, piId)).limit(1);
+  if (!order || order.kind !== EVENT_PACKAGE_KIND) return { applied: false, reason: "no_order" };
+  const full = charge.refunded || charge.amount_refunded >= charge.amount;
+  if (!full) return { applied: false, reason: "partial" };
+  const now = new Date();
+  await db.update(schema.orders).set({ status: "refunded", refundedAt: order.refundedAt ?? now }).where(eq(schema.orders.id, order.id));
+  // A duplicate payment being refunded must not close the event that the other payment paid for.
+  if (order.status === "duplicate") return { applied: false, reason: "duplicate_refunded" };
+  await markRefunded(order.occasionId);
+  return { applied: true };
 }

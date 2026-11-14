@@ -7,11 +7,15 @@ import { Button, Sticker } from "@/components/ui";
 import { Field } from "@/components/app/Field";
 import { Notice } from "@/components/app/Notice";
 import { useLocale, useT } from "@/i18n/client";
-import { OCCASIONS, SUBSCRIPTION, THEMES, type OccasionType } from "@/lib/config";
+import { DEFAULT_TIME_ZONE, FEATURES, OCCASIONS, THEMES, type OccasionType } from "@/lib/config";
 import { COUPLE_TYPES, suggestTitle } from "@/lib/title";
 import { api, errorMessage } from "@/lib/client/api";
 import type { Occasion, Theme } from "@/lib/api-types";
 import { OCCASION_ART } from "./occasion-art";
+import { WindowFields } from "./EventPackage";
+import { formatGBP } from "@/components/marketing/format";
+import { formatInZone, utcToZoned, zonedToUtc } from "@/lib/tz";
+import { defaultWindow, windowError } from "@/lib/window";
 
 const TYPES = Object.keys(OCCASIONS) as OccasionType[];
 const THEME_KEYS = Object.keys(THEMES) as Theme[];
@@ -31,7 +35,7 @@ function defaultDays(type: OccasionType, locale: "en" | "tr"): DayDraft[] {
   return days.map((d, i) => ({ name: d[locale], offset: i, on: i === 0 }));
 }
 
-export function NewOccasionWizard({ templateId, initialTheme }: { templateId?: string; initialTheme?: Theme }) {
+export function NewOccasionWizard({ templateId, initialTheme, windowDays, pricePence }: { templateId?: string; initialTheme?: Theme; windowDays: number; pricePence: number }) {
   const t = useT("host");
   const { locale } = useLocale();
   const [step, setStep] = useState(0);
@@ -47,8 +51,10 @@ export function NewOccasionWizard({ templateId, initialTheme }: { templateId?: s
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<Occasion | null>(null);
-  const [trialStarted, setTrialStarted] = useState(false);
-  const MAX_DAYS = SUBSCRIPTION.features.maxDays;
+  // Gallery window (wall-clock in `tz`). Follows the event date until the host edits it.
+  const [win, setWin] = useState({ opens: "", closes: "", tz: DEFAULT_TIME_ZONE });
+  const [winEdited, setWinEdited] = useState(false);
+  const MAX_DAYS = FEATURES.maxDays;
 
   const autoTitle = useMemo(() => (type ? suggestTitle(type, names, locale) : ""), [type, names, locale]);
   const shownTitle = titleEdited ? title : autoTitle;
@@ -62,21 +68,35 @@ export function NewOccasionWizard({ templateId, initialTheme }: { templateId?: s
     setStep(1);
   }
 
+  function pickDate(date: string) {
+    setStartsOn(date);
+    if (winEdited) return;
+    // Default window: 10:00 on the first chosen day (henna night before the wedding counts), for windowDays days.
+    const firstOffset = Math.min(0, ...days.filter((d) => d.on).map((d) => d.offset));
+    const w = defaultWindow(shift(date, firstOffset), win.tz, windowDays);
+    setWin((v) => (w ? { ...v, opens: utcToZoned(w.opensAt, v.tz), closes: utcToZoned(w.closesAt, v.tz) } : { ...v, opens: "", closes: "" }));
+  }
+
+  const winOpens = zonedToUtc(win.opens, win.tz);
+  const winCloses = zonedToUtc(win.closes, win.tz);
+  const winErr = win.opens || win.closes ? windowError({ opensAt: winOpens, closesAt: winCloses }, windowDays) : null;
+
   async function create() {
     if (!type) return;
     setBusy(true);
     setError(null);
     try {
       const chosen = days.filter((d) => d.on && d.name.trim());
-      const r = await api<{ occasion: Occasion; trialStarted?: boolean }>("/api/v1/occasions", {
+      const r = await api<{ occasion: Occasion }>("/api/v1/occasions", {
         body: {
           type, title: shownTitle.trim() || OCCASIONS[type].label[locale], honorees: names.map((n) => n.trim()).filter(Boolean),
           startsOn: startsOn || null, venueName: venueName || null, city: city || null, theme,
           days: (chosen.length ? chosen : days.slice(0, 1)).map((d) => ({ name: d.name.trim(), date: shift(startsOn, d.offset) })),
+          timeZone: win.tz,
+          ...(winOpens && winCloses && !winErr ? { opensAt: winOpens.toISOString(), closesAt: winCloses.toISOString() } : {}),
         },
       });
       setCreated(r.occasion);
-      setTrialStarted(!!r.trialStarted);
       setStep(4);
     } catch (e) {
       setError(errorMessage(t, e));
@@ -94,10 +114,17 @@ export function NewOccasionWizard({ templateId, initialTheme }: { templateId?: s
   if (step === 4 && created) {
     return (
       <div className="flex flex-col gap-8">
-        <Sticker rotate={-4} className="self-start">{trialStarted ? t("wizard.trialSticker", { days: SUBSCRIPTION.trialDays }) : t("wizard.doneSticker")}</Sticker>
+        <Sticker rotate={-4} className="self-start">{t("wizard.doneSticker")}</Sticker>
         {heading(t("wizard.doneTitle"), t("wizard.doneAccent"))}
-        <p className="m-0 max-w-xl text-lg text-text-2">{t("wizard.doneBody")}</p>
-        {trialStarted ? <Notice tone="blue">{t("wizard.trialBody")}</Notice> : null}
+        <p className="m-0 max-w-xl text-lg text-text-2">{t("wizard.doneBody", { price: formatGBP(pricePence) })}</p>
+        <Notice>
+          {created.package.opensAt && created.package.closesAt
+            ? t("wizard.doneWindow", {
+              from: formatInZone(created.package.opensAt, created.package.timeZone, locale, { weekday: true }),
+              to: formatInZone(created.package.closesAt, created.package.timeZone, locale, { weekday: true }),
+            })
+            : t("wizard.doneNoWindow")}
+        </Notice>
         <div className="flex flex-col gap-3 rounded-[28px] bg-tint p-5 sm:flex-row sm:items-center sm:justify-between">
           <code className="break-all text-[15px] font-semibold">{created.guestUrl}</code>
           <ShareButtons url={created.guestUrl} text={t("share.guestMessage", { title: created.title })} title={created.title}
@@ -184,7 +211,7 @@ export function NewOccasionWizard({ templateId, initialTheme }: { templateId?: s
         <form className="flex flex-col gap-6" onSubmit={(e) => { e.preventDefault(); setStep(3); }}>
           {heading(t("wizard.detailsTitle"), t("wizard.detailsAccent"))}
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="date" type="date" label={t("wizard.date")} value={startsOn} onChange={(e) => setStartsOn(e.target.value)} />
+            <Field id="date" type="date" label={t("wizard.date")} value={startsOn} onChange={(e) => pickDate(e.target.value)} />
             <Field id="city" label={t("wizard.city")} value={city} maxLength={80} onChange={(e) => setCity(e.target.value)} placeholder={t("wizard.cityPlaceholder")} />
             <Field id="venue" className="sm:col-span-2" label={t("wizard.venue")} value={venueName} maxLength={120} onChange={(e) => setVenue(e.target.value)} placeholder={t("wizard.venuePlaceholder")} />
           </div>
@@ -207,7 +234,13 @@ export function NewOccasionWizard({ templateId, initialTheme }: { templateId?: s
               </button>
             ) : null}
           </fieldset>
-          <Button type="submit" size="lg" className="self-start">{t("common.continue")}</Button>
+          <fieldset className="m-0 flex flex-col gap-3 rounded-[24px] border-0 bg-tint p-5">
+            <legend className="float-left mb-1 p-0 text-[15px] font-extrabold">{t("wizard.windowTitle")}</legend>
+            <p className="clear-both m-0 text-sm text-muted">{t("wizard.windowHint", { days: windowDays })}</p>
+            <WindowFields idPrefix="wz" opens={win.opens} closes={win.closes} tz={win.tz} windowDays={windowDays}
+              onChange={(v) => { setWinEdited(true); setWin(v); }} />
+          </fieldset>
+          <Button type="submit" size="lg" className="self-start" disabled={!!winErr && winErr !== "window_incomplete"}>{t("common.continue")}</Button>
         </form>
       ) : null}
 

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { getT } from "@/i18n";
 import { pageParam, requireAdmin, sp1 } from "@/lib/admin";
-import { listUsers, PLAN_FILTERS, type PlanFilter } from "@/lib/admin-queries";
+import { listUsers, USER_FILTERS, type UserFilter } from "@/lib/admin-queries";
 import { BRANDS } from "@/lib/config";
 import { formatBytes, formatDate, formatNumber } from "@/lib/client/format";
 import { Empty, FilterBar, linkCls, PageHeader, Pagination, TableWrap, td, th } from "@/components/admin/ui";
-import { PlanPill, planDate } from "@/components/admin/plan";
+import { UserPill } from "@/components/admin/plan";
 
 export const dynamic = "force-dynamic";
 
@@ -16,16 +16,16 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
   const sp = await searchParams;
   const { t, locale } = await getT("admin");
   const q = sp1(sp.q).trim().slice(0, 200);
-  const planRaw = sp1(sp.plan);
-  const plan = (PLAN_FILTERS as readonly string[]).includes(planRaw) ? (planRaw as PlanFilter) : null;
+  const fRaw = sp1(sp.filter);
+  const filter = (USER_FILTERS as readonly string[]).includes(fRaw) ? (fRaw as UserFilter) : null;
   const page = pageParam(sp.page);
-  const res = await listUsers({ q, plan, page });
+  const res = await listUsers({ q, filter, page });
 
   return (
     <>
       <PageHeader eyebrow={t("nav.users")} title={t("users.title")} accent={t("users.accent")} />
       <FilterBar path="/admin/users" q={q} searchLabel={t("users.search")} searchPlaceholder={t("users.searchPlaceholder")}
-        selects={[{ name: "plan", label: t("users.planFilter"), value: plan ?? "", options: [{ value: "", label: t("common.all") }, ...PLAN_FILTERS.map((p) => ({ value: p, label: t(`status.${p}`) }))] }]}
+        selects={[{ name: "filter", label: t("users.filter"), value: filter ?? "", options: [{ value: "", label: t("common.all") }, ...USER_FILTERS.map((p) => ({ value: p, label: t(`users.filters.${p}`) }))] }]}
         labels={{ apply: t("common.apply"), clear: t("common.clear") }} />
       {res.rows.length === 0 ? <Empty>{t("users.empty")}</Empty> : (
         <TableWrap label={t("users.title")}>
@@ -34,7 +34,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
               <th scope="col" className={th}>{t("users.email")}</th>
               <th scope="col" className={th}>{t("users.name")}</th>
               <th scope="col" className={th}>{t("users.brandLocale")}</th>
-              <th scope="col" className={th}>{t("users.plan")}</th>
+              <th scope="col" className={th}>{t("users.state")}</th>
               <th scope="col" className={th}>{t("users.events")}</th>
               <th scope="col" className={th}>{t("users.storage")}</th>
               <th scope="col" className={th}>{t("users.created")}</th>
@@ -46,12 +46,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
                 <td className={td}><Link href={`/admin/users/${u.id}`} className={`${linkCls} break-all`}>{u.email}</Link></td>
                 <td className={td}>{u.name || <span className="text-muted">–</span>}</td>
                 <td className={td}>{BRANDS[u.brand].name} · {u.locale.toUpperCase()}</td>
-                <td className={td}>
-                  <div className="flex flex-col items-start gap-1">
-                    <PlanPill access={u.access} t={t} />
-                    <span className="text-xs text-text-2">{planDate(u.access, t, locale)}</span>
-                  </div>
-                </td>
+                <td className={td}><UserPill suspended={!!u.suspendedAt} paidEvents={u.paidEvents} t={t} /></td>
                 <td className={td}>{formatNumber(u.events, locale)}</td>
                 <td className={td}>{formatBytes(u.bytes, locale)}</td>
                 <td className={td}>{formatDate(u.createdAt.toISOString(), locale, { day: "numeric", month: "short", year: "numeric" })}</td>
@@ -60,7 +55,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
           </tbody>
         </TableWrap>
       )}
-      <Pagination path="/admin/users" params={{ q, plan: plan ?? "" }} page={res.page} hasNext={res.hasNext}
+      <Pagination path="/admin/users" params={{ q, filter: filter ?? "" }} page={res.page} hasNext={res.hasNext}
         labels={{ previous: t("common.previous"), next: t("common.next"), page: t("common.page", { n: res.page }), nav: t("common.pagination") }} />
     </>
   );

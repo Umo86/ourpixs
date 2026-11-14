@@ -6,17 +6,17 @@ Auth: `Authorization: Bearer <jwt>` (same JWT as the web `op_session` cookie, 30
 ## Auth
 - `POST /api/v1/auth/request-code` `{ email, locale?: "en"|"tr", brand?: "bizimresimler"|"ourpixs" }` (brand defaults to the request host's brand; the app sends `bizimresimler`) → `{ ok: true, previewCode?: string }` (previewCode only when PREVIEW_SHOW_CODE=1 and email not configured)
 - `POST /api/v1/auth/verify` `{ email, code }` → `{ token, host: Host }` (also sets the `op_session` cookie for web). If env `REVIEW_EMAIL` and `REVIEW_CODE` are both set, that email signs in with that code (app-store review).
-- `GET /api/v1/me` → `{ host: Host & { subscription: Subscription } }` (see "Account subscription" below)
+- `GET /api/v1/me` → `{ host: Host }` (no `subscription` any more: payments are per event — see "Event package" below)
 - `PATCH /api/v1/me` `{ name?, locale? }` → `{ host }` (same shape as GET)
-- `DELETE /api/v1/me` → `{ ok: true }` — cancels the Stripe subscription immediately (if any; no refund), then deletes the account, events it owns (all files), memberships, push tokens. `502 billing_error` if Stripe can't be reached (nothing is deleted then).
+- `DELETE /api/v1/me` → `{ ok: true }` — deletes the account, events it owns (all files), memberships, push tokens. (Event packages are one-off payments; there is nothing to cancel.)
 - `POST /api/v1/auth/logout` → `{ ok: true }` (web: clears the cookie)
 - `POST /api/v1/push-tokens` `{ token, platform: "ios"|"android" }` → `{ ok: true }`
 
 ## Occasions (host)
 - `GET /api/v1/occasions` → `{ occasions: OccasionSummary[] }`
-- `POST /api/v1/occasions` `{ type, title, honorees: string[], startsOn?: "YYYY-MM-DD", venueName?, city?, theme?, days?: {name, date?}[] }` → `{ occasion: Occasion, trialStarted: boolean }` — the host's first event starts the 3-day free trial (`trialStarted: true`). `402 plan_required` when `subscription.canCreateEvents` is false.
+- `POST /api/v1/occasions` `{ type, title, honorees: string[], startsOn?: "YYYY-MM-DD", venueName?, city?, theme?, days?: {name, date?}[], opensAt?: iso, closesAt?: iso, timeZone?: IANA }` → `{ occasion: Occasion }` — always free: the event starts in `setup` (test mode). Without `opensAt`/`closesAt` the window defaults to `startsOn` 10:00 in `timeZone` (default `Europe/London`) for `windowDays` days. (`trialStarted` was removed.)
 - `GET /api/v1/occasions/:id` → `{ occasion: Occasion, stats: Stats }`
-- `PATCH /api/v1/occasions/:id` `{ title?, honorees?, startsOn?, venueName?, city?, theme?, approvalMode?, revealMode?, revealAt?, uploadOpensAt?, uploadClosesAt?, pin?: string|null, disposableShots?: number|null }` → `{ occasion }`
+- `PATCH /api/v1/occasions/:id` `{ title?, honorees?, startsOn?, venueName?, city?, theme?, approvalMode?, revealMode?, revealAt?, uploadOpensAt?, uploadClosesAt?, pin?: string|null, disposableShots?: number|null, opensAt?, closesAt?, timeZone? }` → `{ occasion }` — see "Event package" for the window rules.
 - `DELETE /api/v1/occasions/:id` → `{ ok: true }`
 - `GET /api/v1/occasions/:id/media?cursor=&dayId=&moment=&guestId=&kind=photo|video&filter=favourites|hidden|pending` → `{ items: MediaItem[], nextCursor: string|null }`
 - `PATCH /api/v1/occasions/:id/media` `{ ids: string[], action: "hide"|"show"|"delete"|"favourite"|"unfavourite"|"approve" }` → `{ ok: true }`
@@ -24,13 +24,13 @@ Auth: `Authorization: Bearer <jwt>` (same JWT as the web `op_session` cookie, 30
 - `GET /api/v1/occasions/:id/messages` → `{ messages: Message[] }`
 - `GET|POST|DELETE /api/v1/occasions/:id/missions` → `{ missions: Mission[] }` (POST `{ title }`, DELETE `?missionId=`)
 - `GET|POST /api/v1/occasions/:id/share-links` → `{ links: ShareLink[] }` (POST `{ label?, scope }`)
-- `GET /api/v1/occasions/:id/download?dayId=` → `{ files: { id, name, url, mime, kind, bytes, dayId, guestName, createdAt }[] }` — ZIP manifest: every visible original (oldest first) with signed download URLs (1 hour). `402 plan_required` while `access.canDownload` is false.
-- `GET /api/v1/occasions/:id/media/:mediaId/download` → `{ url }` — signed download URL for one original. `402 plan_required` while `access.canDownload` is false.
+- `GET /api/v1/occasions/:id/download?dayId=` → `{ files: { id, name, url, mime, kind, bytes, dayId, guestName, createdAt }[] }` — ZIP manifest: every visible original (oldest first) with signed download URLs (1 hour). `402 payment_required` before the event is paid (other states: `410 event_expired`, `403 download_closed` / `account_suspended`).
+- `GET /api/v1/occasions/:id/media/:mediaId/download` → `{ url }` — signed download URL for one original. Same errors as above.
 
 ## Guest (web guest app + mobile "join by QR")
 Guest auth is a cookie on web; on mobile pass header `X-Guest-Token: <token>` returned by join.
 - `GET /api/v1/g/:slug` → `{ occasion: PublicOccasion, guest, uploadsOpen: boolean }` (requires PIN cookie/header `X-Occasion-Pin` if set)
-- `POST /api/v1/g/:slug/join` `{ name, consent: true, pin? }` → `{ guestToken, guest: { id, displayName }, uploadsOpen: boolean }` (joining works while the event is read-only; guests can still look)
+- `POST /api/v1/g/:slug/join` `{ name, consent: true, pin? }` → `{ guestToken, guest: { id, displayName }, uploadsOpen: boolean }` — only while the gallery is live or ended (`403 not_open` before it opens, `410 event_unavailable` after a refund or deletion). After it ends guests can still join and look.
 - `GET /api/v1/g/:slug/feed?after=<iso>&cursor=` → `{ items: MediaItem[], nextCursor, uploadsOpen: boolean }`
 - `POST /api/v1/g/:slug/uploads` `{ files: { clientId, name, mime, bytes, kind, width?, height?, durationS?, dayId?, momentTag?, missionId?, fromDisposable?, hasDisplay: boolean, hasThumb: boolean }[] }` → `{ uploads: { clientId, mediaId, original: { url, method: "PUT", headers }, display?: {...}, thumb?: {...} }[] }`
 - `POST /api/v1/g/:slug/uploads/complete` `{ mediaIds: string[] }` → `{ ok: true }`
@@ -42,16 +42,18 @@ Guest auth is a cookie on web; on mobile pass header `X-Guest-Token: <token>` re
 ## Types
 ```ts
 type Host = { id: string; email: string; name: string|null; locale: "en"|"tr"; brand: "ourpixs"|"bizimresimler" };
-type Subscription = { status: "none"|"trialing"|"active"|"past_due"|"cancelled"|"expired"; interval: "month"|"year"|null; trialEndsAt: string|null; currentPeriodEnd: string|null; cancelAtPeriodEnd: boolean; deleteAfter: string|null; canCreateEvents: boolean; canDownload: boolean; readOnly: boolean; showUpgradePrompt: boolean; daysLeft: number|null };
-type OccasionAccess = { canUpload: boolean; canDownload: boolean; readOnly: boolean; reason: "trial"|"trial_ended"|"cancelled"|"past_due"|null };
-type OccasionSummary = { id; slug; type; title; startsOn: string|null; coverUrl: string|null; mediaCount: number; guestCount: number; role: "owner"|"cohost"; access: OccasionAccess };
-type Occasion = OccasionSummary & { honorees: string[]; venueName; city; theme; brand; approvalMode: boolean; revealMode: "live"|"next_morning"; revealAt; uploadOpensAt; uploadClosesAt; hasPin: boolean; disposableShots: number|null; storageExpiresAt /* = owner's deleteAfter, null while active/trialing */; days: { id; name; date; sortOrder }[]; guestUrl: string; wallUrl: string };
+type PackageStatus = "setup"|"paid"|"live"|"ended"|"expired"|"refunded"; // effective state (stored state + the clock)
+// canUpload = the host's and co-hosts' upload right (test mode included); guests follow PublicOccasion.uploadsOpen.
+type OccasionAccess = { canUpload: boolean; canDownload: boolean; readOnly: boolean; reason: "setup"|"not_open"|"ended"|"expired"|"refunded"|"suspended"|"locked"|null };
+type EventPackage = { status: PackageStatus; pricePence: number; paidAt: string|null; comped: boolean; opensAt: string|null; closesAt: string|null; timeZone: string; deleteAfter: string|null; testMode: boolean; testUploadLimit: number; canEditWindow: boolean; canEndEarly: boolean; canPay: boolean; windowDays: number; daysLeft: number|null };
+type OccasionSummary = { id; slug; type; title; startsOn: string|null; coverUrl: string|null; mediaCount: number; guestCount: number; role: "owner"|"cohost"; access: OccasionAccess; packageStatus: PackageStatus; opensAt: string|null; closesAt: string|null; deleteAfter: string|null; testMode: boolean; timeZone: string };
+type Occasion = OccasionSummary & { honorees: string[]; venueName; city; theme; brand; approvalMode: boolean; revealMode: "live"|"next_morning"; revealAt; uploadOpensAt; uploadClosesAt; hasPin: boolean; disposableShots: number|null; storageExpiresAt /* = package.deleteAfter, null before paying */; days: { id; name; date; sortOrder }[]; guestUrl: string; wallUrl: string; package: EventPackage };
 type Stats = { guests: number; photos: number; videos: number; messages: number; bytes: number; pendingApproval: number };
-type PublicOccasion = { slug; type; title; honorees; startsOn; venueName; city; theme; brand; days; moments: string[]; liveWall: boolean; missionsEnabled: boolean; disposableShots: number|null; voiceGuestbook: boolean; uploadOpen: boolean; uploadsOpen: boolean; downloadsOpen: boolean; revealMode; revealAt };
+type PublicOccasion = { slug; type; title; honorees; startsOn; venueName; city; theme; brand; days; moments: string[]; liveWall: boolean; missionsEnabled: boolean; disposableShots: number|null; voiceGuestbook: boolean; uploadOpen: boolean; uploadsOpen: boolean; downloadsOpen: boolean; revealMode; revealAt; galleryState: "not_open"|"live"|"ended"|"unavailable"; opensAt: string|null; closesAt: string|null; timeZone: string; videoMaxSeconds: number };
 // originalUrl is null when downloads are locked for the event (access.canDownload / downloadsOpen false):
 // on host and guest media, share links and the live wall. thumbUrl/displayUrl are always there.
 // This includes videos: while locked, videos have no playable URL (show the poster from displayUrl).
-// Every 402 uses the standard error shape: { "error": { "code": "plan_required", "message": "…" } }.
+// Every 402 uses the standard error shape: { "error": { "code": "payment_required", "message": "…" } }.
 type MediaItem = { id; kind: "photo"|"video"|"voice"; thumbUrl: string|null; displayUrl: string|null; originalUrl?: string|null; playbackUrl?: string|null /* videos only; always present so videos play while downloads are locked */; width; height; durationS; momentTag; dayId; guestName: string|null; reactionCount: number; reactedByMe?: boolean; favourite?: boolean; visibility?: string; approved?: boolean; createdAt: string };
 type Mission = { id; title; sortOrder };
 type Message = { id; kind; body; mediaUrl: string|null; durationS; guestName: string|null; createdAt };
@@ -62,11 +64,12 @@ URLs in responses are short-lived signed URLs (1 hour).
 
 ---
 
-## Additions (all additive — nothing above changed shape)
+## Additions (additive unless marked; the event-package changes of Nov 2026 are listed under "Event package")
 
 ### Errors
-Stable `error.code` values: `unauthorized`, `forbidden`, `not_found`, `invalid_request`, `rate_limited` (429), `code_invalid`, `code_expired`, `email_unavailable`, `email_failed`, `pin_required`, `pin_invalid`, `not_joined`, `guest_blocked`, `upload_closed` (403; also when the owner's account is read-only), `plan_limit` (402; file/limit too big), `plan_required` (402; downloads locked, can't create events, or editing a read-only event), `storage_not_configured` (503), `storage_error`, `payments_unavailable` (503), `already_subscribed` (409), `no_subscription` (409), `billing_error` (502), `shots_exhausted` (409), `slug_taken` (409), `slug_invalid`, `slug_reserved`, `server_error`.
-Removed: `plan_feature`, `already_on_plan`, `partner_inactive`, `org_owner` (every feature is on every account now).
+Stable `error.code` values: `unauthorized`, `forbidden`, `not_found`, `invalid_request`, `rate_limited` (429), `code_invalid`, `code_expired`, `email_unavailable`, `email_failed`, `pin_required`, `pin_invalid`, `not_joined`, `guest_blocked`, `upload_closed` (403; gallery ended or uploads closed), `plan_limit` (402; file too big), `storage_not_configured` (503), `storage_error`, `payments_unavailable` (503), `shots_exhausted` (409),
+event package: `payment_required` (402; downloads before paying), `test_limit` (402; test-mode upload limit reached), `video_too_long` (402), `video_duration_required` (400; videos must send `durationS`), `not_open` (403; guests before the gallery opens), `event_unavailable` (410; refunded / deleted gallery), `download_closed` (403), `event_refunded` (403), `event_expired` (410), `window_order` / `window_too_long` / `window_past` / `window_incomplete` (400), `window_locked` (409; window can't change once live), `window_required` / `window_past` (409; checkout), `already_paid` (409), `cannot_pay` (409), `not_live` (409; end-now on a gallery that isn't live), `slug_taken` (409), `slug_invalid`, `slug_reserved`, `server_error`.
+Removed: `plan_feature`, `already_on_plan`, `partner_inactive`, `org_owner`, and with the subscriptions `plan_required`, `already_subscribed`, `no_subscription`, `billing_error`.
 CORS: `/api/v1/*` answers preflight and sends `Access-Control-Allow-Origin: *` (auth is Bearer / X-Guest-Token, never cookies cross-site).
 
 ### Uploads
@@ -83,7 +86,7 @@ CORS: `/api/v1/*` answers preflight and sends `Access-Control-Allow-Origin: *` (
 
 ### PATCH /api/v1/occasions/:id — extra fields
 `days?: { id?, name, date?, uploadOpensAt?, uploadClosesAt? }[]` (1–5; ids kept are updated, new ones created, missing ones removed), `coverMediaId?: string|null`, `vanitySlug?: string|null` (a–z 0–9 and hyphens, 3–40, unique, reserved words blocked).
-PATCH, cover changes, missions (POST), share links (POST) and co-hosts (POST) return `402 plan_required` while the event is read-only. Hiding/deleting media, guestbook entries and blocking guests always work.
+PATCH, cover changes, missions (POST), share links (POST) and co-hosts (POST) fail while the event is read-only (`event_locked`, `account_suspended`, `event_refunded`, `event_expired`). Hiding/deleting media, guestbook entries and blocking guests always work.
 
 ### Cover photo
 - `POST /api/v1/occasions/:id/cover` `{ mime: "image/webp"|"image/jpeg"|"image/png", bytes }` → `{ key, upload: PresignedPut }`
@@ -105,7 +108,8 @@ PATCH, cover changes, missions (POST), share links (POST) and co-hosts (POST) re
 
 ### Guest
 - `GET /api/v1/g/:slug` — `:slug` may be the random slug or the vanity name. Response also has `guest: { id, displayName, shotsTaken } | null`. PublicOccasion also has `coverUrl`, `hasPin` and `days[].uploadOpen`. Style the guest app from `theme` (`THEMES` colours), `honorees` and `coverUrl`. Removed: `plan`, `brandingMode`, `branding`.
-- `uploadOpen` / `uploadsOpen` (same value) and `days[].uploadOpen` are false when the event is outside its upload window **or the owner's account is read-only** (trial ended unpaid, subscription ended). Show a friendly "uploads closed" state; viewing keeps working. `downloadsOpen` is false while the owner's downloads are locked (trial / unpaid).
+- `uploadOpen` / `uploadsOpen` (same value) and `days[].uploadOpen` are true only while the gallery is live (and inside any per-day / legacy upload window). `galleryState` tells the guest app what to show: `not_open` → "This gallery opens on {opensAt}" (no join form), `live` → join and upload, `ended` → join and look, uploads closed, `unavailable` → refunded or deleted. Times are shown in `timeZone`. `downloadsOpen` follows the event's download access.
+- `join`, `feed`, `uploads`, `uploads/complete` and `messages` answer `403 not_open` before the gallery opens and `410 event_unavailable` after a refund or deletion; `GET /g/:slug` always answers (it drives the "opens on …" page).
 - `POST …/join` also accepts `shareToken?` (a `view_upload` share-link token skips the PIN).
 - `GET …/feed` also accepts `kind=photo|video`, `moment`, `dayId`, `sort=new|top`. Videos include `playbackUrl` (always, for playback); `originalUrl` follows the download lock.
 - `GET …/missions` also returns `leaderboard: { guestName, done }[]` and `me: { rank|null, done } | null`.
@@ -115,18 +119,22 @@ PATCH, cover changes, missions (POST), share links (POST) and co-hosts (POST) re
 - `/g/demo` is a built-in demo (web only, simulated in the browser; the API returns 404 for `demo`).
 
 ### Live wall
-- `GET /api/v1/wall/:slug?k=<key>&after=<iso>` → `{ items: MediaItem[], stats: { photos, guests } }` (key from `wallUrl`). Works on every account, including the trial and while read-only.
+- `GET /api/v1/wall/:slug?k=<key>&after=<iso>` → `{ items: MediaItem[], stats: { photos, guests } }` (key from `wallUrl`). The host's screen: works in every state (test uploads included) until the event is refunded or deleted (`410 event_unavailable`).
 
-### Account subscription (billing)
-One subscription per host account: Monthly £9.99 or Yearly £69.99 (GBP, VAT included), every feature, unlimited events. An event's access always follows its **owner's** subscription (co-hosts see the owner's state in `occasion.access`).
-- Free trial: 3 days, no card, starts when the host creates their first event. Everything works except downloads (`canDownload: false`, `originalUrl: null`, download endpoints → `402 plan_required`). `showUpgradePrompt` turns true 24 h into the trial.
-- `expired` (trial ended unpaid): `readOnly: true`, uploads closed, downloads locked; files kept until `deleteAfter` (trial end + 30 days), then deleted.
-- `cancelled` (paid period over, or `past_due` for more than 7 days): `readOnly: true`, uploads closed, `canDownload: true` until `deleteAfter` (period end + 90 days), then deleted.
-- `past_due`: everything keeps working for 7 days from the first failed payment (`daysLeft`), `showUpgradePrompt: true` (send the host to the billing portal).
-- `active` with `cancelAtPeriodEnd: true`: works normally until `currentPeriodEnd`.
-- Subscribing (or paying) before `deleteAfter` restores everything immediately.
-- `POST /api/v1/billing/checkout` `{ interval: "month"|"year" }` → `{ url }` — Stripe Checkout (subscription). `409 already_subscribed` when active/past_due (use the portal), `503 payments_unavailable` when payments aren't configured. Web only; mobile store builds don't call this.
-- `POST /api/v1/billing/portal` → `{ url }` — Stripe Customer Portal (card, switch monthly/yearly, cancel at period end, invoices). `409 no_subscription` before the first subscription.
+### Event package (replaces the account subscription, Nov 2026)
+One price per event (default £69, GBP, VAT included; admin-editable), paid once by the owner. No subscription. Every rule is in `src/lib/access.ts`; `occasion.access` and `occasion.package` mirror it.
+- **setup** (`reason: "setup"`, `package.testMode: true`): the host configures everything and prints QR cards. Test mode: hosts and co-hosts can upload up to `package.testUploadLimit` items (default 20; then `402 test_limit`). Guests opening the link get `galleryState: "not_open"`. Downloads `402 payment_required`.
+- **paid**, before `opensAt` (`reason: "not_open"`): guests still see "opens on …"; hosts can upload and download; the window can still change.
+- **live** (`opensAt ≤ now < closesAt`, `reason: null`): guests join and upload. The window is fixed; the host can end it early.
+- **ended** (`closesAt ≤ now`, `reason: "ended"`): guest uploads closed (`upload_closed`), guests can still join and look, hosts can still add their own photos and download. The owner gets one "download everything" email (daily cron, or lazily when the event is opened).
+- **expired** (`now ≥ deleteAfter` = `closesAt` + 12 months by default): files deleted by the daily cron, `readOnly`, everything closed. Reminder emails go out 30 and 7 days before.
+- **refunded** (full refund in Stripe): `readOnly`, guests can't open it, downloads closed. Never reopened by a late webhook.
+- Window rules: `closesAt − opensAt ≤ package.windowDays` (default 7), `closesAt` in the future; editable any time before paying and, once paid, until it opens (`409 window_locked` after). `timeZone` is the IANA zone the times were entered in.
+- Video length: `durationS` is required for videos and must be ≤ `PublicOccasion.videoMaxSeconds` (default 60; `402 video_too_long`). The stored size is also capped from the length.
+- Fair use: past 50 GB per event (admin-editable) uploads keep working; the event is flagged for admins.
+- `POST /api/v1/occasions/:id/checkout` → `{ url }` (owner only) — Stripe Checkout, mode `payment`, card / Apple Pay / Google Pay. After paying Stripe returns to `/dashboard/:id?paid=1`; the webhook marks the event paid. Errors: `409 window_required` / `window_past` (set dates first), `409 already_paid`, `503 payments_unavailable`. Web only; mobile store builds don't sell packages in the app.
+- `POST /api/v1/occasions/:id/end` → `{ occasion }` — closes a live gallery now (owner and co-hosts). `409 not_live` otherwise.
+- Removed: `POST /api/v1/billing/checkout`, `POST /api/v1/billing/portal`, `GET /me` → `host.subscription`, `trialStarted`.
 
 ### Push notifications (Expo)
 Tokens from `POST /api/v1/push-tokens` receive: first guest upload of the day ("Guests are uploading!"), new guestbook message (≤3 / 10 min), shots awaiting approval (≤1 / 30 min). Payload `data: { occasionId, kind: "first_upload"|"message"|"pending" }`. Each host gets the text in their own `locale`.
@@ -134,10 +142,10 @@ Tokens from `POST /api/v1/push-tokens` receive: first guest upload of the day ("
 ### Universal links
 `/.well-known/apple-app-site-association` (appID `$APPLE_TEAM_ID.com.bizimresimler.app`, paths `/g/*`) and `/.well-known/assetlinks.json` (`com.bizimresimler.app`, fingerprints from `ANDROID_SHA256_FINGERPRINTS`) are served on both domains.
 
-### Admin overrides (additive)
+### Admin overrides
 Set by our team from the web admin dashboard (`/admin`, web only; not part of this API).
-- `Subscription.compUntil?: string|null` — set while the account has complimentary access; `status` is then `"active"` and everything is unlocked (`canDownload: true`, `showUpgradePrompt: false`).
+- An admin can mark an event as paid without a payment (`package.comped: true`), undo that, and clear the fair-use flag.
 - `OccasionAccess.reason` may also be `"suspended"` (the owner's account is suspended: read-only, downloads locked) or `"locked"` (this event's uploads were closed by our team: read-only).
-- New error codes: `account_suspended` (403; `POST /auth/verify` and every host endpoint for a suspended account — show "Your account is suspended, please contact support"), `event_locked` (403; host edits on a locked event, instead of `plan_required`).
+- Error codes: `account_suspended` (403; `POST /auth/verify` and every host endpoint for a suspended account — show "Your account is suspended, please contact support"), `event_locked` (403; host edits and uploads on a locked event).
 - `POST /api/v1/g/:slug/report` also records the report (reason + a hash of the IP) for our moderation queue; the response is unchanged.
 

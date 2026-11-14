@@ -1,9 +1,9 @@
 import "server-only";
-import { and, eq, gt, inArray, isNotNull, isNull, lt, lte, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, eq, gt, inArray, isNotNull, isNull, lt, lte, ne, or, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { SUBSCRIPTION } from "./config";
-import { emailConfigured, sendBillingEmail } from "./email";
-import { cancelSubscriptionNow } from "./billing";
+import { DELETION_REMINDER_DAYS } from "./config";
+import { emailConfigured, sendDeletionReminder } from "./email";
+import { sendDueEndedEmails } from "./package";
 import { abortUpload, deleteObjects } from "./storage";
 import { keysForOccasion } from "./occasion-service";
 
@@ -31,99 +31,54 @@ export async function runCron(name: CronJob, trigger: "schedule" | "admin" = "sc
   }
 }
 
-// ── Expiry: account-billing transitions ──────────────────────────────────────────────────────────
+// ── Expiry: event-package transitions and emails ───────────────────────────────────────────────
 
-const { hosts } = schema;
-const BATCH = 100;
+const O = schema.occasions;
 const DAY_MS = 86400_000;
-const interval = (days: number) => sql.raw(`interval '${Math.round(days)} days'`);
-type Claimed = { id: string; email: string; locale: string; brand: "ourpixs" | "bizimresimler"; deleteAfter: Date | null; stripeSubscriptionId: string | null };
-const claimedCols = { id: hosts.id, email: hosts.email, locale: hosts.locale, brand: hosts.brand, deleteAfter: hosts.deleteAfter, stripeSubscriptionId: hosts.stripeSubscriptionId };
+const BATCH = 100;
 const loc = (l: string) => (l === "tr" ? "tr" : "en") as "en" | "tr";
 
-/** Batch of host ids matching `where` (keeps every UPDATE bounded). */
-const batchOf = (where: SQL | undefined) => db.select({ id: hosts.id }).from(hosts).where(where).limit(BATCH);
-
-/** Complimentary access (admin): the jobs never end, warn or delete an account while it lasts. */
-const notComped = (now: Date) => or(isNull(hosts.compUntil), lte(hosts.compUntil, now));
-
-async function mailAll(rows: Claimed[], kind: Parameters<typeof sendBillingEmail>[1], days?: (r: Claimed) => number | null) {
-  if (!emailConfigured()) return 0;
-  let n = 0;
-  for (const r of rows) {
-    await sendBillingEmail(r.email, kind, { locale: loc(r.locale), brand: r.brand, date: r.deleteAfter, days: days?.(r) ?? null })
-      .then(() => n++).catch((e) => console.error(`[expiry] ${kind} email failed`, e));
-  }
-  return n;
-}
-
 /**
- * Daily account-billing transitions. Every step is a conditional UPDATE … RETURNING, so a host is claimed
- * exactly once per step even if the job overlaps or re-runs (idempotent). Access itself never waits for
- * this job: src/lib/access.ts derives the effective state from the clock.
- *  1. Trial day-1 prompt email (monthly first)            → trial_prompt_sent_at
- *  2. Trial ended unpaid → expired, read-only, delete in 30 days, email
- *  3. Past-due grace (7 days) over → cancelled; Stripe subscription cancelled
- *  4. Cancelled → record read-only start + delete in 90 days, email ("cancellation effective")
- *  5. Deletion warnings (unpaid trial: 7 days before; cancelled: 14 days before) → deletion_warning_sent_at
- * Comped accounts are skipped by every step; once the complimentary period is over, read-only starts no earlier
- * than its end (greatest(…, comp_until)), matching access.ts. The deletions themselves run in the cleanup job.
+ * Daily event-package jobs. Each step claims rows with a conditional UPDATE … RETURNING, so an event is handled
+ * exactly once per step even if the job overlaps or re-runs. Access never waits for this job: src/lib/access.ts
+ * derives the effective state from the clock.
+ *  1. Gallery ended (closes_at passed) → package_status 'ended' + "download everything" email to the owner.
+ *     Vercel Hobby crons run once a day, so this can lag up to a day; the same claim also runs lazily whenever
+ *     an ended event is opened (src/lib/package.ts → touchEnded).
+ *  2. Deletion reminders 30 and 7 days before delete_after (one marker column each).
+ * The deletions themselves run in the cleanup job.
  */
 export async function runExpiry(): Promise<Record<string, number>> {
-  const now = new Date();
   const out: Record<string, number> = {};
-
-  // 1. Trial prompt (only claimed when email can actually be sent).
-  if (emailConfigured()) {
-    const prompt = await db.update(hosts).set({ trialPromptSentAt: now }).where(inArray(hosts.id, batchOf(and(
-      eq(hosts.planStatus, "trialing"), isNull(hosts.trialPromptSentAt), gt(hosts.trialEndsAt, now), notComped(now),
-      lte(hosts.trialStartedAt, new Date(now.getTime() - SUBSCRIPTION.trialPromptAfterHours * 3600_000)),
-    )))).returning(claimedCols);
-    out.trialPrompt = await mailAll(prompt, "trialPrompt", () => SUBSCRIPTION.trialDays);
-  }
-
-  // 2. Trial ended unpaid.
-  const ended = await db.update(hosts).set({
-    planStatus: "expired",
-    readOnlySince: sql`greatest(${hosts.trialEndsAt}, ${hosts.compUntil})`,
-    deleteAfter: sql`greatest(${hosts.trialEndsAt}, ${hosts.compUntil}) + ${interval(SUBSCRIPTION.trialGraceDeleteDays)}`,
-    trialEndEmailSentAt: emailConfigured() ? now : null,
-  }).where(inArray(hosts.id, batchOf(and(eq(hosts.planStatus, "trialing"), lte(hosts.trialEndsAt, now), notComped(now))))).returning(claimedCols);
-  out.trialEnded = ended.length;
-  await mailAll(ended, "trialEnded", () => SUBSCRIPTION.trialGraceDeleteDays);
-
-  // 3. Past-due grace over: behaves as cancelled from the end of the grace period. Stop Stripe retrying, too.
-  const lapsed = await db.update(hosts).set({
-    planStatus: "cancelled", cancelAtPeriodEnd: false,
-    currentPeriodEnd: sql`greatest(${hosts.pastDueSince} + ${interval(SUBSCRIPTION.pastDueGraceDays)}, ${hosts.compUntil})`,
-  }).where(inArray(hosts.id, batchOf(and(
-    eq(hosts.planStatus, "past_due"), isNotNull(hosts.pastDueSince), notComped(now),
-    lte(hosts.pastDueSince, new Date(now.getTime() - SUBSCRIPTION.pastDueGraceDays * DAY_MS)),
-  )))).returning(claimedCols);
-  out.pastDueLapsed = lapsed.length;
-  for (const h of lapsed) await cancelSubscriptionNow(h.stripeSubscriptionId).catch((e) => console.error("[expiry] stripe cancel failed", e));
-
-  // 4. Cancellation effective (from the webhook, step 3, or a cancel-at-period-end whose period is over).
-  await db.update(hosts).set({ planStatus: "cancelled", cancelAtPeriodEnd: false }).where(inArray(hosts.id, batchOf(and(
-    eq(hosts.planStatus, "active"), eq(hosts.cancelAtPeriodEnd, true), lte(hosts.currentPeriodEnd, new Date(now.getTime() - DAY_MS)), notComped(now),
-  ))));
-  const cancelled = await db.update(hosts).set({
-    readOnlySince: sql`greatest(coalesce(${hosts.currentPeriodEnd}, now()), ${hosts.compUntil})`,
-    deleteAfter: sql`greatest(coalesce(${hosts.currentPeriodEnd}, now()), ${hosts.compUntil}) + ${interval(SUBSCRIPTION.cancelledReadOnlyDays)}`,
-  }).where(inArray(hosts.id, batchOf(and(eq(hosts.planStatus, "cancelled"), isNull(hosts.readOnlySince), notComped(now))))).returning(claimedCols);
-  out.cancelled = cancelled.length;
-  await mailAll(cancelled, "cancelled", () => SUBSCRIPTION.cancelledReadOnlyDays);
-
-  // 5. Deletion warnings.
-  if (emailConfigured()) {
-    const warn = await db.update(hosts).set({ deletionWarningSentAt: now }).where(inArray(hosts.id, batchOf(and(
-      isNull(hosts.deletionWarningSentAt), isNotNull(hosts.deleteAfter), gt(hosts.deleteAfter, now), notComped(now),
-      or(
-        and(eq(hosts.planStatus, "expired"), lte(hosts.deleteAfter, new Date(now.getTime() + SUBSCRIPTION.trialDeletionWarningDays * DAY_MS))),
-        and(eq(hosts.planStatus, "cancelled"), lte(hosts.deleteAfter, new Date(now.getTime() + SUBSCRIPTION.cancelledDeletionWarningDays * DAY_MS))),
-      ),
-    )))).returning(claimedCols);
-    out.deletionWarnings = await mailAll(warn, "deletionSoon", (r) => (r.deleteAfter ? Math.max(1, Math.ceil((r.deleteAfter.getTime() - now.getTime()) / DAY_MS)) : null));
+  out.endedEmails = await sendDueEndedEmails({ max: BATCH });
+  out.reminders30 = 0;
+  out.reminders7 = 0;
+  if (!emailConfigured()) return out;
+  const now = new Date();
+  for (const days of DELETION_REMINDER_DAYS) {
+    const col = days === 30 ? O.reminder30SentAt : O.reminder7SentAt;
+    // The 30-day reminder is skipped once the 7-day window has started (no two emails in one run).
+    const lowerBound = days === 30 ? new Date(now.getTime() + 7 * DAY_MS) : now;
+    const batch = db.select({ id: O.id }).from(O).where(and(
+      inArray(O.packageStatus, ["paid", "live", "ended"]), isNull(col), isNotNull(O.deleteAfter),
+      gt(O.deleteAfter, lowerBound), lte(O.deleteAfter, new Date(now.getTime() + days * DAY_MS)),
+    )).limit(BATCH);
+    const claimed = await db.update(O).set(days === 30 ? { reminder30SentAt: now } : { reminder7SentAt: now })
+      .where(and(inArray(O.id, batch), isNull(col)))
+      .returning({ id: O.id, title: O.title, ownerId: O.ownerId, deleteAfter: O.deleteAfter });
+    if (!claimed.length) continue;
+    const owners = await db.select({ id: schema.hosts.id, email: schema.hosts.email, locale: schema.hosts.locale, brand: schema.hosts.brand })
+      .from(schema.hosts).where(inArray(schema.hosts.id, [...new Set(claimed.map((c) => c.ownerId))]));
+    const byId = new Map(owners.map((h) => [h.id, h]));
+    let n = 0;
+    for (const c of claimed) {
+      const h = byId.get(c.ownerId);
+      if (!h || !c.deleteAfter) continue;
+      const left = Math.max(1, Math.ceil((c.deleteAfter.getTime() - now.getTime()) / DAY_MS));
+      await sendDeletionReminder(h.email, { locale: loc(h.locale), brand: h.brand, title: c.title, occasionId: c.id, date: c.deleteAfter, days: left })
+        .then(() => n++).catch((e) => console.error(`[expiry] ${days}-day reminder failed`, e));
+    }
+    out[days === 30 ? "reminders30" : "reminders7"] = n;
   }
   return out;
 }
@@ -134,17 +89,14 @@ const MEDIA_BATCH = 300;
 const EVENT_BATCH = 15;
 
 /**
- * Account retention: once an unpaid trial's or cancelled account's delete_after has passed, every event it owns
- * loses its files (media, covers, guestbook recordings) and is archived. Idempotent: archived events are skipped,
- * so an interrupted run just continues next time. Subscribing before delete_after clears it (nothing is deleted).
- * Comped accounts are never deleted while the complimentary period lasts.
+ * Retention: once an event's delete_after has passed (closes_at + settings.retentionMonths), its files (media, covers,
+ * guestbook recordings) are deleted, the event is archived and its package marked 'expired'. Idempotent: archived events
+ * are skipped, so an interrupted run just continues next time. Setup (never paid) and refunded events are not touched here.
  */
-async function deleteExpiredAccounts() {
-  const { occasions } = schema;
+async function deleteExpiredEvents() {
   const now = new Date();
-  const due = await db.select({ id: occasions.id }).from(occasions)
-    .innerJoin(hosts, eq(hosts.id, occasions.ownerId))
-    .where(and(ne(occasions.status, "archived"), inArray(hosts.planStatus, ["expired", "cancelled"]), lte(hosts.deleteAfter, now), notComped(now)))
+  const due = await db.select({ id: O.id }).from(O)
+    .where(and(ne(O.status, "archived"), inArray(O.packageStatus, ["paid", "live", "ended", "expired"]), isNotNull(O.deleteAfter), lte(O.deleteAfter, now)))
     .limit(EVENT_BATCH);
   for (const o of due) {
     await deleteObjects(await keysForOccasion(o.id));
@@ -152,15 +104,15 @@ async function deleteExpiredAccounts() {
       db.delete(schema.media).where(eq(schema.media.occasionId, o.id)),
       db.delete(schema.messages).where(eq(schema.messages.occasionId, o.id)),
       db.delete(schema.shareLinks).where(eq(schema.shareLinks.occasionId, o.id)),
-      db.update(occasions).set({ status: "archived", coverKey: null }).where(eq(occasions.id, o.id)),
+      db.update(O).set({ status: "archived", coverKey: null, packageStatus: "expired" }).where(eq(O.id, o.id)),
     ]);
   }
   return due.length;
 }
 
-/** Daily (Vercel Hobby allows one run a day; upgrade to Pro to run hourly): delete files of lapsed accounts, purge abandoned/failed/deleted media, stale login codes, rate-limit rows and expired share links. */
+/** Daily (Vercel Hobby allows one run a day; upgrade to Pro to run hourly): delete files of events past retention, purge abandoned/failed/deleted media, stale login codes, rate-limit rows and expired share links. */
 export async function runCleanup(): Promise<Record<string, number>> {
-  const archived = await deleteExpiredAccounts();
+  const archived = await deleteExpiredEvents();
   const { media } = schema;
   const dayAgo = new Date(Date.now() - 24 * 3600_000);
   const stale = await db.select({ id: media.id, a: media.keyOriginal, b: media.keyDisplay, c: media.keyThumb, status: media.status })

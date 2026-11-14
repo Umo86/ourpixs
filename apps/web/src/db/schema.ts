@@ -16,9 +16,19 @@ export const mediaStatusEnum = pgEnum("media_status", ["pending", "uploaded", "f
 export const visibilityEnum = pgEnum("visibility", ["visible", "hidden", "deleted"]);
 export const shareScopeEnum = pgEnum("share_scope", ["view", "view_upload"]);
 export const messageKindEnum = pgEnum("message_kind", ["text", "voice", "video"]);
-/** Account subscription state (see src/lib/access.ts). "none" = no trial yet (it starts with the first event). */
+/** LEGACY account subscription state (before the event package). Columns kept in the DB, no longer read or written. */
 export const hostPlanStatusEnum = pgEnum("host_plan_status", ["none", "trialing", "active", "past_due", "cancelled", "expired"]);
 export const planIntervalEnum = pgEnum("plan_interval", ["month", "year"]);
+/**
+ * Event package state (src/lib/access.ts derives the effective state from this plus the clock):
+ *  setup    — not paid yet: the host configures the event and can test-upload; guests see "not open yet"
+ *  paid     — paid; live while opens_at ≤ now < closes_at (access derives "live"/"ended" from the clock)
+ *  live     — recorded state (optional; the clock decides)
+ *  ended    — the gallery window is over (recorded by the cron / lazily, with the "download everything" email)
+ *  expired  — past delete_after: files deleted by the cron
+ *  refunded — refunded in full: read-only, guests can't open it
+ */
+export const packageStatusEnum = pgEnum("package_status", ["setup", "paid", "live", "ended", "expired", "refunded"]);
 
 /** Hosts = people who create events. Guests never get accounts. */
 export const hosts = pgTable("hosts", {
@@ -28,10 +38,11 @@ export const hosts = pgTable("hosts", {
   locale: text("locale").notNull().default("en"),
   brand: brandEnum("brand").notNull().default("ourpixs"),
   stripeCustomerId: text("stripe_customer_id"),
-  // ── Account subscription (Monthly / Yearly). Access rules live in src/lib/access.ts. ──
+  // ── LEGACY account subscription columns (replaced by the per-event package on `occasions`). ──
+  // Kept in the DB on purpose (no destructive migration); nothing reads or writes them any more.
   planStatus: hostPlanStatusEnum("plan_status").notNull().default("none"),
   planInterval: planIntervalEnum("plan_interval"),
-  /** Set when the host creates their first event; the free trial runs until trialEndsAt. */
+  /** LEGACY: start and end of the old account trial. */
   trialStartedAt: timestamp("trial_started_at", { withTimezone: true }),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
@@ -48,7 +59,7 @@ export const hosts = pgTable("hosts", {
   trialEndEmailSentAt: timestamp("trial_end_email_sent_at", { withTimezone: true }),
   deletionWarningSentAt: timestamp("deletion_warning_sent_at", { withTimezone: true }),
   // ── Admin overrides (see src/lib/access.ts and /admin). ──
-  /** Complimentary access: while comp_until > now the account has full active access, and the crons never end or delete it. */
+  /** LEGACY complimentary access for the account subscription. No longer read: admins now mark single events as paid. */
   compUntil: timestamp("comp_until", { withTimezone: true }),
   /** Suspended accounts can't sign in or use the API; their events are read-only for guests. */
   suspendedAt: timestamp("suspended_at", { withTimezone: true }),
@@ -92,7 +103,7 @@ export const occasions = pgTable("occasions", {
   venueName: text("venue_name"),
   city: text("city"),
   theme: themeEnum("theme").notNull().default("noir"),
-  /** Legacy (one-off per-event plans). Kept in the DB, no longer used for features: access follows the owner's subscription. */
+  /** Legacy (one-off per-event plans). Kept in the DB, no longer used: access follows the event package below. */
   plan: planEnum("plan").notNull().default("free"),
   uploadOpensAt: timestamp("upload_opens_at", { withTimezone: true }),
   uploadClosesAt: timestamp("upload_closes_at", { withTimezone: true }),
@@ -102,13 +113,37 @@ export const occasions = pgTable("occasions", {
   pinHash: text("pin_hash"),
   coverKey: text("cover_key"),
   disposableShots: integer("disposable_shots"),
-  /** Legacy per-event retention. No longer read: retention follows the owner's account (hosts.delete_after). */
+  /** Legacy per-event retention. No longer read: retention is `delete_after` below. */
   storageExpiresAt: timestamp("storage_expires_at", { withTimezone: true }),
   status: statusEnum("status").notNull().default("active"),
   /** Admin override: uploads closed and the event is read-only (src/lib/access.ts) until an admin reopens it. */
   adminLockedAt: timestamp("admin_locked_at", { withTimezone: true }),
+  // ── Event package (src/lib/access.ts is the one place that interprets these). ──
+  packageStatus: packageStatusEnum("package_status").notNull().default("setup"),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  /** Set when an admin marked the event as paid without a payment (complimentary). */
+  compedAt: timestamp("comped_at", { withTimezone: true }),
+  /** The gallery window the organiser schedules (closes_at − opens_at ≤ settings.windowDays). */
+  opensAt: timestamp("opens_at", { withTimezone: true }),
+  closesAt: timestamp("closes_at", { withTimezone: true }),
+  /** IANA zone the window was entered in (shown to guests in that zone). */
+  timeZone: text("time_zone").notNull().default("Europe/London"),
+  /** closes_at + settings.retentionMonths, recorded at payment / window changes. Files are deleted after it. */
+  deleteAfter: timestamp("delete_after", { withTimezone: true }),
+  /** Once-only email markers. */
+  endedEmailSentAt: timestamp("ended_email_sent_at", { withTimezone: true }),
+  reminder30SentAt: timestamp("reminder_30_sent_at", { withTimezone: true }),
+  reminder7SentAt: timestamp("reminder_7_sent_at", { withTimezone: true }),
+  /** Set once when the event's storage first passes settings.fairUseGb (admins are emailed once). */
+  fairUseAlertedAt: timestamp("fair_use_alerted_at", { withTimezone: true }),
+  /** Latest Checkout session started for this event (an older open one is expired when a new one starts). */
+  stripeCheckoutSessionId: text("stripe_checkout_session_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [index("occasions_owner_idx").on(t.ownerId)]);
+}, (t) => [
+  index("occasions_owner_idx").on(t.ownerId),
+  index("occasions_package_idx").on(t.packageStatus, t.closesAt),
+  index("occasions_delete_after_idx").on(t.deleteAfter),
+]);
 
 export const occasionMembers = pgTable("occasion_members", {
   occasionId: uuid("occasion_id").notNull().references(() => occasions.id, { onDelete: "cascade" }),
@@ -218,17 +253,36 @@ export const shareLinks = pgTable("share_links", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-/** Legacy one-off per-event orders (before account subscriptions). Kept for records; no longer written. */
+/**
+ * Payments. kind "event_package" = the host's £69 package (one Stripe Checkout session per row);
+ * "guest_download" is reserved for guests buying all photos (later stage). Old rows with a `plan` are legacy one-off orders.
+ * status: "paid" | "refunded" | "duplicate" (paid for an event that was already paid: refund by hand).
+ */
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
   occasionId: uuid("occasion_id").notNull().references(() => occasions.id, { onDelete: "cascade" }),
   hostId: uuid("host_id").notNull().references(() => hosts.id),
   stripeSessionId: text("stripe_session_id").notNull().unique(),
-  plan: planEnum("plan").notNull(),
+  /** Legacy (per-event plans before subscriptions); null for event packages. */
+  plan: planEnum("plan"),
+  kind: text("kind").notNull().default("event_package"),
   amountPence: integer("amount_pence").notNull(),
   currency: text("currency").notNull().default("gbp"),
   status: text("status").notNull(),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  /** Stripe livemode: false for test-mode payments. */
+  livemode: boolean("livemode").notNull().default(false),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  refundedAt: timestamp("refunded_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index("orders_payment_intent_idx").on(t.stripePaymentIntentId), index("orders_occasion_idx").on(t.occasionId)]);
+
+/** Admin-editable settings (/admin/settings). Missing keys fall back to PACKAGE_DEFAULTS in src/lib/config.ts. */
+export const settings = pgTable("settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedBy: uuid("updated_by").references(() => hosts.id, { onDelete: "set null" }),
 });
 
 /** Postgres-backed token bucket for rate limiting. */

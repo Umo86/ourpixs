@@ -21,7 +21,8 @@ export default async function GuestLayout({ children, params }: { children: Reac
   const { o, guest, locale, publicOccasion, pinOk, demo } = await loadGuestContext(slug);
   const brand = await getBrand();
   const t = makeT(locale, "guest");
-  const joined = !!guest;
+  const open = publicOccasion.galleryState === "live" || publicOccasion.galleryState === "ended";
+  const joined = !!guest && open;
   return (
     <I18nProvider locale={locale} brand={brand}>
       <GuestProvider

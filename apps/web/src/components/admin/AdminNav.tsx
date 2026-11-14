@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, ClipboardList, Flag, Inbox, LayoutDashboard, PartyPopper, Users } from "lucide-react";
+import { Activity, ClipboardList, Flag, Inbox, LayoutDashboard, PartyPopper, SlidersHorizontal, Users } from "lucide-react";
 
-const ICONS = { overview: LayoutDashboard, users: Users, events: PartyPopper, moderation: Flag, enquiries: Inbox, audit: ClipboardList, system: Activity } as const;
+const ICONS = { overview: LayoutDashboard, users: Users, events: PartyPopper, moderation: Flag, enquiries: Inbox, settings: SlidersHorizontal, audit: ClipboardList, system: Activity } as const;
 export type AdminNavKey = keyof typeof ICONS;
 
 /** Left column on desktop, a horizontal pill row on mobile. */

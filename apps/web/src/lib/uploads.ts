@@ -2,11 +2,13 @@ import "server-only";
 import { z } from "zod";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { ALLOWED_MIME, SUBSCRIPTION } from "./config";
+import { ALLOWED_MIME, VIDEO_BYTES_PER_SECOND } from "./config";
 import { ApiError, badRequest, planLimit } from "./http";
 import { activeDays, canonicalMoment, dayUploadOpen, uploadOpen } from "./occasion";
 import { nsfwCheck, signalFlags } from "./moderation";
-import { accessForOccasion, assertCanUpload } from "./access";
+import { accessForOccasion, assertCanUpload, assertGuestCanUpload, type Access } from "./access";
+import { getSettings } from "./settings";
+import { checkFairUse } from "./package";
 import { notifyHosts } from "./push";
 import { after } from "next/server";
 import { loadDays } from "./queries";
@@ -49,17 +51,42 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Guests need a live gallery; hosts and co-hosts follow access.canUpload (test mode: limited count). */
+function assertActorCanUpload(o: OccasionRow, access: Access, guest: GuestRow | null) {
+  if (o.status !== "active") throw new ApiError(403, "upload_closed", "This event is no longer accepting uploads");
+  if (guest) {
+    assertGuestCanUpload(access);
+    if (!uploadOpen(o, access.guestsCanUpload)) throw new ApiError(403, "upload_closed", "Uploads are closed for this event");
+  } else {
+    assertCanUpload(access);
+  }
+}
+
+/** Items counting towards the test-mode limit (everything uploaded or in flight for the event). */
+async function testModeCount(occasionId: string) {
+  const [r] = await db.select({ n: sql<number>`count(*)::int` }).from(schema.media)
+    .where(and(eq(schema.media.occasionId, occasionId), sql`${schema.media.status} <> 'failed'`, sql`${schema.media.visibility} <> 'deleted'`));
+  return Number(r?.n ?? 0);
+}
+
+/** Server-side byte cap for one video, from the allowed length. */
+export const maxVideoBytes = (seconds: number) => seconds * VIDEO_BYTES_PER_SECOND;
+
 export async function createUploads(o: OccasionRow, files: UploadFile[], actor: Actor) {
   if (!storageDriver()) throw new StorageNotConfigured();
-  const features = SUBSCRIPTION.features;
   const guest = "guest" in actor ? actor.guest : null;
-  const access = await accessForOccasion(o);
-  if (o.status !== "active") throw new ApiError(403, "upload_closed", "This event is no longer accepting uploads");
-  assertCanUpload(access);
-  if (guest && !uploadOpen(o, access.canUpload)) throw new ApiError(403, "upload_closed", "Uploads are closed for this event");
+  const [access, settings] = await Promise.all([accessForOccasion(o), getSettings()]);
+  assertActorCanUpload(o, access, guest);
+  if (!guest && access.testMode) {
+    const used = await testModeCount(o.id);
+    if (used + files.length > access.testUploadLimit) {
+      throw new ApiError(402, "test_limit", `Test mode allows ${access.testUploadLimit} uploads (${Math.max(0, access.testUploadLimit - used)} left). Pay for the event to open it to your guests.`);
+    }
+  }
 
   await limit(guest ? `up:g:${guest.id}` : `up:h:${(actor as { hostId: string }).hostId}`, 400, 3600, files.length);
 
+  const maxSeconds = settings.videoMaxSeconds;
   for (const f of files) {
     if (!ALLOWED_MIME.includes(f.mime)) throw badRequest(`Unsupported file type: ${f.mime}`);
     const family = f.mime.split("/")[0];
@@ -68,8 +95,10 @@ export async function createUploads(o: OccasionRow, files: UploadFile[], actor: 
     }
     if (f.kind === "photo" && f.bytes > MAX_PHOTO_BYTES) throw planLimit("Photo is too large");
     if (f.kind === "video") {
-      if (f.bytes > features.maxVideoBytes) throw planLimit("Video is too large (up to 1 GB)");
-      if (f.durationS && f.durationS > features.maxVideoSeconds + 1) throw planLimit("Video is too long (up to 10 minutes)");
+      // The browser checks the length before uploading; this is the server-side check (1 s of slack for rounding).
+      if (f.durationS == null) throw new ApiError(400, "video_duration_required", "Video length is missing");
+      if (f.durationS > maxSeconds + 1) throw new ApiError(402, "video_too_long", `Videos can be up to ${maxSeconds} seconds long`);
+      if (f.bytes > maxVideoBytes(maxSeconds)) throw new ApiError(402, "video_too_long", `Videos can be up to ${maxSeconds} seconds long`);
     }
   }
 
@@ -147,8 +176,9 @@ export async function completeUploads(o: OccasionRow, mediaIds: string[], actor:
   const owner = "guest" in actor ? eq(schema.media.guestId, actor.guest.id) : eq(schema.media.uploadedByHostId, actor.hostId);
   const rows = await db.select().from(schema.media)
     .where(and(eq(schema.media.occasionId, o.id), inArray(schema.media.id, mediaIds), owner, eq(schema.media.status, "pending")));
-  assertCanUpload(await accessForOccasion(o));
-  const maxVideoBytes = SUBSCRIPTION.features.maxVideoBytes;
+  const [access, settings] = await Promise.all([accessForOccasion(o), getSettings()]);
+  assertActorCanUpload(o, access, "guest" in actor ? actor.guest : null);
+  const videoCap = maxVideoBytes(settings.videoMaxSeconds);
   const missing: string[] = [];
   let pending = false;
   await Promise.all(rows.map(async (m) => {
@@ -157,7 +187,10 @@ export async function completeUploads(o: OccasionRow, mediaIds: string[], actor:
       missing.push(m.id);
       return;
     }
-    const tooBig = m.kind === "video" ? orig.bytes > maxVideoBytes : orig.bytes > MAX_PHOTO_BYTES;
+    // Videos: the recorded length must be within the limit, and the stored size must fit it.
+    const tooBig = m.kind === "video"
+      ? orig.bytes > videoCap || m.durationS == null || m.durationS > settings.videoMaxSeconds + 1
+      : orig.bytes > MAX_PHOTO_BYTES;
     if (tooBig) {
       await deleteObjects([m.keyOriginal, m.keyDisplay, m.keyThumb]).catch(() => {});
       await db.update(schema.media).set({ status: "failed" }).where(eq(schema.media.id, m.id));
@@ -183,11 +216,15 @@ export async function completeUploads(o: OccasionRow, mediaIds: string[], actor:
     }).where(eq(schema.media.id, m.id));
     if (nsfw || !m.approved) pending = true;
   }));
-  // Push to hosts after the response is sent (guests' uploads only).
-  if ("guest" in actor && rows.length > missing.length) {
+  if (rows.length > missing.length) {
     after(async () => {
-      await notifyHosts(o, "first_upload");
-      if (pending) await notifyHosts(o, "pending");
+      // Fair use: past the storage limit uploads keep working; admins get one alert.
+      await checkFairUse(o).catch((e) => console.error("[uploads] fair-use check failed", e));
+      // Push to hosts after the response is sent (guests' uploads only).
+      if ("guest" in actor) {
+        await notifyHosts(o, "first_upload");
+        if (pending) await notifyHosts(o, "pending");
+      }
     });
   }
   return { missing };

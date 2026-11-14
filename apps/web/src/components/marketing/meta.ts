@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getBrand, getLocale, getT } from "@/i18n";
 import { BRANDS, MAIN_BRAND, SUPPORT_EMAIL, brandBaseUrl, type Brand, type Locale } from "@/lib/config";
 import { pricingVars } from "./format";
+import { getSettings } from "@/lib/settings";
 
 type Page = "home" | "features" | "pricing" | "privacy" | "terms" | "credits";
 type Paths = { en: string; tr: string };
@@ -55,9 +56,9 @@ export async function buildMetadata(opts: {
 }
 
 export async function pageMetadata(page: Page, path: string): Promise<Metadata> {
-  const [{ t }, brand] = await Promise.all([getT("marketing"), getBrand()]);
+  const [{ t }, brand, settings] = await Promise.all([getT("marketing"), getBrand(), getSettings()]);
   const name = BRANDS[brand].name;
-  const vars = { ...pricingVars(SUPPORT_EMAIL[brand]), brand: name };
+  const vars = { ...pricingVars(SUPPORT_EMAIL[brand], settings), brand: name };
   return buildMetadata({
     title: t(`meta.${page}.title`, vars),
     description: t(`meta.${page}.description`, vars),

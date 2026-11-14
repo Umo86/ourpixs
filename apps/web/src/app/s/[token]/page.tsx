@@ -32,12 +32,14 @@ export default async function SharePage({ params, searchParams }: { params: Prom
   const locale = await getLocale();
   const t = makeT(locale, "guest");
   const where = [...liveMedia(o.id), eq(schema.media.visibility, "visible"), eq(schema.media.approved, true), inArray(schema.media.kind, ["photo", "video"]), revealedForGuests(o)];
-  const [page, access, cover] = await Promise.all([
+  // Share links open with the gallery (live or ended), like the guest link; never before it opens or after deletion.
+  const access = await accessForOccasion(o);
+  if (!access.guestsCanView) notFound();
+  const [page, cover] = await Promise.all([
     mediaPage({ where, cursor: typeof cursor === "string" ? cursor : undefined, limit: 60 }).catch(() => ({ rows: [], nextCursor: null })),
-    accessForOccasion(o),
     coverUrlFor(o.coverKey),
   ]);
-  // Share links are for viewing; downloads follow the owner's account (locked during the trial / when unpaid).
+  // Share links are for viewing; downloads follow the event's download access.
   const items = await toMediaItems(page.rows, "guest", { canDownload: access.canDownload });
   const eyebrow = [OCCASIONS[o.type].label[locale], o.startsOn ? formatDate(o.startsOn, locale) : null, o.city].filter(Boolean).join(" · ");
 
@@ -60,7 +62,7 @@ export default async function SharePage({ params, searchParams }: { params: Prom
           </div>
         </section>
         <div className="flex flex-wrap items-center gap-3">
-          {link.scope === "view_upload" && access.canUpload ? (
+          {link.scope === "view_upload" && access.guestsCanUpload ? (
             <Link href={`/g/${publicSlug(o)}?k=${token}`} className="inline-flex min-h-12 items-center rounded-full bg-royal px-6 font-extrabold text-white no-underline hover:bg-royal-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky">{t("share.addYours")}</Link>
           ) : null}
         </div>

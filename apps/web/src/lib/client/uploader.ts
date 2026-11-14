@@ -15,7 +15,11 @@ type Entry = { item: QueueItem; file: File; ticket?: { t: UploadTicket; at: numb
 type Persisted = { file: File; meta: UploadMeta; ticket?: Entry["ticket"] };
 
 /** Errors the user (or host) has to fix; retrying won't help. */
-const FATAL = new Set(["plan_limit", "plan_required", "upload_closed", "shots_exhausted", "invalid_request", "not_joined", "storage_not_configured", "not_found", "unauthorized", "pin_required"]);
+const FATAL = new Set([
+  "plan_limit", "plan_required", "upload_closed", "shots_exhausted", "invalid_request", "not_joined", "storage_not_configured", "not_found",
+  "unauthorized", "pin_required", "test_limit", "video_too_long", "video_duration_required", "video_unreadable", "not_open",
+  "event_unavailable", "payment_required", "event_locked", "account_suspended", "guest_blocked",
+]);
 const MAX_ATTEMPTS = 6;
 const TICKET_TTL = 50 * 60 * 1000;
 
@@ -58,7 +62,8 @@ export class Uploader {
   private snap: QueueItem[] = [];
   private restored = false;
 
-  constructor(private cfg: { ns: string; createUrl: string; completeUrl: string; concurrency?: number }) {
+  /** `maxVideoSeconds`: videos longer than this are stopped in the browser before uploading (the server checks again). */
+  constructor(private cfg: { ns: string; createUrl: string; completeUrl: string; concurrency?: number; maxVideoSeconds?: number }) {
     if (typeof window !== "undefined") window.addEventListener("online", () => this.pump());
   }
 
@@ -162,6 +167,11 @@ export class Uploader {
     try {
       this.patch(id, { status: "processing", progress: 0 });
       const p: Processed = await processFile(e.file);
+      const maxS = this.cfg.maxVideoSeconds;
+      if (p.kind === "video" && maxS) {
+        if (p.durationS == null) throw new ApiClientError(0, "video_unreadable", "Couldn't read the video length");
+        if (p.durationS > maxS + 1) throw new ApiClientError(0, "video_too_long", "Video is too long");
+      }
       const ticket = await this.ticketFor(e, p);
       this.patch(id, { status: "uploading" });
       const total = p.original.size + (p.display?.size ?? 0) + (p.thumb?.size ?? 0);

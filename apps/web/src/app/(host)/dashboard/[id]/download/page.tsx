@@ -9,6 +9,7 @@ import { DownloadClient } from "@/components/host/DownloadClient";
 import { Notice } from "@/components/app/Notice";
 import { accessForOccasion } from "@/lib/access";
 import { paymentsEnabled } from "@/lib/stripe";
+import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,12 @@ export default async function DownloadPage({ params }: { params: Promise<{ id: s
   const m = await requireMemberPage(id);
   if (!m) notFound();
   const { t, locale } = await getT("host");
-  const [days, stats, access] = await Promise.all([loadDays(m.occasion.id), occasionStats(m.occasion), accessForOccasion(m.occasion)]);
+  const [days, stats, access, settings] = await Promise.all([loadDays(m.occasion.id), occasionStats(m.occasion), accessForOccasion(m.occasion), getSettings()]);
+  const locked = access.canDownload ? null
+    : access.reason === "suspended" ? t("download.lockedSuspended")
+    : access.state === "refunded" ? t("download.lockedRefunded")
+    : access.state === "expired" ? t("download.lockedExpired")
+    : t("download.lockedSetup");
   return (
     <Container size="narrow" className="flex flex-col gap-6 py-6 sm:py-8">
       <div className="flex flex-col gap-2">
@@ -30,9 +36,9 @@ export default async function DownloadPage({ params }: { params: Promise<{ id: s
         <p className="m-0 text-text-2">{t("download.lead", { size: formatBytes(stats.bytes, locale) })}</p>
         {access.deleteAfter && !access.deleted ? <p className="m-0 text-sm font-semibold text-royal">{t("download.keptUntil", { date: formatDate(access.deleteAfter.toISOString(), locale) })}</p> : null}
       </div>
-      {!access.canDownload ? <Notice>{t(access.reason === "trial_ended" ? "billing.downloadsLockedEnded" : "billing.downloadsLocked")}</Notice> : null}
+      {locked ? <Notice>{locked}</Notice> : null}
       <DownloadClient occasionId={m.occasion.id} title={m.occasion.title} days={days.map((d) => ({ id: d.id, name: d.name }))}
-        canDownload={access.canDownload} isOwner={m.role === "owner"} payments={paymentsEnabled()} />
+        canDownload={access.canDownload} isOwner={m.role === "owner"} payments={paymentsEnabled()} pricePence={settings.eventPricePence} canPay={access.canPay} />
     </Container>
   );
 }

@@ -13,7 +13,8 @@
   "moderation": "Denetim",
   "enquiries": "Talepler",
   "audit": "İşlem kaydı",
-  "system": "Sistem"
+  "system": "Sistem",
+  "settings": "Ayarlar"
  },
  "common": {
   "all": "Tümü",
@@ -34,20 +35,17 @@
   "unknownGuest": "Misafir"
  },
  "status": {
-  "none": "Deneme başlamadı",
-  "trialing": "Deneme",
-  "active": "Aktif",
-  "past_due": "Ödeme gecikti",
-  "cancelled": "İptal edildi",
-  "expired": "Deneme bitti",
-  "comped": "Ücretsiz erişim",
-  "suspended": "Askıda",
-  "month": "aylık",
-  "year": "yıllık",
+  "setup": "Hazırlık",
+  "paid": "Ödendi, henüz açılmadı",
   "live": "Yayında",
-  "readonly": "Salt okunur",
+  "ended": "Kapandı",
+  "expired": "Silindi",
+  "refunded": "İade edildi",
+  "comped": "Ücretsiz",
+  "suspended": "Askıda",
   "archived": "Arşivde",
   "locked": "Kilitli",
+  "fair_use": "Adil kullanım aşıldı",
   "visible": "Görünür",
   "hidden": "Gizli",
   "pending": "Onay bekliyor",
@@ -70,37 +68,26 @@
   "invalid_request": "Lütfen bilgileri kontrol edip tekrar deneyin.",
   "rate_limited": "Kısa sürede çok fazla işlem yaptınız. Bir dakika bekleyip tekrar deneyin.",
   "reauth_required": "Devam etmek için lütfen tekrar giriş yapın.",
-  "not_trial": "Bu hesap ücretsiz denemede değil. Bunun yerine ücretsiz erişim tanımlayın.",
-  "not_comped": "Bu hesabın ücretsiz erişimi yok.",
-  "self_action": "Bunu kendi hesabınıza uygulayamazsınız.",
-  "confirm_mismatch": "Eşleşmedi. Lütfen tam olarak gösterildiği gibi yazın.",
-  "no_subscription": "Bu hesapta Stripe aboneliği yok.",
-  "billing_error": "Stripe bu işlemi yapamadı, hiçbir şey değişmedi. Tekrar deneyin ya da Stripe panelini kullanın.",
+  "not_comped": "Yalnızca bir yöneticinin ödendi olarak işaretlediği etkinlik hazırlığa dönebilir.",
+  "self_action": "Bunu kendi hesabınıza yapamazsınız.",
+  "confirm_mismatch": "Eşleşmedi. Tam olarak gösterildiği gibi yazın.",
   "payments_unavailable": "Bu ortamda Stripe ayarlı değil.",
   "storage_not_configured": "Bu ortamda depolama ayarlı değil.",
-  "storage_error": "Depolama yanıt vermedi. Lütfen tekrar deneyin."
+  "storage_error": "Depolama yanıt vermedi. Lütfen tekrar deneyin.",
+  "not_setup": "Yalnızca ödenmemiş bir etkinlik ödendi olarak işaretlenebilir.",
+  "has_payment": "Bu etkinliğin bir ödemesi var. Bunun yerine Stripe panelinden iade edin."
  },
  "overview": {
   "eyebrow": "Yönetim",
   "title": "İşler nasıl",
   "accent": "gidiyor",
-  "money": "Gelir",
-  "mrr": "Aylık gelir (MRR)",
-  "mrrHint": "Aktif aylık + yıllık ÷ 12",
-  "arr": "Yıllık gelir (ARR)",
-  "conversion": "Denemeden ödemeye (30 gün)",
-  "conversionHint": "Biten {cohort} denemeden {converted} tanesi abone oldu",
-  "paying": "Ödeme yapan hesaplar",
+  "money": "Etkinlik paketleri",
   "hosts": "Ev sahipleri",
   "hostsTotal": "Toplam ev sahibi",
   "new7": "Son 7 günde yeni",
   "new30": "Son 30 günde yeni",
-  "byPlan": "Plana göre hesaplar",
-  "activeMonthly": "Aktif aylık",
-  "activeYearly": "Aktif yıllık",
   "activity": "Etkinlikler ve yüklemeler",
   "eventsTotal": "Toplam etkinlik",
-  "liveToday": "Bugün yayında",
   "eventsNew7": "Son 7 günde açılan",
   "uploadsToday": "Bugünkü yüklemeler",
   "uploadsWeek": "Son 7 günde {n}",
@@ -110,27 +97,38 @@
   "signupsChart": "Günlük kayıtlar",
   "uploadsChart": "Günlük yüklemeler",
   "chartSummary": "{what}: son 30 günde {n}",
-  "chartRange": "{from} – {to} · toplam {n}"
+  "chartRange": "{from} – {to} · toplam {n}",
+  "revenue30": "Gelir, son 30 gün",
+  "revenueAll": "Gelir, tüm zamanlar",
+  "packagesHint": "{n} paket",
+  "testPayments": "Test modu ödemeleri",
+  "testPaymentsHint": "Yukarıdakilere dahil; yalnızca Stripe test anahtarları",
+  "refunds": "İade edilen paketler",
+  "duplicates": "İade edilecek {n} çift ödeme",
+  "byPackage": "Paket durumuna göre etkinlikler",
+  "liveNow": "Şu an yayındaki galeriler",
+  "fairUse": "Adil kullanımı aşan"
  },
  "users": {
   "title": "Tüm",
   "accent": "hesaplar",
   "search": "Ara",
   "searchPlaceholder": "E-posta ya da ad",
-  "planFilter": "Plan",
   "email": "E-posta",
   "name": "Ad",
   "brandLocale": "Marka · dil",
-  "plan": "Plan",
   "events": "Etkinlik",
   "storage": "Depolama",
   "created": "Oluşturulma",
   "empty": "Eşleşen hesap yok.",
-  "compUntil": "{date} tarihine kadar",
-  "trialEnds": "Deneme {date} tarihinde bitiyor",
-  "renewsOn": "{date} tarihinde yenileniyor",
-  "endsOn": "{date} tarihinde bitiyor",
-  "endedOn": "{date} tarihinde bitti"
+  "filter": "Göster",
+  "filters": {
+   "paying": "Ödenmiş etkinliği olan",
+   "suspended": "Askıda"
+  },
+  "state": "Durum",
+  "paidEvents": "{n} ödenmiş etkinlik",
+  "noPaidEvents": "Ödenmiş etkinlik yok"
  },
  "user": {
   "eyebrow": "Hesap",
@@ -138,62 +136,31 @@
   "brand": "Marka",
   "locale": "Dil",
   "id": "Kimlik",
-  "subscription": "Abonelik",
-  "storedStatus": "Kayıtlı durum",
-  "effective": "Şu anki durum",
-  "trial": "Deneme",
-  "periodEnd": "Ödenen dönemin sonu",
-  "cancelAtPeriodEnd": "dönem sonunda iptal olacak",
-  "pastDueSince": "Ödeme şu tarihten beri başarısız",
-  "readOnlySince": "Salt okunur başlangıcı",
-  "deleteAfter": "Dosyaların silineceği tarih",
-  "compUntil": "Ücretsiz erişim bitişi",
   "stripeCustomer": "Stripe müşterisi",
-  "stripeSubscription": "Stripe aboneliği",
   "suspendedNotice": "{date} tarihinde askıya alındı. Gerekçe: {reason}",
-  "compedNotice": "{date} tarihine kadar ücretsiz erişim var. Her şey açık; hesap o tarihe kadar sona ermez ve silinmez.",
   "actions": "İşlemler",
   "selfNotice": "Bu sizin kendi hesabınız, bu yüzden askıya alma ve silme burada kapalı.",
-  "extendTrial": "Denemeyi uzat",
-  "extendTrialTitle": "Ücretsiz denemeyi uzatın",
-  "extendTrialBody": "Denemeye gün ekler. Bitmiş bir deneme bugünden itibaren yeniden başlar ve silme tarihi kaldırılır.",
-  "extendTrialConfirm": "Denemeyi uzat",
-  "days": "Eklenecek gün (1–30)",
-  "grantComp": "Ücretsiz erişim tanımla",
-  "changeComp": "Ücretsiz erişim tarihini değiştir",
-  "grantCompTitle": "Ücretsiz erişim",
-  "grantCompBody": "Seçilen günün sonuna kadar tam erişim (tüm özellikler ve indirmeler). Bu süre boyunca hesap sona ermez ve silinmez.",
-  "grantCompConfirm": "Kaydet",
-  "compDate": "Bitiş günü (dahil)",
-  "removeComp": "Ücretsiz erişimi kaldır",
-  "removeCompTitle": "Ücretsiz erişimi kaldırın",
-  "removeCompBody": "Hesap hemen abonelik durumuna döner. Bu durum salt okunursa, bir şey silinmeden önce tam bekleme süresi yine işler.",
-  "removeCompConfirm": "Kaldır",
-  "cancelSub": "Aboneliği iptal et",
-  "cancelSubTitle": "Stripe aboneliğini iptal edin",
-  "cancelSubBody": "Buradan iade yapılmaz. İade için Stripe panelini kullanın.",
-  "cancelSubConfirm": "Aboneliği iptal et",
-  "cancelWhen": "Ne zaman",
-  "cancelAtEnd": "Ödenen dönemin sonunda",
-  "cancelNow": "Hemen",
   "suspend": "Hesabı askıya al",
   "suspendTitle": "Bu hesabı askıya alın",
   "suspendBody": "Tüm cihazlarda oturumu kapanır, giriş yapamaz ve uygulamayı kullanamaz. Etkinlikleri misafirlere açık kalır ama salt okunur olur: yükleme ve indirme yapılamaz.",
   "suspendConfirm": "Askıya al",
   "unsuspend": "Askıyı kaldır",
   "unsuspendTitle": "Askıyı kaldırın",
-  "unsuspendBody": "Yeniden giriş yapabilir; etkinlikleri planının izin verdiği şekilde çalışır.",
+  "unsuspendBody": "Yeniden giriş yapabilir; etkinlikleri paketlerinin izin verdiği şekilde çalışır.",
   "unsuspendConfirm": "Askıyı kaldır",
   "delete": "Hesabı sil",
   "deleteTitle": "Bu hesabı silin",
-  "deleteBody": "Varsa Stripe aboneliği hemen iptal edilir; ardından hesap, sahip olduğu tüm etkinlikler ve bütün dosyaları silinir. Bu işlem geri alınamaz.",
+  "deleteBody": "Hesap, sahip olduğu tüm etkinlikler ve bütün dosyaları silinir. Ödeme kayıtlarının hesapla bağlantısı kalkar. Bu işlem geri alınamaz.",
   "deleteConfirm": "Kalıcı olarak sil",
   "typeEmail": "Onaylamak için {email} yazın",
   "events": "Sahip olduğu etkinlikler ({n})",
   "allEvents": "Etkinliklerde aç",
   "noEvents": "Henüz etkinlik yok.",
   "cohostOf": "Ortak ev sahibi olduğu etkinlikler",
-  "audit": "Yönetim geçmişi"
+  "audit": "Yönetim geçmişi",
+  "payments": "Ödemeler",
+  "paidEvents": "Ödenmiş etkinlikler",
+  "paymentsHint": "Ödemeler etkinlik başınadır: paket ve ödemeler için aşağıdaki etkinliklere bakın."
  },
  "events": {
   "title": "Tüm",
@@ -211,7 +178,8 @@
   "status": "Durum",
   "createdOn": "{date} tarihinde açıldı",
   "empty": "Eşleşen etkinlik yok.",
-  "ownerFiltered": "Tek bir hesabın etkinlikleri gösteriliyor."
+  "ownerFiltered": "Tek bir hesabın etkinlikleri gösteriliyor.",
+  "window": "Galeri zamanı"
  },
  "event": {
   "lockedNotice": "Misafir yüklemeleri {date} tarihinde bir yönetici tarafından kapatıldı. Yeniden açılana kadar etkinlik salt okunur.",
@@ -230,8 +198,7 @@
   "owner": "Sahibi",
   "link": "Bağlantı kodu",
   "place": "Yer",
-  "uploadWindow": "Yükleme zamanı",
-  "always": "Her zaman açık",
+  "uploadWindow": "Eski yükleme zamanı",
   "approval": "Onay modu",
   "pin": "PIN",
   "id": "Kimlik",
@@ -244,11 +211,11 @@
   "actions": "İşlemler",
   "lock": "Misafir yüklemelerini kapat",
   "lockTitle": "Misafir yüklemelerini kapatın",
-  "lockBody": "Planın önüne geçer: kimse yükleme yapamaz, ev sahipleri ayarları değiştiremez. Görüntüleme, canlı duvar ve indirmeler çalışmaya devam eder.",
+  "lockBody": "Paketin önüne geçer: kimse yükleme yapamaz, ev sahipleri ayarları ve tarihleri değiştiremez. Görüntüleme, canlı ekran ve indirmeler pakete göre çalışır.",
   "lockConfirm": "Yüklemeleri kapat",
   "unlock": "Misafir yüklemelerini aç",
   "unlockTitle": "Misafir yüklemelerini yeniden açın",
-  "unlockBody": "Etkinlik yeniden sahibinin planına göre çalışır.",
+  "unlockBody": "Etkinlik yeniden paketine göre çalışır.",
   "unlockConfirm": "Yüklemeleri aç",
   "archive": "Arşivle",
   "archiveTitle": "Bu etkinliği arşivleyin",
@@ -275,7 +242,42 @@
   "noMedia": "Burada medya yok.",
   "guestList": "Misafirler",
   "noGuests": "Henüz katılan misafir yok.",
-  "audit": "Yönetim geçmişi"
+  "audit": "Yönetim geçmişi",
+  "noLegacyWindow": "Ayarlı değil (galeri zamanı geçerli)",
+  "package": "Etkinlik paketi",
+  "packageState": "Şu an",
+  "storedState": "Kayıtlı durum",
+  "paidAt": "Ödendi",
+  "window": "Galeri zamanı",
+  "noWindow": "Henüz tarih yok",
+  "timeZone": "Saat dilimi",
+  "deleteAfter": "Dosyaların silineceği tarih",
+  "endedEmail": "“Galeri kapandı” e-postası",
+  "fairUse": "Depolama / adil kullanım",
+  "fairUseNotice": "Bu etkinlik {date} tarihinde adil kullanım sınırını ({gb} GB) aştı. Yüklemeler devam ediyor; yöneticilere bir kez e-posta gönderildi.",
+  "payments": "Ödemeler",
+  "amount": "Tutar",
+  "mode": "Mod",
+  "live": "Canlı",
+  "test": "Test",
+  "noPayments": "Bu etkinlik için ödeme yok.",
+  "orderStatus": {
+   "paid": "Ödendi",
+   "refunded": "İade edildi",
+   "duplicate": "Çift ödeme: iade edin"
+  },
+  "markPaid": "Ödendi olarak işaretle (ücretsiz)",
+  "markPaidTitle": "Bu etkinliği ödendi olarak işaretle",
+  "markPaidBody": "Etkinliğe ödeme olmadan ücretsiz bir paket verir. Galeri tarihlerinde açılır ve olağan saklama süresi boyunca tutulur.",
+  "markPaidConfirm": "Ödendi olarak işaretle",
+  "resetSetup": "Hazırlığa geri al",
+  "resetSetupTitle": "Ücretsiz paketi geri al",
+  "resetSetupBody": "Etkinlik hazırlık durumuna döner: ödemesi yapılana kadar misafirler katılamaz. Yalnızca bir yöneticinin ödendi olarak işaretlediği etkinlikler için.",
+  "resetSetupConfirm": "Hazırlığa geri al",
+  "clearFairUse": "Adil kullanım işaretini kaldır",
+  "clearFairUseTitle": "Adil kullanım işaretini kaldır",
+  "clearFairUseBody": "İşareti kaldırır. Etkinlik hâlâ sınırın üzerindeyse bir sonraki yüklemede yeniden işaretlenir ve yöneticilere yeni bir e-posta gider.",
+  "clearFairUseConfirm": "İşareti kaldır"
  },
  "guests": {
   "name": "Ad",
@@ -386,20 +388,20 @@
   "urls": "Genel adresler",
   "environment": "Ortam",
   "cron": {
-   "expiry": "Abonelik geçişleri (expiry)",
+   "expiry": "Galeri kapandı ve hatırlatma e-postaları (expiry)",
    "cleanup": "Saklama ve temizlik (cleanup)"
   },
   "cronLead": {
-   "expiry": "Her gün: deneme hatırlatmaları, biten denemeler, başarısız ödeme süresi, iptaller ve silme uyarıları.",
-   "cleanup": "Her gün: süresi dolan hesapların dosyalarını, yarım kalan yüklemeleri, eski giriş kodlarını ve süresi geçen paylaşım bağlantılarını siler."
+   "expiry": "Her gün: “galeri kapandı, her şeyi indirin” e-postaları ve dosyalar silinmeden 30 ve 7 gün önce hatırlatmalar.",
+   "cleanup": "Her gün: saklama süresi dolan etkinliklerin dosyalarını, yarım kalan yüklemeleri, eski giriş kodlarını ve süresi geçen paylaşım bağlantılarını siler."
   },
   "runNow": "Şimdi çalıştır",
   "running": "Çalışıyor…",
   "runConfirm": "Şimdi çalıştır",
   "runTitle": "{name} şimdi çalıştırılsın mı?",
   "runBody": {
-   "expiry": "Günlük zamanlamayla aynı görevi çalıştırır. Tekrar çalıştırmak güvenlidir: her hesap her adımda yalnızca bir kez işlenir. E-posta gönderilebilir.",
-   "cleanup": "Günlük zamanlamayla aynı görevi çalıştırır. Silme tarihi geçmiş hesapların dosyaları kalıcı olarak silinir."
+   "expiry": "Günlük zamanlamayla aynı görevi çalıştırır. Tekrar çalıştırmak güvenlidir: her etkinlik her e-postayı bir kez alır. E-posta gönderilebilir.",
+   "cleanup": "Günlük zamanlamayla aynı görevi çalıştırır. Silme tarihi geçmiş etkinliklerin dosyaları kalıcı olarak silinir."
   },
   "runDone": "Tamamlandı. Çalıştırma aşağıda listelendi.",
   "noRuns": "Henüz kayıtlı çalıştırma yok.",
@@ -410,6 +412,69 @@
   "trigger": {
    "admin": "Bir yönetici çalıştırdı",
    "schedule": "Zamanlanmış"
+  }
+ },
+ "settings": {
+  "title": "Ürün",
+  "accent": "ayarları",
+  "lead": "Sitede, uygulamada ve Stripe ödeme sayfasında kullanılan fiyatlar ve sınırlar. Değişiklikler hemen geçerli olur; ödemesi yapılmış etkinlikler tarihlerini ve silinme tarihlerini korur. Her değişiklik denetim kaydına yazılır.",
+  "save": "Ayarları kaydet",
+  "saved": "Kaydedildi. Yeni değerler şimdi geçerli.",
+  "invalid": "Bir ya da daha fazla değer izin verilen aralığın dışında.",
+  "noChanges": "Değişen bir şey yok.",
+  "pending": "Kaydedilecek {n} değişiklik",
+  "reasonHint": "Eski ve yeni değerlerle birlikte denetim kaydına yazılır.",
+  "range": "İzin verilen: {min} – {max}",
+  "default": "varsayılan {v}",
+  "usingDefault": "Varsayılan kullanılıyor",
+  "changedBy": "{date} tarihinde {who} değiştirdi",
+  "units": {
+   "pence": "GBP",
+   "days": "gün",
+   "gb": "GB",
+   "seconds": "saniye",
+   "months": "ay",
+   "items": "adet"
+  },
+  "keys": {
+   "eventPricePence": {
+    "label": "Etkinlik paketi fiyatı",
+    "hint": "Ev sahibinin etkinlik başına bir kez ödediği tutar (KDV dahil). Fiyatlar sayfasında ve Stripe ödeme sayfasında kullanılır."
+   },
+   "guestDownloadPence": {
+    "label": "Misafir “hepsini indir” fiyatı",
+    "hint": "Misafirin bir etkinliğin tüm fotoğraf ve videoları için ödediği tutar (sonraki aşama)."
+   },
+   "windowDays": {
+    "label": "En uzun galeri süresi",
+    "hint": "Bir galerinin açılıştan kapanışa kadar en fazla ne kadar açık kalabileceği."
+   },
+   "fairUseGb": {
+    "label": "Etkinlik başına adil kullanım depolaması",
+    "hint": "Aşıldığında yüklemeler devam eder ama etkinlik işaretlenir ve yöneticilere bir kez e-posta gider."
+   },
+   "videoMaxSeconds": {
+    "label": "En uzun video",
+    "hint": "Yüklemeden önce tarayıcıda, ardından sunucuda yeniden kontrol edilir."
+   },
+   "retentionMonths": {
+    "label": "Galeri kapandıktan sonra saklama",
+    "hint": "Dosyalar kapanıştan bu kadar sonra silinir. Değişiklikten sonra ödenen ya da tarihi değişen etkinliklere uygulanır."
+   },
+   "hostTestUploadLimit": {
+    "label": "Ödemeden önceki deneme yüklemeleri",
+    "hint": "Ev sahiplerinin deneme modunda ekleyebileceği fotoğraf ya da video sayısı."
+   }
+  }
+ },
+ "fairUse": {
+  "email": {
+   "subject": "Adil kullanım: {title} {limit} GB'ı geçti",
+   "heading": "Bir etkinlik adil kullanım sınırını aştı",
+   "body": "{title} (sahibi {owner}) şu an {gb} GB yer kaplıyor; {limit} GB'lık adil kullanım sınırının üzerinde.",
+   "body2": "Yüklemeler devam ediyor. Göz atın ve ev sahibiyle iletişime geçip geçmemeye karar verin.",
+   "cta": "Etkinliği yönetim panelinde aç",
+   "footer": "Yöneticiler (ADMIN_EMAILS) için iç uyarı. Her etkinlik için bir kez gönderilir."
   }
  }
 }

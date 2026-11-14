@@ -125,7 +125,7 @@ export function UploadScreen() {
                   <span className="flex justify-between gap-2 text-[13px]">
                     <span className="truncate font-semibold">{q.name}</span>
                     <span className={q.status === "error" ? "text-[#FF9A9A]" : "text-muted-dark"}>
-                      {q.status === "done" ? t("upload.statusDone") : q.status === "error" ? t(`errors.${q.errorCode}`) !== `errors.${q.errorCode}` ? t(`errors.${q.errorCode}`) : t("upload.statusFailed")
+                      {q.status === "done" ? t("upload.statusDone") : q.status === "error" ? t(`errors.${q.errorCode}`) !== `errors.${q.errorCode}` ? t(`errors.${q.errorCode}`, { seconds: o.videoMaxSeconds }) : t("upload.statusFailed")
                         : q.status === "queued" ? (q.attempts ? t("upload.statusRetrying") : t("upload.statusWaiting")) : q.status === "processing" ? t("upload.statusPreparing") : `${Math.round(q.progress * 100)}%`}
                     </span>
                   </span>

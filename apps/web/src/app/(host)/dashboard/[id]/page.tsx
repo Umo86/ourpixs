@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { Container } from "@/components/ui";
 import { getT } from "@/i18n";
@@ -12,9 +12,10 @@ import { formatBytes, formatNumber } from "@/lib/client/format";
 import { storageDriver } from "@/lib/storage";
 import { AlbumClient } from "@/components/host/AlbumClient";
 import { Notice } from "@/components/app/Notice";
-import { UpgradePrompt } from "@/components/host/Billing";
-import { accessForOccasion, computeAccess } from "@/lib/access";
-import { toSubscription } from "@/lib/serializers";
+import { PackageCard, TestModeBanner } from "@/components/host/EventPackage";
+import { accessForOccasion } from "@/lib/access";
+import { toPackage } from "@/lib/serializers";
+import { getSettings } from "@/lib/settings";
 import { paymentsEnabled } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
@@ -24,19 +25,25 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return { title: m?.occasion.title };
 }
 
-export default async function AlbumPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AlbumPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ paid?: string; checkout?: string }> }) {
   const { id } = await params;
+  const sp = await searchParams;
   const m = await requireMemberPage(id);
   if (!m) notFound();
   const o = m.occasion;
   const { t, locale } = await getT("host");
-  const [stats, days, guests, access] = await Promise.all([
+  const [stats, days, guests, access, settings, testUsed] = await Promise.all([
     occasionStats(o),
     loadDays(o.id),
     db.select({ id: schema.guests.id, name: schema.guests.displayName }).from(schema.guests)
       .where(eq(schema.guests.occasionId, o.id)).orderBy(asc(schema.guests.displayName)).limit(1000),
     accessForOccasion(o),
+    getSettings(),
+    db.select({ n: sql<number>`count(*)::int` }).from(schema.media)
+      .where(and(eq(schema.media.occasionId, o.id), sql`${schema.media.status} <> 'failed'`, sql`${schema.media.visibility} <> 'deleted'`))
+      .then((r) => Number(r[0]?.n ?? 0)),
   ]);
+  const pkg = toPackage(o, access, settings);
   const isOwner = m.role === "owner";
   const payments = paymentsEnabled();
   const occLocale = brandLocale(o);
@@ -52,7 +59,12 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
   return (
     <Container className="flex flex-col gap-6 py-6 sm:py-8">
       {!storageDriver() ? <Notice tone="error">{t("errors.storage_not_configured")}</Notice> : null}
-      {isOwner ? <UpgradePrompt sub={toSubscription(computeAccess(m.host))} payments={payments} /> : null}
+      {sp.paid && access.state === "setup" ? <Notice tone="success">{t("pay.paidNotice")}</Notice> : null}
+      {sp.checkout === "cancelled" && access.state === "setup" ? <Notice>{t("pay.cancelledNotice")}</Notice> : null}
+      {access.reason !== "locked" && access.reason !== "suspended" ? (
+        <PackageCard occasionId={o.id} pkg={pkg} isOwner={isOwner} payments={payments} testUsed={testUsed} />
+      ) : null}
+      {access.testMode ? <TestModeBanner used={testUsed} limit={access.testUploadLimit} /> : null}
       <dl className="m-0 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {tiles.map((s) => (
           <div key={s.label} className="flex flex-col-reverse gap-1 rounded-[24px] bg-tint px-5 py-4">
@@ -72,6 +84,10 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
         canUpload={access.canUpload}
         isOwner={isOwner}
         payments={payments}
+        videoMaxSeconds={settings.videoMaxSeconds}
+        testUploadLimit={access.testUploadLimit}
+        pricePence={settings.eventPricePence}
+        canPay={access.canPay}
       />
     </Container>
   );

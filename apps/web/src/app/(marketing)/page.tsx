@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getT } from "@/i18n";
 import { getMessage } from "@/i18n/shared";
-import { MONEY_BACK_DAYS, SUBSCRIPTION } from "@/lib/config";
+import { SUPPORT_EMAIL } from "@/lib/config";
+import { getSettings } from "@/lib/settings";
+import { getBrand, getT } from "@/i18n";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Sticker } from "@/components/ui/Sticker";
@@ -11,7 +12,7 @@ import { START_HREF } from "@/components/site/constants";
 import { HeroVideo } from "@/components/marketing/HeroVideo";
 import { FinalCta } from "@/components/marketing/FinalCta";
 import { MEDIA } from "@/components/marketing/constants";
-import { fill } from "@/components/marketing/format";
+import { fill, pricingVars } from "@/components/marketing/format";
 import { pageMetadata } from "@/components/marketing/meta";
 
 export const generateMetadata = () => pageMetadata("home", "/");
@@ -33,7 +34,8 @@ const BENTO_LOOKS = [
 const section = "py-16 sm:py-24 lg:py-28";
 
 export default async function HomePage() {
-  const { t, locale } = await getT("marketing");
+  const [{ t, locale }, brand, settings] = await Promise.all([getT("marketing"), getBrand(), getSettings()]);
+  const vars = pricingVars(SUPPORT_EMAIL[brand], settings);
   const stats = getMessage<{ value: string; label: string }[]>(locale, "marketing", "home.hero.stats");
   const occasions = getMessage<Occasion[]>(locale, "marketing", "home.occasions.items");
   const steps = getMessage<Item[]>(locale, "marketing", "home.how.steps");
@@ -60,7 +62,7 @@ export default async function HomePage() {
             {stats.map((s) => (
               <div key={s.label} className="flex flex-col-reverse">
                 <dt className="text-[13px] text-[#D5D8E2]">{s.label}</dt>
-                <dd className="m-0 text-[28px] font-black tracking-[-0.03em] sm:text-4xl">{fill(s.value, { days: MONEY_BACK_DAYS })}</dd>
+                <dd className="m-0 text-[28px] font-black tracking-[-0.03em] sm:text-4xl">{fill(s.value, vars)}</dd>
               </div>
             ))}
           </dl>
@@ -93,7 +95,7 @@ export default async function HomePage() {
                     <span aria-hidden className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-b from-ink/0 to-ink/80" />
                     <span className="absolute inset-x-5 bottom-5 flex items-end justify-between gap-3">
                       <span className="text-[28px] font-black leading-none tracking-[-0.035em] sm:text-4xl">{o.label}</span>
-                      <span className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink">{fill(o.tag, { days: SUBSCRIPTION.features.maxDays })}</span>
+                      <span className="whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink">{fill(o.tag, { ...vars, days: vars.maxDays })}</span>
                     </span>
                   </Link>
                 </li>
@@ -180,7 +182,7 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      <FinalCta id="start" title={t("home.cta.title")} accent={t("home.cta.accent")} cta={t("home.cta.cta")} href={START_HREF} note={t("home.cta.note", { days: MONEY_BACK_DAYS })} />
+      <FinalCta id="start" title={t("home.cta.title")} accent={t("home.cta.accent")} cta={t("home.cta.cta")} href={START_HREF} note={t("home.cta.note", vars)} />
     </>
   );
 }

@@ -4,6 +4,7 @@ import { SiteHeader, SiteFooter, CookieNotice, supportEmail } from "@/components
 import { Container } from "@/components/ui";
 import { getBrand, getT } from "@/i18n";
 import { pricingVars } from "@/components/marketing/format";
+import { getSettings } from "@/lib/settings";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getT("host");
@@ -12,8 +13,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function SupportPage() {
   const { t } = await getT("host");
-  const email = supportEmail(await getBrand());
-  const faq = t("support.faq", pricingVars(email)).split("|").map((pair) => pair.split("::"));
+  const [brand, settings] = await Promise.all([getBrand(), getSettings()]);
+  const email = supportEmail(brand);
+  const faq = t("support.faq", pricingVars(email, settings)).split("|").map((pair) => pair.split("::"));
   return (
     <div className="flex min-h-screen flex-col bg-white text-ink">
       <SiteHeader variant="light" />

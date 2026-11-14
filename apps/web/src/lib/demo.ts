@@ -4,7 +4,7 @@
  */
 import type { GuestMission, MediaItem, PublicOccasion } from "./api-types";
 import { MEDIA, mediaUrl } from "@/components/marketing/constants";
-import { MAIN_BRAND, type Locale } from "./config";
+import { DEFAULT_TIME_ZONE, MAIN_BRAND, PACKAGE_DEFAULTS, type Locale } from "./config";
 
 export const DEMO_SLUG = "demo";
 export const DEMO_COOKIE = "op_demo_name";
@@ -28,6 +28,8 @@ export function demoOccasion(locale: Locale): PublicOccasion {
     moments: tr ? ["Gelin girişi", "İlk dans", "Takı töreni", "Halay", "Pasta", "Aile"] : ["Grand entrance", "First dance", "Gold ceremony", "Halay", "Cake", "Family"],
     liveWall: true, missionsEnabled: true, disposableShots: 12, voiceGuestbook: true, uploadOpen: true, uploadsOpen: true, downloadsOpen: true,
     revealMode: "live", revealAt: null, coverUrl: MEDIA.wedding, hasPin: false,
+    galleryState: "live", opensAt: yesterday.toISOString(), closesAt: new Date(today.getTime() + 6 * 86400000).toISOString(),
+    timeZone: DEFAULT_TIME_ZONE, videoMaxSeconds: PACKAGE_DEFAULTS.videoMaxSeconds,
   };
 }
 

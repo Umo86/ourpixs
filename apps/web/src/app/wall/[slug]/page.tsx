@@ -26,6 +26,7 @@ export default async function WallPage({ params, searchParams }: { params: Promi
   const t = makeT(locale, "guest");
   const where = [...liveMedia(o.id), eq(schema.media.visibility, "visible"), eq(schema.media.approved, true), inArray(schema.media.kind, ["photo", "video"]), revealedForGuests(o)];
   const [{ rows }, stats, access] = await Promise.all([mediaPage({ where, limit: 40 }), occasionStats(o), accessForOccasion(o)]);
+  if (access.state === "expired" || access.state === "refunded") notFound();
   const url = guestUrl(o);
   const qr = await QRCode.toDataURL(url, { margin: 1, width: 600, errorCorrectionLevel: "M", color: { dark: "#0A0A0A", light: "#FFFFFF" } });
   return (

@@ -8,12 +8,13 @@ import { Toggle } from "@/components/app/Toggle";
 import { Notice } from "@/components/app/Notice";
 import { ShareButtons } from "@/components/app/ShareButtons";
 import { useLocale, useT } from "@/i18n/client";
-import { SUBSCRIPTION, THEMES } from "@/lib/config";
+import { FEATURES, THEMES } from "@/lib/config";
 import { api, errorMessage } from "@/lib/client/api";
 import { fromLocalInput, toLocalInput } from "@/lib/client/datetime";
 import { formatDate } from "@/lib/client/format";
 import { resizeToWebp } from "@/lib/client/image";
 import type { Occasion, ShareLink, Theme } from "@/lib/api-types";
+import { WindowEditor } from "./EventPackage";
 
 type Props = { initial: Occasion; isOwner: boolean; storage: boolean };
 type DayDraft = { id?: string; name: string; date: string; opens: string; closes: string };
@@ -34,7 +35,7 @@ export function SettingsClient({ initial, isOwner, storage }: Props) {
   const { locale } = useLocale();
   const router = useRouter();
   const [o, setO] = useState(initial);
-  const maxDays = SUBSCRIPTION.features.maxDays;
+  const maxDays = FEATURES.maxDays;
   const [saving, setSaving] = useState<string | null>(null);
   const [flash, setFlash] = useState<{ section: string; tone: "success" | "error"; text: string } | null>(null);
 
@@ -48,9 +49,7 @@ export function SettingsClient({ initial, isOwner, storage }: Props) {
   const [vanity, setVanity] = useState(o.vanitySlug || "");
   // Days
   const [days, setDays] = useState<DayDraft[]>(o.days.map((d) => ({ id: d.id, name: d.name, date: d.date || "", opens: toLocalInput(d.uploadOpensAt), closes: toLocalInput(d.uploadClosesAt) })));
-  // Uploads & privacy
-  const [opens, setOpens] = useState(toLocalInput(o.uploadOpensAt));
-  const [closes, setCloses] = useState(toLocalInput(o.uploadClosesAt));
+  // Uploads & privacy (the gallery window itself is edited in the "Gallery dates" section)
   const [approval, setApproval] = useState(o.approvalMode);
   const [reveal, setReveal] = useState(o.revealMode);
   const [revealAt, setRevealAt] = useState(toLocalInput(o.revealAt));
@@ -165,6 +164,10 @@ export function SettingsClient({ initial, isOwner, storage }: Props) {
   const shareLabels = { whatsapp: t("share.whatsapp"), share: t("share.native"), copy: t("common.copyLink"), copied: t("common.copied") };
   return (
     <div className="flex flex-col gap-5">
+      <Section id="gallery" title={t("settings.gallery")}>
+        <WindowEditor occasion={o} onSaved={setO} />
+      </Section>
+
       <Section id="details" title={t("settings.details")}>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field id="s-title" className="sm:col-span-2" label={t("wizard.titleLabel")} value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} />
@@ -269,10 +272,6 @@ export function SettingsClient({ initial, isOwner, storage }: Props) {
 
       <Section id="uploads" title={t("settings.uploads")}>
         <div className="flex flex-col gap-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="s-opens" type="datetime-local" label={t("settings.opens")} hint={t("settings.opensHint")} value={opens} onChange={(e) => setOpens(e.target.value)} />
-            <Field id="s-closes" type="datetime-local" label={t("settings.closes")} hint={t("settings.closesHint")} value={closes} onChange={(e) => setCloses(e.target.value)} />
-          </div>
           <Toggle checked={approval} onChange={setApproval} label={t("settings.approval")} description={t("settings.approvalHint")} />
           <div className="flex flex-col gap-2">
             <label htmlFor="s-reveal" className="text-[15px] font-bold">{t("settings.reveal")}</label>
@@ -290,7 +289,7 @@ export function SettingsClient({ initial, isOwner, storage }: Props) {
           </div>
         </div>
         {saveBtn("uploads", () => save("uploads", {
-          uploadOpensAt: fromLocalInput(opens), uploadClosesAt: fromLocalInput(closes), approvalMode: approval, revealMode: reveal,
+          approvalMode: approval, revealMode: reveal,
           revealAt: fromLocalInput(revealAt), disposableShots: shots ? Math.max(1, Math.min(100, Number(shots))) : null,
         }))}
         {msg("uploads")}

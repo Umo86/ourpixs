@@ -6,7 +6,7 @@ import { getGuest, occasionBySlug, requirePinAccess } from "@/lib/guest";
 import { liveMedia, mediaPage } from "@/lib/queries";
 import { toMediaItems } from "@/lib/serializers";
 import { canonicalMoment, revealedForGuests, uploadOpen } from "@/lib/occasion";
-import { accessForOccasion } from "@/lib/access";
+import { accessForOccasion, assertGuestsCanView } from "@/lib/access";
 
 const { media } = schema;
 
@@ -24,19 +24,18 @@ export const GET = route<{ slug: string }>(async (req, { slug }) => {
   const o = await occasionBySlug(slug);
   const guest = await getGuest(o);
   await requirePinAccess(o, clientIp(req), guest);
+  const access = await accessForOccasion(o);
+  assertGuestsCanView(access);
   const q = readQuery(req, query);
   const where = [...liveMedia(o.id), eq(media.visibility, "visible"), eq(media.approved, true), ne(media.kind, "voice"), revealedForGuests(o)];
   if (q.after) where.push(sql`${media.createdAt} > ${q.after}::timestamptz`);
   if (q.kind) where.push(eq(media.kind, q.kind));
   if (q.dayId) where.push(eq(media.dayId, q.dayId));
   if (q.moment) where.push(eq(media.momentTag, canonicalMoment(o, q.moment) ?? q.moment));
-  const [{ rows, nextCursor }, access] = await Promise.all([
-    mediaPage({ where, cursor: q.after ? undefined : q.cursor, sort: q.sort, guestIdForReaction: guest?.id, limit: q.after ? 100 : 30 }),
-    accessForOccasion(o),
-  ]);
-  // `uploadsOpen` is false when the owner's account is read-only (or the upload window is closed).
+  const { rows, nextCursor } = await mediaPage({ where, cursor: q.after ? undefined : q.cursor, sort: q.sort, guestIdForReaction: guest?.id, limit: q.after ? 100 : 30 });
+  // `uploadsOpen` is false unless the gallery is live (and inside any per-event upload window).
   return json({
     items: await toMediaItems(rows, "guest", { canDownload: access.canDownload }), nextCursor: q.after ? null : nextCursor,
-    uploadsOpen: uploadOpen(o, access.canUpload),
+    uploadsOpen: uploadOpen(o, access.guestsCanUpload),
   });
 });

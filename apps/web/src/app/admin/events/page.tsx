@@ -6,7 +6,7 @@ import { isUuid } from "@/lib/http";
 import { OCCASIONS } from "@/lib/config";
 import { formatBytes, formatDate, formatNumber } from "@/lib/client/format";
 import { Empty, FilterBar, linkCls, PageHeader, Pagination, TableWrap, td, th } from "@/components/admin/ui";
-import { EventPill } from "@/components/admin/plan";
+import { EventPill, FairUsePill } from "@/components/admin/plan";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +38,7 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
               <th scope="col" className={th}>{t("events.titleCol")}</th>
               <th scope="col" className={th}>{t("events.type")}</th>
               <th scope="col" className={th}>{t("events.owner")}</th>
-              <th scope="col" className={th}>{t("events.dates")}</th>
+              <th scope="col" className={th}>{t("events.window")}</th>
               <th scope="col" className={th}>{t("events.guests")}</th>
               <th scope="col" className={th}>{t("events.media")}</th>
               <th scope="col" className={th}>{t("events.storage")}</th>
@@ -55,13 +55,13 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
                 <td className={td}>{OCCASIONS[o.type].label[locale]}</td>
                 <td className={td}><Link href={`/admin/users/${o.ownerId}`} className={`${linkCls} break-all`}>{o.ownerEmail}</Link></td>
                 <td className={td}>
-                  {o.startsOn ? d(o.startsOn) : "–"}
+                  {o.opensAt && o.closesAt ? `${d(o.opensAt.toISOString())} → ${d(o.closesAt.toISOString())}` : o.startsOn ? d(o.startsOn) : "–"}
                   <span className="block text-xs text-muted">{t("events.createdOn", { date: d(o.createdAt.toISOString()) })}</span>
                 </td>
                 <td className={td}>{formatNumber(o.guestCount, locale)}</td>
                 <td className={td}>{formatNumber(o.mediaCount, locale)}</td>
                 <td className={td}>{formatBytes(o.bytes, locale)}</td>
-                <td className={td}><EventPill status={o.status} access={o.access} t={t} /></td>
+                <td className={td}><div className="flex flex-wrap gap-1"><EventPill status={o.status} access={o.access} t={t} />{o.fairUseAlertedAt ? <FairUsePill t={t} /> : null}</div></td>
               </tr>
             ))}
           </tbody>

@@ -7,12 +7,12 @@ import { useT } from "@/i18n/client";
 import { api } from "@/lib/client/api";
 import { openSaveTarget, safeName, saveZip, type ZipEntry } from "@/lib/client/zip";
 import { ApiClientError } from "@/lib/client/api";
-import { UpgradeDialog } from "./Billing";
+import { DownloadLockedDialog } from "./EventPackage";
 
 type Day = { id: string; name: string };
 type ManifestFile = { id: string; name: string; url: string; createdAt: string };
 
-/** Signed originals from the server (402 plan_required while downloads are locked). */
+/** Signed originals from the server (402 payment_required before the event is paid). */
 async function manifest(occasionId: string, dayId: string | null): Promise<ManifestFile[]> {
   const r = await api<{ files: ManifestFile[] }>(`/api/v1/occasions/${occasionId}/download${dayId ? `?dayId=${dayId}` : ""}`);
   return r.files;
@@ -22,7 +22,7 @@ const toEntries = (files: ManifestFile[], folder: string | null): ZipEntry[] =>
   files.map((f) => ({ name: folder ? `${safeName(folder)}/${f.name}` : f.name, url: f.url, lastModified: new Date(f.createdAt) }));
 
 /** Client-side streaming ZIP per day (or everything), straight from storage to disk. */
-export function DownloadClient({ occasionId, title, days, canDownload, isOwner, payments }: { occasionId: string; title: string; days: Day[]; canDownload: boolean; isOwner: boolean; payments: boolean }) {
+export function DownloadClient({ occasionId, title, days, canDownload, isOwner, payments, pricePence, canPay }: { occasionId: string; title: string; days: Day[]; canDownload: boolean; isOwner: boolean; payments: boolean; pricePence: number; canPay: boolean }) {
   const t = useT("host");
   const [running, setRunning] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ files: number; totalFiles: number; bytes: number } | null>(null);
@@ -67,7 +67,7 @@ export function DownloadClient({ occasionId, title, days, canDownload, isOwner, 
       setMessage({ tone: "success", text: t("download.saved") });
     } catch (e) {
       await target?.abort().catch(() => {});
-      if (e instanceof ApiClientError && e.code === "plan_required") setLocked(true);
+      if (e instanceof ApiClientError && (e.code === "payment_required" || e.code === "plan_required")) setLocked(true);
       else if ((e as Error).name !== "AbortError") setMessage({ tone: "error", text: t("download.failed") });
     } finally {
       setRunning(null);
@@ -107,7 +107,7 @@ export function DownloadClient({ occasionId, title, days, canDownload, isOwner, 
       ) : null}
       {message ? <Notice tone={message.tone}>{message.text}</Notice> : null}
       <p className="m-0 text-sm text-muted">{t("download.browserNote")}</p>
-      <UpgradeDialog open={locked} onClose={() => setLocked(false)} isOwner={isOwner} payments={payments} />
+      <DownloadLockedDialog open={locked} onClose={() => setLocked(false)} isOwner={isOwner} payments={payments} occasionId={occasionId} pricePence={pricePence} canPay={canPay} />
     </div>
   );
 }

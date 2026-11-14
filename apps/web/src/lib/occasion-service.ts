@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { and, eq, ne, notInArray, or, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { OCCASIONS, SUBSCRIPTION, type Brand, type Locale, type OccasionType } from "./config";
+import { DEFAULT_TIME_ZONE, FEATURES, OCCASIONS, type Brand, type Locale, type OccasionType } from "./config";
 import { ApiError, badRequest, planLimit } from "./http";
 import { brandLocale } from "./occasion";
 import { loadDays, occasionExtras } from "./queries";
@@ -10,7 +10,11 @@ import { coverUrlFor, toOccasion, toSummary } from "./serializers";
 import { randomSlug, vanityError } from "./slug";
 import { hashSecret } from "./crypto";
 import { deleteObjects } from "./storage";
-import { accessForOccasion, accessForOwners, assertCanCreateEvents, assertWritable, computeAccess, forOccasion, loadOwnerBilling, trialEndFrom, type Access } from "./access";
+import { accessForOccasion, accessForOccasions, assertCanEditWindow, assertWritable, type Access } from "./access";
+import { getSettings } from "./settings";
+import { addMonths, defaultWindow, windowError } from "./window";
+import { isTimeZone } from "./tz";
+import { touchEnded } from "./package";
 
 type OccasionRow = typeof schema.occasions.$inferSelect;
 
@@ -18,7 +22,8 @@ const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const isoDate = z.iso.datetime({ offset: true });
 const THEMES = ["noir", "royal", "ivory", "dusk", "mono", "blush"] as const;
 const TYPES = Object.keys(OCCASIONS) as [OccasionType, ...OccasionType[]];
-const MAX_DAYS_STORED = SUBSCRIPTION.features.maxDays;
+const MAX_DAYS_STORED = FEATURES.maxDays;
+const timeZone = z.string().trim().max(64).refine(isTimeZone, "Unknown time zone");
 
 export const createSchema = z.object({
   type: z.enum(TYPES),
@@ -29,6 +34,10 @@ export const createSchema = z.object({
   city: z.string().trim().max(80).optional().nullable(),
   theme: z.enum(THEMES).optional(),
   days: z.array(z.object({ name: z.string().trim().min(1).max(60), date: dateStr.optional().nullable() })).max(MAX_DAYS_STORED).optional(),
+  /** Additive: the gallery window (defaults to the event date 10:00 for settings.windowDays days) and its time zone. */
+  opensAt: isoDate.nullable().optional(),
+  closesAt: isoDate.nullable().optional(),
+  timeZone: timeZone.optional(),
 });
 
 export const patchSchema = z.object({
@@ -54,26 +63,49 @@ export const patchSchema = z.object({
   vanitySlug: z.string().trim().toLowerCase().max(40).nullable().optional(),
   /** Additive: pick the album cover from a photo. */
   coverMediaId: z.string().uuid().nullable().optional(),
+  /** Additive: the gallery window (editable until it opens; closes_at − opens_at ≤ settings.windowDays) and its zone. */
+  opensAt: isoDate.nullable().optional(),
+  closesAt: isoDate.nullable().optional(),
+  timeZone: timeZone.optional(),
 });
 
+/** API message for a window_* error code. */
+function windowCodeMessage(code: string) {
+  switch (code) {
+    case "window_order": return "The gallery must open before it closes";
+    case "window_too_long": return "The gallery can be live for up to the maximum number of days";
+    case "window_past": return "The gallery's closing time has already passed";
+    default: return "Pick when the gallery opens and when it closes";
+  }
+}
+
 /**
- * Creates an event owned by `hostId`. The host's first event starts their free trial (no card).
- * Returns `trialStarted: true` when this call started it.
+ * Creates an event owned by `hostId`, in setup (not paid): the host can configure it, print QR cards and test-upload.
+ * The gallery window defaults to the event date at 10:00 (event time zone) for settings.windowDays days.
  */
 export async function createOccasion(hostId: string, brand: Brand, input: z.infer<typeof createSchema>, locale?: Locale) {
-  const billing = await loadOwnerBilling(hostId);
-  if (!billing) throw new ApiError(401, "unauthorized", "Sign in required");
-  assertCanCreateEvents(computeAccess(billing));
   const id = crypto.randomUUID();
   // Default day name in the host's language (BizimResimler hosts may be English or Turkish).
   const loc = locale ?? brandLocale({ brand });
   const days = input.days?.length
     ? input.days
     : [{ name: OCCASIONS[input.type].days[0]![loc], date: input.startsOn ?? null }];
+  const s = await getSettings();
+  const tz = input.timeZone ?? DEFAULT_TIME_ZONE;
+  let window: { opensAt: Date | null; closesAt: Date | null } = { opensAt: null, closesAt: null };
+  if (input.opensAt !== undefined || input.closesAt !== undefined) {
+    window = { opensAt: input.opensAt ? new Date(input.opensAt) : null, closesAt: input.closesAt ? new Date(input.closesAt) : null };
+    if (window.opensAt || window.closesAt) {
+      const err = windowError(window, s.windowDays);
+      if (err) throw new ApiError(400, err, windowCodeMessage(err));
+    }
+  } else {
+    window = defaultWindow(input.startsOn, tz, s.windowDays) ?? window;
+  }
   const values = {
     id, ownerId: hostId, brand, type: input.type, title: input.title, honorees: input.honorees,
     startsOn: input.startsOn ?? null, venueName: input.venueName || null, city: input.city || null,
-    theme: input.theme ?? "noir",
+    theme: input.theme ?? "noir", timeZone: tz, opensAt: window.opensAt, closesAt: window.closesAt,
   };
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -88,22 +120,38 @@ export async function createOccasion(hostId: string, brand: Brand, input: z.infe
       if (attempt === 2 || !String((e as Error).message).includes("slug")) throw e;
     }
   }
-  // First event: start the trial (conditional, so two parallel creates can't restart it).
-  let trialStarted = false;
-  if (billing.planStatus === "none") {
-    const now = new Date();
-    const started = await db.update(schema.hosts)
-      .set({ planStatus: "trialing", trialStartedAt: now, trialEndsAt: trialEndFrom(now) })
-      .where(and(eq(schema.hosts.id, hostId), eq(schema.hosts.planStatus, "none"))).returning({ id: schema.hosts.id });
-    trialStarted = started.length > 0;
-  }
   const [o] = await db.select().from(schema.occasions).where(eq(schema.occasions.id, id));
-  return { occasion: o!, trialStarted };
+  return { occasion: o! };
 }
 
 export async function updateOccasion(o: OccasionRow, p: z.infer<typeof patchSchema>) {
-  assertWritable(await accessForOccasion(o));
+  const access = await accessForOccasion(o);
+  assertWritable(access);
   const set: Partial<typeof schema.occasions.$inferInsert> = {};
+  const s = await getSettings();
+  const windowTouched = p.opensAt !== undefined || p.closesAt !== undefined || (p.timeZone !== undefined && p.timeZone !== o.timeZone);
+  if (windowTouched) {
+    assertCanEditWindow(access);
+    const now = new Date();
+    let opensAt = p.opensAt !== undefined ? (p.opensAt ? new Date(p.opensAt) : null) : o.opensAt;
+    const closesAt = p.closesAt !== undefined ? (p.closesAt ? new Date(p.closesAt) : null) : o.closesAt;
+    if (!opensAt && !closesAt && access.state === "setup") {
+      // Clearing the window is allowed before paying.
+    } else {
+      const err = windowError({ opensAt, closesAt }, s.windowDays, now);
+      if (err) throw new ApiError(400, err, windowCodeMessage(err));
+      // A paid gallery moved into the past simply opens now.
+      if (access.state === "paid" && opensAt! < now) opensAt = now;
+    }
+    set.opensAt = opensAt;
+    set.closesAt = closesAt;
+    if (p.timeZone !== undefined) set.timeZone = p.timeZone;
+    if (access.paid && closesAt) set.deleteAfter = addMonths(closesAt, s.retentionMonths);
+  } else if (p.startsOn && !o.opensAt && !o.closesAt && access.state === "setup") {
+    // First date for an event without a window: give it the default window.
+    const w = defaultWindow(p.startsOn, o.timeZone, s.windowDays);
+    if (w) Object.assign(set, w);
+  }
   if (p.title !== undefined) set.title = p.title;
   if (p.honorees !== undefined) set.honorees = p.honorees;
   if (p.startsOn !== undefined) set.startsOn = p.startsOn;
@@ -166,13 +214,14 @@ export async function updateOccasion(o: OccasionRow, p: z.infer<typeof patchSche
   return fresh!;
 }
 
-/** Full Occasion payload for a member (with `access` from the owner's subscription). */
+/** Full Occasion payload for a member (with `access` and the package fields). */
 export async function occasionPayload(o: OccasionRow, role: "owner" | "cohost", access?: Access) {
-  const [days, extras, a] = await Promise.all([loadDays(o.id), occasionExtras([o.id]), access ?? accessForOccasion(o)]);
+  const [days, extras, a, s] = await Promise.all([loadDays(o.id), occasionExtras([o.id]), access ?? accessForOccasion(o), getSettings()]);
+  touchEnded(o, a);
   const ex = extras.get(o.id);
   return toOccasion(o, days, {
     coverUrl: await coverUrlFor(ex?.coverKey ?? null), mediaCount: ex?.mediaCount ?? 0, guestCount: ex?.guestCount ?? 0, role,
-  }, a);
+  }, a, s);
 }
 
 /** Occasion ids a host belongs to with their role. */
@@ -185,14 +234,16 @@ export async function memberships(hostId: string) {
 
 export async function summariesFor(hostId: string) {
   const rows = await memberships(hostId);
-  const [extras, access] = await Promise.all([occasionExtras(rows.map((r) => r.occasion.id)), accessForOwners(rows.map((r) => r.occasion.ownerId))]);
+  const [extras, access] = await Promise.all([occasionExtras(rows.map((r) => r.occasion.id)), accessForOccasions(rows.map((r) => r.occasion))]);
   const list = await Promise.all(rows.map(async (r) => {
     const ex = extras.get(r.occasion.id);
+    const a = access.get(r.occasion.id)!;
+    touchEnded(r.occasion, a);
     return {
       row: r.occasion,
       summary: toSummary(r.occasion, {
         coverUrl: await coverUrlFor(ex?.coverKey ?? null), mediaCount: ex?.mediaCount ?? 0, guestCount: ex?.guestCount ?? 0, role: r.role as "owner" | "cohost",
-      }, forOccasion(access.get(r.occasion.ownerId)!, r.occasion)),
+      }, a),
     };
   }));
   // Newest event date first; undated by creation.

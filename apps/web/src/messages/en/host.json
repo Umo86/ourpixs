@@ -31,7 +31,7 @@
   "pin_invalid": "That PIN isn't right.",
   "not_joined": "Join the event first.",
   "upload_closed": "Uploads are closed for this event.",
-  "plan_limit": "That file is too big (photos up to 60 MB, videos up to 10 minutes or 1 GB).",
+  "plan_limit": "That file is too big (photos up to 60 MB).",
   "storage_not_configured": "Photo storage isn't set up yet, so uploads are paused. Please try again later.",
   "storage_error": "The upload didn't finish. We'll try again.",
   "payments_unavailable": "Payments are coming soon.",
@@ -39,14 +39,28 @@
   "slug_taken": "That link name is taken. Try another one.",
   "slug_invalid": "Use 3–40 lowercase letters, numbers or hyphens.",
   "slug_reserved": "That link name is reserved. Try another one.",
-  "no_subscription": "There's no subscription on this account yet.",
   "guest_blocked": "This guest is blocked.",
-  "plan_required": "This needs an active plan. Subscribe to download, create more events or edit a read-only event.",
-  "already_subscribed": "You already have a subscription. Use Manage billing to change it.",
-  "billing_error": "We couldn't cancel your subscription, so nothing was deleted. Please try again or contact us.",
   "account_suspended": "This account is suspended. Please contact support if you think this is a mistake.",
   "event_locked": "This event has been locked by our team. Please contact support.",
-  "reauth_required": "Please sign in again to continue."
+  "reauth_required": "Please sign in again to continue.",
+  "test_limit": "You've used all your test uploads. Pay for the event to open it to your guests.",
+  "video_too_long": "Videos can be up to {seconds} seconds long. Trim it on your phone and try again.",
+  "video_unreadable": "We couldn't read this video's length. Try another video, or trim it and try again.",
+  "video_duration_required": "We couldn't read this video's length. Try another video, or trim it and try again.",
+  "not_open": "This gallery isn't open yet.",
+  "event_unavailable": "This gallery is no longer available.",
+  "payment_required": "Downloads open once you've paid for the event.",
+  "download_closed": "Downloads aren't available for this event.",
+  "event_refunded": "This event was refunded, so it can't be changed.",
+  "event_expired": "This event's files have been deleted.",
+  "window_locked": "The gallery has already opened, so its dates can't change. You can still end it early.",
+  "window_order": "The gallery has to open before it closes.",
+  "window_too_long": "The gallery can be live for up to the maximum number of days. Pick a shorter time.",
+  "window_past": "That closing time has already passed. Pick new dates.",
+  "window_incomplete": "Pick both when the gallery opens and when it closes.",
+  "window_required": "Pick when your gallery opens and closes, then pay.",
+  "already_paid": "This event is already paid for. It can take a moment to show.",
+  "cannot_pay": "This event can't be paid for right now. Please contact support."
  },
  "login": {
   "metaTitle": "Sign in",
@@ -85,13 +99,26 @@
   "new": "New event",
   "cohost": "Co-host",
   "counts": "{media} shots · {guests} guests",
-  "emptySticker": "3 days free",
+  "emptySticker": "Free to set up",
   "emptyTitle": "Your first",
   "emptyAccent": "album.",
   "emptyBody": "Create an event, print the QR cards and every guest's photos land in one private album.",
   "emptyCta": "Create your first event",
   "accountTitle": "Your account",
-  "accountBody": "Signed in as {email}. Deleting your account removes the events you own and every photo in them."
+  "accountBody": "Signed in as {email}. Deleting your account removes the events you own and every photo in them.",
+  "status": {
+   "setup": "Setup · test mode",
+   "paid": "Paid · opens {date}",
+   "paidNoDate": "Paid · pick your dates",
+   "live": "Live until {date}",
+   "ended": "Ended · download until {date}",
+   "endedNoDate": "Ended",
+   "expired": "Files deleted",
+   "refunded": "Refunded",
+   "locked": "Locked",
+   "suspended": "Suspended"
+  },
+  "statusLabel": "Status"
  },
  "wizard": {
   "metaTitle": "New event",
@@ -129,17 +156,16 @@
   "themeAccent": "look.",
   "create": "Create event",
   "creating": "Creating…",
-  "doneSticker": "Ready",
+  "doneSticker": "Free to set up",
   "doneTitle": "Your event",
-  "doneAccent": "is live.",
-  "doneBody": "Share the link or print the QR cards. Guests scan, type their first name and start sharing.",
+  "doneAccent": "is ready.",
+  "doneBody": "Print the QR cards and try it out with a few test uploads. When you're happy, pay {price} to open the gallery to your guests.",
   "printQr": "Print QR cards",
   "openAlbum": "Open the album",
-  "trialSticker": "Your {days}-day free trial starts now",
-  "trialBody": "Everything is switched on, including video, the live wall and the guestbook. Downloads unlock when you subscribe.",
-  "blockedTitle": "Subscribe to create",
-  "blockedAccent": "more events.",
-  "blockedBody": "Your free trial has been used. One plan covers unlimited events: {monthly} a month or {yearly} a year."
+  "doneWindow": "Your gallery is set to open on {from} and close on {to}. You can change this in Settings until it opens.",
+  "doneNoWindow": "Pick when your gallery opens and closes in Settings, then pay to open it to your guests.",
+  "windowTitle": "When is the gallery live?",
+  "windowHint": "Guests can join and upload between these times, for up to {days} days. We start it at 10:00 on the event date; you can change it any time until it opens."
  },
  "themes": {
   "noir": "Noir",
@@ -160,7 +186,7 @@
   "wall": "Live wall"
  },
  "occasion": {
-  "archived": "This event's files were deleted when the account's plan ended."
+  "archived": "This event's files were deleted at the end of its storage period."
  },
  "stats": {
   "guests": "Guests",
@@ -234,7 +260,8 @@
    "blurry": "Blurry",
    "nsfw": "Check",
    "reported": "Reported"
-  }
+  },
+  "videoLocked": "This video will play here once the event is paid for."
  },
  "qr": {
   "metaTitle": "QR cards",
@@ -332,11 +359,8 @@
   "pinOff": "No PIN. Anyone with the link or QR can join.",
   "pinNew": "New PIN (4–8 digits)",
   "pinSet": "Set PIN",
-  "pinRemove": "Remove PIN"
- },
- "plan": {
-  "comingSoon": "Payments coming soon",
-  "cancelledNotice": "Checkout cancelled. Nothing was charged."
+  "pinRemove": "Remove PIN",
+  "gallery": "Gallery dates"
  },
  "danger": {
   "title": "Delete event",
@@ -395,7 +419,11 @@
   "saved": "Download complete.",
   "failed": "The download stopped. Please try again.",
   "nothing": "There's nothing to download yet.",
-  "browserNote": "Big albums download best in Chrome or Edge on a computer, which save straight to disk."
+  "browserNote": "Big albums download best in Chrome or Edge on a computer, which save straight to disk.",
+  "lockedSetup": "Downloads open once you've paid for the event. Until then you can view everything in the album.",
+  "lockedRefunded": "This event was refunded, so downloads are closed.",
+  "lockedExpired": "This event's files have been deleted.",
+  "lockedSuspended": "This account is suspended, so downloads are closed. Please contact support."
  },
  "support": {
   "metaTitle": "Support",
@@ -408,7 +436,7 @@
   "moreHelp": "Help centre",
   "deleteLink": "Delete your account",
   "privacy": "Privacy policy",
-  "faq": "Do guests need an app?::No. Guests scan the QR code and upload from their phone's browser. The app is optional, mainly for hosts.|How much does it cost?::One plan with everything, for unlimited events: {monthly} a month or {yearly} a year. Your first event starts a {trialDays}-day free trial, no card needed.|How long are photos kept?::For as long as you're subscribed. If you cancel, you can still view and download everything for {readOnlyDays} days. An unpaid trial is kept for {trialKeepDays} days after it ends.|Can I get a refund?::Yes. There's a {days}-day money-back guarantee on your first payment. Email us from the address you signed up with.|Who can see the photos?::Only the hosts and co-hosts see the full album. Guests see the shared feed, and you can approve shots first."
+  "faq": "Do guests need an app?::No. Guests scan the QR code and upload from their phone's browser. The app is optional, mainly for hosts.|How much does it cost?::{price} per event, paid once. Setting up is free, and you can test it with up to {testLimit} uploads of your own before you pay.|How long are photos kept?::While the gallery is live and for {retentionMonths} months after it ends. We email you when it ends, and again 30 and 7 days before anything is deleted.|Can I get a refund?::Yes. Email us from the address you signed up with any time before your gallery goes live and we'll refund you in full.|Who can see the photos?::Only the hosts and co-hosts see the full album. Guests see the shared feed, and you can approve shots first."
  },
  "accountDelete": {
   "metaTitle": "Delete your account",
@@ -448,107 +476,95 @@
    "cta": "Review in the album",
    "footer": "You got this email because you host this event."
   },
-  "billing": {
-   "footer": "You got this email because you have an account with {brand}.",
-   "trialPrompt": {
-    "subject": "Keep your photos in full quality with {brand}",
-    "heading": "Your trial is going well",
-    "body": "Your free trial includes everything except downloads. Subscribe to download every original and ZIP whenever you like.",
-    "body2": "Monthly is {monthly} a month, or choose yearly for {yearly} and save {saving}%. Cancel any time.",
-    "cta": "Subscribe monthly"
-   },
-   "trialEnded": {
-    "subject": "Your {brand} free trial has ended",
-    "heading": "Your trial has ended",
-    "body": "Your events are now read-only: guests can't add new photos and downloads are locked. Nothing has been deleted.",
-    "body2": "We keep your files until {date}. Subscribe before then and everything unlocks straight away, including downloads.",
-    "cta": "Subscribe now"
-   },
-   "cancelled": {
-    "subject": "Your {brand} subscription has ended",
-    "heading": "Your subscription has ended",
-    "body": "Your events no longer take new uploads. You can still view and download everything until {date}.",
-    "body2": "After that the files are deleted. Subscribe again before then and your events reopen straight away.",
-    "cta": "Download your photos"
-   },
-   "deletionSoon": {
-    "subject": "Your {brand} photos will be deleted on {date}",
-    "heading": "Your files will be deleted soon",
-    "body": "The photos, videos and messages from your events will be deleted on {date}, in {days} days.",
-    "body2": "Subscribe before then to keep everything. If you have an active download window, download your albums now.",
-    "cta": "Open your dashboard"
-   }
+  "ended": {
+   "subject": "Your {title} gallery has ended: download everything",
+   "heading": "Your gallery has ended",
+   "body": "Guest uploads for {title} are now closed. Every photo and video is ready for you to download in full quality, as one ZIP or one per day.",
+   "body2": "Your files are kept until {date}. Download them before then and keep a copy somewhere safe.",
+   "body2NoDate": "Download them soon and keep a copy somewhere safe.",
+   "cta": "Download everything",
+   "footer": "You got this email because you host this event on {brand}."
+  },
+  "deletionSoon": {
+   "subject": "{title}: your photos will be deleted on {date}",
+   "heading": "Your files will be deleted soon",
+   "body": "The photos, videos and messages from {title} will be deleted on {date}, in {days} days.",
+   "body2": "Download everything now if you haven't already. After that date they can't be recovered.",
+   "cta": "Download everything"
   }
  },
  "billing": {
-  "monthly": "Monthly",
-  "yearly": "Yearly",
-  "kicker": "Your plan",
-  "redirecting": "Opening…",
-  "subscribeMonthly": "Subscribe monthly · {price}",
-  "subscribeYearly": "Yearly · {price} (save {saving}%)",
-  "manage": "Manage billing",
-  "fine": "Prices include VAT. Cancel any time; it takes effect at the end of the period you've paid for. 14-day money-back guarantee on your first payment.",
-  "subscribedNotice": "You're subscribed. Downloads are unlocked on all your events.",
-  "readOnlyBadge": "Read-only",
-  "videoLocked": "Videos play here once you subscribe. Your guests' uploads are safe.",
-  "downloadsLocked": "Downloads unlock when you subscribe. On the free trial you can view everything, including the live wall.",
-  "downloadsLockedEnded": "Downloads are locked because the free trial has ended. Subscribe to download everything.",
-  "status": {
-   "none": "Free for {days} days",
-   "noneBody": "Your free trial starts when you create your first event. No card needed.",
-   "trialing": "Free trial: {days} days left",
-   "trialingBody": "Everything works until {date}. Downloads unlock when you subscribe.",
-   "activeMonthly": "Monthly plan",
-   "activeYearly": "Yearly plan",
-   "renews": "Renews on {date}.",
-   "cancelling": "Cancelled. Everything keeps working until {date}.",
-   "pastDue": "Payment failed",
-   "pastDueBody": "Please update your card. Your events keep working for {days} more days.",
-   "cancelled": "Your subscription has ended",
-   "cancelledBody": "Your events are read-only. You can view and download everything until {date}, then the files are deleted.",
-   "expired": "Your free trial has ended",
-   "expiredBody": "Your events are read-only and downloads are locked. Files are kept until {date}.",
-   "comped": "Complimentary access",
-   "compedBody": "Everything is unlocked until {date}, on us."
-  },
   "readOnly": {
-   "trialEnded": "The free trial has ended, so this event is read-only and downloads are locked. Files are kept until {date}.",
-   "cancelled": "The subscription has ended, so this event is read-only. Everything can still be downloaded until {date}.",
-   "cohost": "Only the event owner can subscribe.",
    "locked": "Uploads are closed for this event and it can't be edited right now. Please contact support.",
-   "suspended": "This account is suspended, so its events are read-only. Please contact support."
-  },
-  "prompt": {
-   "trial": {
-    "sticker": "{days} days left on your trial",
-    "title": "Keep every photo,",
-    "accent": "in full quality.",
-    "body": "Your trial includes everything except downloads. Subscribe monthly for {monthly}, or yearly for {yearly} and save {saving}%."
-   },
-   "expired": {
-    "sticker": "Trial ended",
-    "title": "Your photos are",
-    "accent": "waiting for you.",
-    "body": "Uploads are closed and downloads are locked. We keep your files until {date}. Subscribe to unlock everything straight away."
-   },
-   "cancelled": {
-    "sticker": "Read-only",
-    "title": "Come back",
-    "accent": "any time.",
-    "body": "Your events no longer take new uploads. You can download everything until {date}. Subscribe again to reopen them."
-   },
-   "pastDue": {
-    "sticker": "Payment failed",
-    "title": "Let's sort out",
-    "accent": "your payment.",
-    "body": "We couldn't take your last payment. Update your card to keep your events open: they keep working for {days} more days."
-   }
+   "suspended": "This account is suspended, so its events are read-only. Please contact support.",
+   "refunded": "This event was refunded, so it's read-only and guests can't open it.",
+   "expired": "This event's files were deleted at the end of its storage period.",
+   "badge": "Read-only"
   },
   "dialog": {
-   "title": "Downloads unlock when you subscribe",
-   "body": "Everything else is included in your trial. Subscribe for {monthly} a month or {yearly} a year to download originals and ZIPs.",
-   "cohost": "Downloads unlock when the event owner subscribes."
+   "title": "Downloads open once you've paid",
+   "body": "Pay {price} for this event to download every original and ZIP, and to open the gallery to your guests.",
+   "cohost": "Downloads open once the event owner has paid for the event."
   }
+ },
+ "window": {
+  "title": "Gallery dates",
+  "hint": "Guests can join and upload while the gallery is live: up to {days} days, between the times you choose. You can change them until the gallery opens.",
+  "opens": "Gallery opens",
+  "closes": "Gallery closes",
+  "timeZone": "Time zone",
+  "timeZoneHint": "Times are in this zone. Guests see them in the same zone.",
+  "length": "Live for {days} days and {hours} hours",
+  "lengthDays": "Live for {days} days",
+  "lengthHours": "Live for {hours} hours",
+  "save": "Save dates",
+  "useDefault": "Use the event date",
+  "lockedLive": "The gallery is live, so its dates are fixed. You can end it early if you need to.",
+  "lockedEnded": "The gallery has ended. Guest uploads are closed.",
+  "endNow": "End the gallery now",
+  "endConfirm": "End the gallery now? Guests won't be able to add photos after this, and it can't be undone.",
+  "ending": "Ending…",
+  "ended": "The gallery has ended. We'll email you a download link.",
+  "notSet": "No dates yet",
+  "range": "{from} – {to}"
+ },
+ "pay": {
+  "productName": "Event package",
+  "checkoutNote": "Full refund if you cancel before your gallery goes live. Your gallery opens and closes on the dates you chose.",
+  "cta": "Pay {price}",
+  "redirecting": "Opening checkout…",
+  "comingSoon": "Payments coming soon",
+  "ownerOnly": "Only the event owner can pay for it.",
+  "cancelledNotice": "Checkout cancelled. Nothing was charged.",
+  "paidNotice": "Thank you, your payment went through. It can take a moment to show here.",
+  "fine": "One-off payment, VAT included. Card, Apple Pay or Google Pay. Full refund if you cancel before the gallery goes live."
+ },
+ "package": {
+  "kicker": "Event package",
+  "setupTitle": "Set up and test,",
+  "setupAccent": "then pay.",
+  "setupBody": "Guests can't join yet: they'll see when the gallery opens. Print your QR cards and try it with up to {limit} test uploads of your own ({used} used so far).",
+  "setupNoDates": "Pick when your gallery opens and closes, then pay to open it to your guests.",
+  "setupDates": "Your gallery: {range}.",
+  "paidTitle": "Paid. Opens",
+  "paidAccent": "{date}.",
+  "paidBody": "Guests who scan the QR code before then see when the gallery opens. You can still add photos yourself and change the dates until it opens.",
+  "liveTitle": "Live until",
+  "liveAccent": "{date}.",
+  "liveBody": "Guests can join and upload now. When the gallery closes we'll email you a link to download everything.",
+  "endedTitle": "Ended. Download until",
+  "endedAccent": "{date}.",
+  "endedBody": "Guest uploads are closed and guests can still look. Download every photo and video in full quality any time before {date}.",
+  "expiredTitle": "Files",
+  "expiredAccent": "deleted.",
+  "expiredBody": "This event's photos and videos were deleted at the end of its storage period.",
+  "refundedTitle": "Refunded",
+  "refundedAccent": "in full.",
+  "refundedBody": "This event was refunded, so it's read-only and guests can't open it. You can delete it in Settings.",
+  "comped": "Our team has covered this event for you.",
+  "changeDates": "Change dates",
+  "download": "Download everything",
+  "testBanner": "Test mode: only you and your co-hosts can upload ({used} of {limit}). Guests see “opens soon” until you pay and the gallery opens.",
+  "cohostPay": "The event owner can pay to open the gallery."
  }
 }

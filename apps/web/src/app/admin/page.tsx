@@ -13,21 +13,11 @@ export default async function AdminOverviewPage() {
   const [s, series] = await Promise.all([overviewStats(), dailySeries(30)]);
   const n = (v: number) => formatNumber(v, locale);
   const gbp = (pence: number) => formatGBP(Math.round(pence));
-  const conv = s.conversion.cohort ? Math.round((s.conversion.converted / s.conversion.cohort) * 100) : null;
   const dayLabels = series.map((d) => formatDate(d.day, locale, { day: "numeric", month: "short" }));
   const signups30 = series.reduce((a, d) => a + d.signups, 0);
   const uploads30 = series.reduce((a, d) => a + d.uploads, 0);
-  const plans: [string, number, string][] = [
-    [t("status.trialing"), s.plans.trialing, "/admin/users?plan=trialing"],
-    [t("overview.activeMonthly"), s.plans.activeMonthly, "/admin/users?plan=active"],
-    [t("overview.activeYearly"), s.plans.activeYearly, "/admin/users?plan=active"],
-    [t("status.past_due"), s.plans.pastDue, "/admin/users?plan=past_due"],
-    [t("status.cancelled"), s.plans.cancelled, "/admin/users?plan=cancelled"],
-    [t("status.expired"), s.plans.expired, "/admin/users?plan=expired"],
-    [t("status.none"), s.plans.none, "/admin/users?plan=none"],
-    [t("status.comped"), s.plans.comped, "/admin/users?plan=comped"],
-    [t("status.suspended"), s.plans.suspended, "/admin/users?plan=suspended"],
-  ];
+  const states: [string, number, string][] = (["setup", "paid", "live", "ended", "expired", "refunded"] as const)
+    .map((k) => [t(`status.${k}`), s.packages[k], `/admin/events?filter=${k}`]);
 
   return (
     <>
@@ -36,24 +26,24 @@ export default async function AdminOverviewPage() {
       <section aria-labelledby="ov-money" className="flex flex-col gap-3">
         <h2 id="ov-money" className="m-0 text-xl font-black tracking-tight">{t("overview.money")}</h2>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatTile label={t("overview.mrr")} value={gbp(s.mrrPence)} hint={t("overview.mrrHint")} />
-          <StatTile label={t("overview.arr")} value={gbp(s.arrPence)} />
-          <StatTile label={t("overview.conversion")} value={conv === null ? "–" : `${conv}%`}
-            hint={t("overview.conversionHint", { converted: n(s.conversion.converted), cohort: n(s.conversion.cohort) })} />
-          <StatTile label={t("overview.paying")} value={n(s.plans.activeMonthly + s.plans.activeYearly)} href="/admin/users?plan=active" />
+          <StatTile label={t("overview.revenue30")} value={gbp(s.revenue.pence30)} hint={t("overview.packagesHint", { n: n(s.revenue.count30) })} />
+          <StatTile label={t("overview.revenueAll")} value={gbp(s.revenue.pence)} hint={t("overview.packagesHint", { n: n(s.revenue.count) })} />
+          <StatTile label={t("overview.testPayments")} value={n(s.revenue.testCount)} hint={t("overview.testPaymentsHint")} />
+          <StatTile label={t("overview.refunds")} value={n(s.revenue.refunded)} hint={s.revenue.duplicates ? t("overview.duplicates", { n: n(s.revenue.duplicates) }) : undefined} />
         </div>
       </section>
 
       <section aria-labelledby="ov-hosts" className="flex flex-col gap-3">
         <h2 id="ov-hosts" className="m-0 text-xl font-black tracking-tight">{t("overview.hosts")}</h2>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatTile label={t("overview.hostsTotal")} value={n(s.hosts.total)} href="/admin/users" />
           <StatTile label={t("overview.new7")} value={n(s.hosts.new7)} />
           <StatTile label={t("overview.new30")} value={n(s.hosts.new30)} />
+          <StatTile label={t("status.suspended")} value={n(s.hosts.suspended)} href="/admin/users?filter=suspended" />
         </div>
-        <Card title={t("overview.byPlan")} id="ov-plans">
-          <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-3 lg:grid-cols-5">
-            {plans.map(([label, v, href]) => (
+        <Card title={t("overview.byPackage")} id="ov-plans">
+          <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-3 lg:grid-cols-6">
+            {states.map(([label, v, href]) => (
               <li key={label}>
                 <a href={href} className="flex min-h-11 flex-col rounded-2xl bg-tint px-4 py-3 text-ink no-underline hover:bg-[#E4E8F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky">
                   <span className="text-[13px] font-semibold text-muted">{label}</span>
@@ -69,10 +59,11 @@ export default async function AdminOverviewPage() {
         <h2 id="ov-activity" className="m-0 text-xl font-black tracking-tight">{t("overview.activity")}</h2>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatTile label={t("overview.eventsTotal")} value={n(s.events.total)} href="/admin/events" />
-          <StatTile label={t("overview.liveToday")} value={n(s.events.liveToday)} />
+          <StatTile label={t("overview.liveNow")} value={n(s.packages.live)} href="/admin/events?filter=live" />
           <StatTile label={t("overview.eventsNew7")} value={n(s.events.new7)} />
           <StatTile label={t("overview.uploadsToday")} value={n(s.uploads.today)} hint={t("overview.uploadsWeek", { n: n(s.uploads.week) })} />
           <StatTile label={t("overview.storage")} value={formatBytes(s.uploads.bytes, locale)} />
+          <StatTile label={t("overview.fairUse")} value={n(s.events.fairUse)} href="/admin/events?filter=fair_use" />
           <StatTile label={t("overview.moderation")} value={n(s.moderationOpen)} href="/admin/moderation" />
           <StatTile label={t("overview.enquiries")} value={n(s.enquiriesOpen)} href="/admin/enquiries" />
         </div>

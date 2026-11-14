@@ -10,7 +10,7 @@ import { CronRunButton } from "@/components/admin/CronRunButton";
 
 export const dynamic = "force-dynamic";
 
-/** Compact cron summary, e.g. "trialEnded 2 · cancelled 0". */
+/** Compact cron summary, e.g. "endedEmails 2 · reminders30 0". */
 function summaryText(s: unknown): string {
   if (!s || typeof s !== "object") return "";
   return Object.entries(s as Record<string, unknown>).filter(([k]) => k !== "trigger").map(([k, v]) => `${k} ${typeof v === "object" ? JSON.stringify(v) : String(v)}`).join(" · ");

@@ -1,8 +1,8 @@
 import "server-only";
-import { and, asc, desc, eq, ilike, isNotNull, isNull, ne, not, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNotNull, isNull, ne, or, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { SUBSCRIPTION } from "./config";
-import { compedSql, computeAccess, effectiveStatusSql, forOccasion, ownerReadOnlySql, type Access, type BillingRow } from "./access";
+import { computeAccess, packageStateSql, type Access } from "./access";
+import { getSettings } from "./settings";
 import { signMany } from "./storage";
 import { likePattern, PAGE } from "./admin";
 
@@ -11,27 +11,30 @@ import { likePattern, PAGE } from "./admin";
  * and aggregate with sub-queries in the same statement, so a page is a fixed number of round-trips.
  */
 
-const { hosts, occasions, media, guests, leads, adminAudit, cronRuns, occasionMembers, days } = schema;
+const { hosts, occasions, media, guests, leads, adminAudit, cronRuns, occasionMembers, days, orders } = schema;
 
 /** Start of today in London (events and uploads are counted by UK calendar day). */
 const londonMidnight = sql`(date_trunc('day', now() at time zone 'Europe/London') at time zone 'Europe/London')`;
-const londonToday = sql`(now() at time zone 'Europe/London')::date`;
 const int = (v: unknown) => Number(v ?? 0);
 
-export const PLAN_FILTERS = ["trialing", "active", "past_due", "cancelled", "expired", "none", "comped", "suspended"] as const;
-export type PlanFilter = (typeof PLAN_FILTERS)[number];
-export const EVENT_FILTERS = ["live", "readonly", "archived"] as const;
+export const USER_FILTERS = ["paying", "suspended"] as const;
+export type UserFilter = (typeof USER_FILTERS)[number];
+/** Event list filters: effective package states, plus admin overrides and the fair-use flag. */
+export const EVENT_FILTERS = ["setup", "paid", "live", "ended", "expired", "refunded", "locked", "fair_use", "archived"] as const;
 export type EventFilter = (typeof EVENT_FILTERS)[number];
+export const PACKAGE_STATES = ["setup", "paid", "live", "ended", "expired", "refunded"] as const;
 export const MEDIA_FILTERS = ["all", "visible", "hidden", "pending", "flagged"] as const;
 export type MediaFilter = (typeof MEDIA_FILTERS)[number];
 export const ENQUIRY_FILTERS = ["open", "handled", "all"] as const;
 export type EnquiryFilter = (typeof ENQUIRY_FILTERS)[number];
 
-const billingCols = {
-  planStatus: hosts.planStatus, planInterval: hosts.planInterval, trialStartedAt: hosts.trialStartedAt, trialEndsAt: hosts.trialEndsAt,
-  currentPeriodEnd: hosts.currentPeriodEnd, cancelAtPeriodEnd: hosts.cancelAtPeriodEnd, pastDueSince: hosts.pastDueSince,
-  readOnlySince: hosts.readOnlySince, deleteAfter: hosts.deleteAfter, compUntil: hosts.compUntil, suspendedAt: hosts.suspendedAt,
+/** Columns access.ts needs from an event. */
+const packageCols = {
+  packageStatus: occasions.packageStatus, opensAt: occasions.opensAt, closesAt: occasions.closesAt, deleteAfter: occasions.deleteAfter,
+  adminLockedAt: occasions.adminLockedAt, compedAt: occasions.compedAt, paidAt: occasions.paidAt,
 };
+/** Paid event-package orders (refunds and duplicates excluded). */
+const paidOrder = and(eq(orders.kind, "event_package"), eq(orders.status, "paid"));
 
 function paged<T>(rows: T[], page: number) {
   return { rows: rows.slice(0, PAGE), page, hasNext: rows.length > PAGE };
@@ -54,31 +57,25 @@ export const moderationWhere = and(
 // ── Overview ───────────────────────────────────────────────────────────────────────────────────────
 
 export async function overviewStats() {
-  const status = effectiveStatusSql();
-  const comped = compedSql();
-  const [[h], [e], [m], [mod], [enq]] = await Promise.all([
+  const settings = await getSettings();
+  const state = packageStateSql(settings.retentionMonths);
+  const [[h], [e], [m], [mod], [enq], [pay]] = await Promise.all([
     db.select({
       total: sql<number>`count(*)::int`,
       new7: sql<number>`(count(*) filter (where ${hosts.createdAt} >= now() - interval '7 days'))::int`,
       new30: sql<number>`(count(*) filter (where ${hosts.createdAt} >= now() - interval '30 days'))::int`,
-      none: sql<number>`(count(*) filter (where ${status} = 'none'))::int`,
-      trialing: sql<number>`(count(*) filter (where ${status} = 'trialing'))::int`,
-      activeMonthly: sql<number>`(count(*) filter (where ${status} = 'active' and ${hosts.planInterval} is distinct from 'year'))::int`,
-      activeYearly: sql<number>`(count(*) filter (where ${status} = 'active' and ${hosts.planInterval} = 'year'))::int`,
-      pastDue: sql<number>`(count(*) filter (where ${status} = 'past_due'))::int`,
-      cancelled: sql<number>`(count(*) filter (where ${status} = 'cancelled'))::int`,
-      expired: sql<number>`(count(*) filter (where ${status} = 'expired'))::int`,
-      comped: sql<number>`(count(*) filter (where ${comped}))::int`,
       suspended: sql<number>`(count(*) filter (where ${hosts.suspendedAt} is not null))::int`,
-      // Trial → paid: trials that ended in the last 30 days, and how many of those hosts subscribed (at any point).
-      trialCohort: sql<number>`(count(*) filter (where ${hosts.trialEndsAt} > now() - interval '30 days' and ${hosts.trialEndsAt} <= now()))::int`,
-      trialConverted: sql<number>`(count(*) filter (where ${hosts.trialEndsAt} > now() - interval '30 days' and ${hosts.trialEndsAt} <= now() and ${hosts.stripeSubscriptionId} is not null))::int`,
     }).from(hosts),
     db.select({
       total: sql<number>`count(*)::int`,
       new7: sql<number>`(count(*) filter (where ${occasions.createdAt} >= now() - interval '7 days'))::int`,
-      liveToday: sql<number>`(count(*) filter (where ${occasions.status} <> 'archived' and (${occasions.startsOn} = ${londonToday}
-        or exists(select 1 from days d where d.occasion_id = ${occasions.id} and d.date = ${londonToday}))))::int`,
+      setup: sql<number>`(count(*) filter (where ${state} = 'setup'))::int`,
+      paid: sql<number>`(count(*) filter (where ${state} = 'paid'))::int`,
+      live: sql<number>`(count(*) filter (where ${state} = 'live'))::int`,
+      ended: sql<number>`(count(*) filter (where ${state} = 'ended'))::int`,
+      expired: sql<number>`(count(*) filter (where ${state} = 'expired'))::int`,
+      refunded: sql<number>`(count(*) filter (where ${state} = 'refunded'))::int`,
+      fairUse: sql<number>`(count(*) filter (where ${occasions.fairUseAlertedAt} is not null and ${occasions.status} <> 'archived'))::int`,
     }).from(occasions),
     db.select({
       today: sql<number>`(count(*) filter (where ${media.createdAt} >= ${londonMidnight}))::int`,
@@ -87,23 +84,30 @@ export async function overviewStats() {
     }).from(media).where(eq(media.status, "uploaded")),
     db.select({ n: sql<number>`count(*)::int` }).from(media).where(moderationWhere),
     db.select({ n: sql<number>`count(*)::int` }).from(leads).where(isNull(leads.handledAt)),
+    db.select({
+      count: sql<number>`count(*)::int`,
+      pence: sql<number>`coalesce(sum(${orders.amountPence}), 0)::bigint`,
+      count30: sql<number>`(count(*) filter (where ${orders.paidAt} >= now() - interval '30 days'))::int`,
+      pence30: sql<number>`coalesce(sum(${orders.amountPence}) filter (where ${orders.paidAt} >= now() - interval '30 days'), 0)::bigint`,
+      testCount: sql<number>`(count(*) filter (where not ${orders.livemode}))::int`,
+      refunded: sql<number>`(select count(*)::int from orders r where r.kind = 'event_package' and r.status = 'refunded')`,
+      duplicates: sql<number>`(select count(*)::int from orders r where r.kind = 'event_package' and r.status = 'duplicate')`,
+    }).from(orders).where(paidOrder),
   ]);
-  const activeMonthly = int(h?.activeMonthly);
-  const activeYearly = int(h?.activeYearly);
-  // MRR from the DB: paying accounts only (comped-only accounts pay nothing). Pence.
-  const mrrPence = activeMonthly * SUBSCRIPTION.monthlyPence + (activeYearly * SUBSCRIPTION.yearlyPence) / 12;
   return {
-    hosts: { total: int(h?.total), new7: int(h?.new7), new30: int(h?.new30) },
-    plans: {
-      trialing: int(h?.trialing), activeMonthly, activeYearly, pastDue: int(h?.pastDue), cancelled: int(h?.cancelled),
-      expired: int(h?.expired), none: int(h?.none), comped: int(h?.comped), suspended: int(h?.suspended),
+    hosts: { total: int(h?.total), new7: int(h?.new7), new30: int(h?.new30), suspended: int(h?.suspended) },
+    packages: {
+      setup: int(e?.setup), paid: int(e?.paid), live: int(e?.live), ended: int(e?.ended), expired: int(e?.expired), refunded: int(e?.refunded),
     },
-    mrrPence, arrPence: mrrPence * 12,
-    conversion: { cohort: int(h?.trialCohort), converted: int(h?.trialConverted) },
-    events: { total: int(e?.total), liveToday: int(e?.liveToday), new7: int(e?.new7) },
+    revenue: {
+      count: int(pay?.count), pence: int(pay?.pence), count30: int(pay?.count30), pence30: int(pay?.pence30), testCount: int(pay?.testCount),
+      refunded: int(pay?.refunded), duplicates: int(pay?.duplicates),
+    },
+    events: { total: int(e?.total), new7: int(e?.new7), fairUse: int(e?.fairUse) },
     uploads: { today: int(m?.today), week: int(m?.week), bytes: int(m?.bytes) },
     moderationOpen: int(mod?.n),
     enquiriesOpen: int(enq?.n),
+    retentionMonths: settings.retentionMonths,
   };
 }
 
@@ -134,23 +138,23 @@ const hostEventCount = sql<number>`(select count(*)::int from occasions o where 
 const hostStorage = sql<number>`(select coalesce(sum(m.bytes), 0)::bigint from media m inner join occasions o on o.id = m.occasion_id
   where o.owner_id = ${hosts.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`;
 
-function planFilterSql(f: PlanFilter): SQL {
-  if (f === "comped") return compedSql();
+const hostPaidEvents = sql<number>`(select count(*)::int from occasions o where o.owner_id = ${hosts.id} and o.package_status in ('paid', 'live', 'ended', 'expired'))`;
+
+function userFilterSql(f: UserFilter): SQL {
   if (f === "suspended") return sql`${hosts.suspendedAt} is not null`;
-  return sql`${effectiveStatusSql()} = ${f}`;
+  return sql`exists(select 1 from occasions o where o.owner_id = ${hosts.id} and o.package_status in ('paid', 'live', 'ended'))`;
 }
 
-export async function listUsers(opts: { q: string; plan: PlanFilter | null; page: number }) {
+export async function listUsers(opts: { q: string; filter: UserFilter | null; page: number }) {
   const where: SQL[] = [];
   if (opts.q) where.push(or(ilike(hosts.email, likePattern(opts.q)), ilike(hosts.name, likePattern(opts.q)))!);
-  if (opts.plan) where.push(planFilterSql(opts.plan));
+  if (opts.filter) where.push(userFilterSql(opts.filter));
   const rows = await db.select({
     id: hosts.id, email: hosts.email, name: hosts.name, brand: hosts.brand, locale: hosts.locale, createdAt: hosts.createdAt,
-    ...billingCols, events: hostEventCount, bytes: hostStorage,
+    suspendedAt: hosts.suspendedAt, events: hostEventCount, paidEvents: hostPaidEvents, bytes: hostStorage,
   }).from(hosts).where(where.length ? and(...where) : undefined)
     .orderBy(desc(hosts.createdAt), desc(hosts.id)).limit(PAGE + 1).offset(offsetOf(opts.page));
-  const now = new Date();
-  return paged(rows.map((r) => ({ ...r, events: int(r.events), bytes: int(r.bytes), access: computeAccess(r, now) })), opts.page);
+  return paged(rows.map((r) => ({ ...r, events: int(r.events), paidEvents: int(r.paidEvents), bytes: int(r.bytes) })), opts.page);
 }
 
 export async function userDetail(id: string) {
@@ -159,7 +163,7 @@ export async function userDetail(id: string) {
   const [owned, cohosted, auditRows] = await Promise.all([
     db.select({
       id: occasions.id, title: occasions.title, type: occasions.type, slug: occasions.slug, status: occasions.status,
-      startsOn: occasions.startsOn, createdAt: occasions.createdAt, adminLockedAt: occasions.adminLockedAt,
+      startsOn: occasions.startsOn, createdAt: occasions.createdAt, ...packageCols, fairUseAlertedAt: occasions.fairUseAlertedAt,
       mediaCount: sql<number>`(select count(*)::int from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`,
       bytes: sql<number>`(select coalesce(sum(m.bytes), 0)::bigint from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`,
       guestCount: sql<number>`(select count(*)::int from guests g where g.occasion_id = ${occasions.id})`,
@@ -169,10 +173,11 @@ export async function userDetail(id: string) {
       .where(and(eq(occasionMembers.hostId, id), eq(occasionMembers.role, "cohost"))).orderBy(desc(occasions.createdAt)).limit(PAGE),
     db.select().from(adminAudit).where(and(eq(adminAudit.targetType, "host"), eq(adminAudit.targetId, id))).orderBy(desc(adminAudit.createdAt)).limit(20),
   ]);
-  const access = computeAccess(host);
+  const settings = await getSettings();
+  const now = new Date();
   return {
-    host, access,
-    owned: owned.map((o) => ({ ...o, mediaCount: int(o.mediaCount), bytes: int(o.bytes), guestCount: int(o.guestCount), access: forOccasion(access, o) })),
+    host,
+    owned: owned.map((o) => ({ ...o, mediaCount: int(o.mediaCount), bytes: int(o.bytes), guestCount: int(o.guestCount), access: computeAccess(o, host, settings, now) })),
     cohosted, audit: auditRows,
   };
 }
@@ -183,24 +188,26 @@ const occMediaCount = sql<number>`(select count(*)::int from media m where m.occ
 const occStorage = sql<number>`(select coalesce(sum(m.bytes), 0)::bigint from media m where m.occasion_id = ${occasions.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`;
 const occGuests = sql<number>`(select count(*)::int from guests g where g.occasion_id = ${occasions.id})`;
 
-function eventFilterSql(f: EventFilter): SQL {
+function eventFilterSql(f: EventFilter, retentionMonths: number): SQL {
   if (f === "archived") return eq(occasions.status, "archived");
-  if (f === "readonly") return and(ne(occasions.status, "archived"), or(isNotNull(occasions.adminLockedAt), ownerReadOnlySql()))!;
-  return and(ne(occasions.status, "archived"), isNull(occasions.adminLockedAt), not(ownerReadOnlySql()))!;
+  if (f === "locked") return and(ne(occasions.status, "archived"), isNotNull(occasions.adminLockedAt))!;
+  if (f === "fair_use") return isNotNull(occasions.fairUseAlertedAt);
+  return sql`${packageStateSql(retentionMonths)} = ${f}`;
 }
 
 export async function listEvents(opts: { q: string; filter: EventFilter | null; page: number; ownerId?: string | null }) {
+  const settings = await getSettings();
   const where: SQL[] = [];
   if (opts.q) {
     const p = likePattern(opts.q);
     where.push(or(ilike(occasions.title, p), ilike(occasions.slug, p), ilike(occasions.vanitySlug, p), ilike(hosts.email, p))!);
   }
-  if (opts.filter) where.push(eventFilterSql(opts.filter));
+  if (opts.filter) where.push(eventFilterSql(opts.filter, settings.retentionMonths));
   if (opts.ownerId) where.push(eq(occasions.ownerId, opts.ownerId));
   const rows = await db.select({
     id: occasions.id, title: occasions.title, type: occasions.type, slug: occasions.slug, status: occasions.status,
-    startsOn: occasions.startsOn, createdAt: occasions.createdAt, adminLockedAt: occasions.adminLockedAt,
-    ownerId: occasions.ownerId, ownerEmail: hosts.email, ...billingCols,
+    startsOn: occasions.startsOn, createdAt: occasions.createdAt, ...packageCols, fairUseAlertedAt: occasions.fairUseAlertedAt,
+    ownerId: occasions.ownerId, ownerEmail: hosts.email, ownerSuspendedAt: hosts.suspendedAt,
     guestCount: occGuests, mediaCount: occMediaCount, bytes: occStorage,
   }).from(occasions).innerJoin(hosts, eq(hosts.id, occasions.ownerId))
     .where(where.length ? and(...where) : undefined)
@@ -208,7 +215,7 @@ export async function listEvents(opts: { q: string; filter: EventFilter | null; 
   const now = new Date();
   return paged(rows.map((r) => ({
     ...r, guestCount: int(r.guestCount), mediaCount: int(r.mediaCount), bytes: int(r.bytes),
-    access: forOccasion(computeAccess(r as BillingRow, now), r),
+    access: computeAccess(r, { suspendedAt: r.ownerSuspendedAt }, settings, now),
   })), opts.page);
 }
 
@@ -247,7 +254,7 @@ export async function eventDetail(id: string, opts: { mediaPage: number; mediaFi
     .innerJoin(hosts, eq(hosts.id, occasions.ownerId)).where(eq(occasions.id, id)).limit(1);
   if (!row) return null;
   const { occasion: o, owner } = row;
-  const [dayRows, members, stats, mediaRows, guestRows, auditRows] = await Promise.all([
+  const [dayRows, members, stats, mediaRows, guestRows, auditRows, orderRows, settings] = await Promise.all([
     db.select().from(days).where(eq(days.occasionId, id)).orderBy(asc(days.sortOrder)),
     db.select({ hostId: hosts.id, email: hosts.email, name: hosts.name, role: occasionMembers.role })
       .from(occasionMembers).innerJoin(hosts, eq(hosts.id, occasionMembers.hostId)).where(eq(occasionMembers.occasionId, id)).limit(PAGE),
@@ -268,6 +275,8 @@ export async function eventDetail(id: string, opts: { mediaPage: number; mediaFi
       uploads: sql<number>`(select count(*)::int from media m where m.guest_id = ${guests.id} and m.status = 'uploaded' and m.visibility <> 'deleted')`,
     }).from(guests).where(eq(guests.occasionId, id)).orderBy(desc(guests.createdAt), desc(guests.id)).limit(PAGE + 1).offset(offsetOf(opts.guestPage)),
     db.select().from(adminAudit).where(and(eq(adminAudit.targetType, "occasion"), eq(adminAudit.targetId, id))).orderBy(desc(adminAudit.createdAt)).limit(20),
+    db.select().from(orders).where(eq(orders.occasionId, id)).orderBy(desc(orders.createdAt)).limit(20),
+    getSettings(),
   ]);
   const mPage = paged(mediaRows, opts.mediaPage);
   const signed = await signAdmin(mPage.rows.map((r) => r.m));
@@ -277,8 +286,8 @@ export async function eventDetail(id: string, opts: { mediaPage: number; mediaFi
   }));
   const s = stats[0];
   return {
-    occasion: o, owner, days: dayRows, members,
-    access: forOccasion(computeAccess(owner), o),
+    occasion: o, owner, days: dayRows, members, orders: orderRows, settings,
+    access: computeAccess(o, owner, settings),
     stats: {
       guests: int(s?.guests), media: int(s?.media), bytes: int(s?.bytes), photos: int(s?.photos), videos: int(s?.videos),
       hidden: int(s?.hidden), pending: int(s?.pending), messages: int(s?.messages), openReports: int(s?.openReports),
@@ -287,6 +296,17 @@ export async function eventDetail(id: string, opts: { mediaPage: number; mediaFi
     guests: { ...paged(guestRows.map((g) => ({ ...g, uploads: int(g.uploads) })), opts.guestPage) },
     audit: auditRows,
   };
+}
+
+// ── Payments ───────────────────────────────────────────────────────────────────────────────────────
+
+/** Latest event-package payments (all statuses), with the event and owner. */
+export async function recentPayments(n = 20) {
+  return db.select({
+    id: orders.id, occasionId: orders.occasionId, title: occasions.title, email: hosts.email, amountPence: orders.amountPence,
+    status: orders.status, livemode: orders.livemode, paidAt: orders.paidAt, createdAt: orders.createdAt, stripeSessionId: orders.stripeSessionId,
+  }).from(orders).innerJoin(occasions, eq(occasions.id, orders.occasionId)).innerJoin(hosts, eq(hosts.id, orders.hostId))
+    .where(eq(orders.kind, "event_package")).orderBy(desc(orders.createdAt)).limit(n);
 }
 
 // ── Moderation ─────────────────────────────────────────────────────────────────────────────────────

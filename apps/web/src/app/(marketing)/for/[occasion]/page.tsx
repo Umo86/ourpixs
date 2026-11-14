@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getT } from "@/i18n";
-import { MONEY_BACK_DAYS, OCCASIONS, SUBSCRIPTION } from "@/lib/config";
+import { getBrand, getT } from "@/i18n";
+import { OCCASIONS, SUPPORT_EMAIL } from "@/lib/config";
+import { getSettings } from "@/lib/settings";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Display } from "@/components/ui/SectionHeading";
@@ -11,7 +12,7 @@ import { START_HREF } from "@/components/site/constants";
 import { FaqList } from "@/components/marketing/FaqList";
 import { FinalCta } from "@/components/marketing/FinalCta";
 import { MEDIA } from "@/components/marketing/constants";
-import { formatGBP } from "@/components/marketing/format";
+import { fill, pricingVars } from "@/components/marketing/format";
 import { buildMetadata } from "@/components/marketing/meta";
 import { OCCASION_PAGES, OCCASION_UI, getOccasionPage } from "@/content/occasions";
 
@@ -32,7 +33,8 @@ export default async function OccasionPage({ params }: { params: Promise<{ occas
   const { occasion } = await params;
   const page = getOccasionPage(occasion);
   if (!page) notFound();
-  const { t, locale } = await getT("marketing");
+  const [{ t, locale }, brand, settings] = await Promise.all([getT("marketing"), getBrand(), getSettings()]);
+  const vars = pricingVars(SUPPORT_EMAIL[brand], settings);
   const c = page[locale];
   const ui = OCCASION_UI[locale];
   const moments = OCCASIONS[page.type].moments.map((m) => m[locale]);
@@ -50,8 +52,8 @@ export default async function OccasionPage({ params }: { params: Promise<{ occas
               <Button href="/demo" variant="secondary" size="lg">{ui.demo}</Button>
             </div>
             <p className="m-0 text-sm text-muted">
-              {ui.priceLabel}: <strong className="text-ink">{t("pricing.priceLine", { monthly: formatGBP(SUBSCRIPTION.monthlyPence), yearly: formatGBP(SUBSCRIPTION.yearlyPence) })}</strong>
-              {` · ${t("pricing.trial.short", { trialDays: SUBSCRIPTION.trialDays })}`}
+              {ui.priceLabel}: <strong className="text-ink">{t("pricing.priceLine", vars)}</strong>
+              {` · ${t("pricing.freeSetup.short", vars)}`}
             </p>
           </div>
           <div className="relative aspect-[4/3] min-w-0 flex-[1_1_420px] overflow-hidden rounded-[32px]">
@@ -81,7 +83,7 @@ export default async function OccasionPage({ params }: { params: Promise<{ occas
                 <span aria-hidden className="flex size-12 flex-none items-center justify-center rounded-full bg-royal text-[19px] font-extrabold text-white">{i + 1}</span>
                 <div>
                   <h3 className="m-0 text-2xl font-extrabold tracking-[-0.03em]">{s.title}</h3>
-                  <p className="m-0 mt-1 text-[16.5px] leading-relaxed text-text-2">{s.body}</p>
+                  <p className="m-0 mt-1 text-[16.5px] leading-relaxed text-text-2">{fill(s.body, vars)}</p>
                 </div>
               </li>
             ))}
@@ -92,7 +94,7 @@ export default async function OccasionPage({ params }: { params: Promise<{ occas
       <section className="bg-tint">
         <Container size="narrow" className="flex flex-col gap-8 py-16 sm:py-24">
           <Display size="md" accent={ui.faqAccent}>{ui.faqTitle}</Display>
-          <FaqList items={c.faq} />
+          <FaqList items={c.faq.map((f) => ({ q: fill(f.q, vars), a: fill(f.a, vars) }))} />
           <nav aria-label={ui.others} className="flex flex-wrap items-center gap-2 pt-4">
             <span className="mr-2 text-sm font-bold">{ui.others}:</span>
             {OCCASION_PAGES.filter((o) => o.slug !== page.slug).map((o) => (
@@ -102,7 +104,7 @@ export default async function OccasionPage({ params }: { params: Promise<{ occas
         </Container>
       </section>
 
-      <FinalCta title={c.ctaTitle} accent={c.ctaAccent} cta={ui.start} href={START_HREF} note={t("home.cta.note", { days: MONEY_BACK_DAYS })} />
+      <FinalCta title={c.ctaTitle} accent={c.ctaAccent} cta={ui.start} href={START_HREF} note={t("home.cta.note", vars)} />
     </>
   );
 }

@@ -12,7 +12,7 @@ type Props = {
   /** Extra actions (host: favourite, hide, delete, set as cover). */
   actions?: (item: MediaItem) => ReactNode;
   downloadUrl?: (item: MediaItem) => string | null;
-  /** Downloads locked (trial / unpaid): the button stays visible and calls this instead (e.g. an upgrade prompt). */
+  /** Downloads locked (event not paid): the button stays visible and calls this instead (e.g. the pay prompt). */
   onDownloadLocked?: () => void;
 };
 

@@ -2,16 +2,15 @@ import type Stripe from "stripe";
 import type { NextRequest } from "next/server";
 import { errorJson, json, toErrorResponse } from "@/lib/http";
 import { stripe } from "@/lib/stripe";
-import { invoiceSubscriptionId, markPaymentFailed, syncSubscription } from "@/lib/billing";
+import { fulfilCheckout, handleChargeRefunded } from "@/lib/billing";
 
 /**
- * Stripe webhook for the account subscription. Subscribe the endpoint to:
- *   checkout.session.completed, customer.subscription.created, customer.subscription.updated,
- *   customer.subscription.deleted, invoice.paid, invoice.payment_failed
+ * Stripe webhook for the event package. Subscribe the endpoint to:
+ *   checkout.session.completed, checkout.session.async_payment_succeeded, charge.refunded
  *
- * Idempotent: every event re-reads the subscription from Stripe and applies its current state
- * (src/lib/billing.ts → syncSubscription), so duplicates, replays and out-of-order delivery are harmless,
- * and a stale or cancelled subscription can never revive an account.
+ * Signature-checked. Idempotent: every event re-reads the session / charge from Stripe and applies its current
+ * state with conditional updates (src/lib/billing.ts), so duplicates, replays and out-of-order delivery are harmless,
+ * and a refunded event can never be reopened. Other event types are acknowledged and ignored.
  */
 export async function POST(req: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -27,27 +26,16 @@ export async function POST(req: NextRequest) {
   }
   try {
     switch (event.type) {
-      case "checkout.session.completed": {
+      case "checkout.session.completed":
+      case "checkout.session.async_payment_succeeded": {
         const s = event.data.object as Stripe.Checkout.Session;
-        const subId = typeof s.subscription === "string" ? s.subscription : s.subscription?.id;
-        if (s.mode === "subscription" && subId) await syncSubscription(subId, { hostId: s.client_reference_id || s.metadata?.hostId || null });
+        // Delayed methods complete with payment_status "unpaid"; fulfilCheckout waits for async_payment_succeeded then.
+        if (s.mode === "payment") await fulfilCheckout(s.id);
         break;
       }
-      case "customer.subscription.created":
-      case "customer.subscription.updated":
-      case "customer.subscription.deleted":
-        await syncSubscription((event.data.object as Stripe.Subscription).id);
+      case "charge.refunded":
+        await handleChargeRefunded((event.data.object as Stripe.Charge).id);
         break;
-      case "invoice.paid": {
-        const subId = invoiceSubscriptionId(event.data.object as Stripe.Invoice);
-        if (subId) await syncSubscription(subId);
-        break;
-      }
-      case "invoice.payment_failed": {
-        const inv = event.data.object as Stripe.Invoice;
-        if (inv.id) await markPaymentFailed(inv.id);
-        break;
-      }
       default:
         break;
     }

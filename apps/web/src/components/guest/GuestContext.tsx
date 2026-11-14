@@ -21,11 +21,11 @@ export function GuestProvider({ value, children }: { value: GuestCtx; children: 
   const uploader = useMemo(() => {
     let u = uploaders.get(value.slug);
     if (!u) {
-      u = new Uploader({ ns: `guest:${value.slug}`, createUrl: `/api/v1/g/${value.slug}/uploads`, completeUrl: `/api/v1/g/${value.slug}/uploads/complete` });
+      u = new Uploader({ ns: `guest:${value.slug}`, createUrl: `/api/v1/g/${value.slug}/uploads`, completeUrl: `/api/v1/g/${value.slug}/uploads/complete`, maxVideoSeconds: value.occasion.videoMaxSeconds });
       uploaders.set(value.slug, u);
     }
     return u;
-  }, [value.slug]);
+  }, [value.slug, value.occasion.videoMaxSeconds]);
 
   // Per-day QR links (?d=<dayId>) lock the guest to that day; remembered on this device.
   useEffect(() => {

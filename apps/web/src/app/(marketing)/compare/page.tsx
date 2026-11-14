@@ -1,7 +1,9 @@
 import { Check, Minus, X, CircleHelp } from "lucide-react";
 import { getBrand, getT } from "@/i18n";
 import { makeT } from "@/i18n/shared";
-import { BRANDS } from "@/lib/config";
+import { BRANDS, SUPPORT_EMAIL } from "@/lib/config";
+import { getSettings } from "@/lib/settings";
+import { fill, pricingVars } from "@/components/marketing/format";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Display } from "@/components/ui/SectionHeading";
@@ -26,7 +28,8 @@ const ICON: Record<Mark, { Icon: typeof Check; cls: string }> = {
 };
 
 export default async function ComparePage() {
-  const [{ locale }, brand] = await Promise.all([getT("marketing"), getBrand()]);
+  const [{ locale }, brand, settings] = await Promise.all([getT("marketing"), getBrand(), getSettings()]);
+  const vars = pricingVars(SUPPORT_EMAIL[brand], settings);
   const c = COMPARE[locale];
   const name = BRANDS[brand].name;
   return (
@@ -65,7 +68,7 @@ export default async function ComparePage() {
                               <Icon size={14} aria-hidden />
                               <span className="sr-only">{c.marks[mark]}</span>
                             </span>
-                            <span className="leading-snug text-text-2">{text}</span>
+                            <span className="leading-snug text-text-2">{fill(text, vars)}</span>
                           </span>
                         </td>
                       );

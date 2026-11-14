@@ -1,10 +1,10 @@
 import "server-only";
 import { schema } from "@/db";
-import type { Day, Host, Message, MediaItem, Mission, Occasion, OccasionSummary, PublicOccasion, ShareLink, Subscription, Theme } from "./api-types";
-import { SUBSCRIPTION, type Locale, type OccasionType } from "./config";
+import type { Day, EventPackage, Host, Message, MediaItem, Mission, Occasion, OccasionSummary, PublicOccasion, ShareLink, Theme } from "./api-types";
+import { FEATURES, type Locale, type OccasionType, type PackageSettings } from "./config";
 import { activeDays, dayGuestUrl, dayUploadOpen, effectiveRevealAt, guestUrl, momentLabels, shareUrl, uploadOpen, wallUrl } from "./occasion";
 import { presignGet, signMany, storageDriver } from "./storage";
-import { occasionAccessOf, type Access } from "./access";
+import { occasionAccessOf, type Access } from "./access-rules";
 
 type HostRow = typeof schema.hosts.$inferSelect;
 type OccasionRow = typeof schema.occasions.$inferSelect;
@@ -20,12 +20,12 @@ export function toHost(h: HostRow): Host {
   return { id: h.id, email: h.email, name: h.name, locale: h.locale === "tr" ? "tr" : "en", brand: h.brand };
 }
 
-export function toSubscription(a: Access): Subscription {
+export function toPackage(o: OccasionRow, a: Access, s: PackageSettings): EventPackage {
   return {
-    status: a.status, interval: a.interval, trialEndsAt: iso(a.trialEndsAt), currentPeriodEnd: iso(a.currentPeriodEnd),
-    cancelAtPeriodEnd: a.cancelAtPeriodEnd, deleteAfter: iso(a.deleteAfter), canCreateEvents: a.canCreateEvents,
-    canDownload: a.canDownload, readOnly: a.readOnly, showUpgradePrompt: a.showUpgradePrompt, daysLeft: a.daysLeft,
-    compUntil: a.comped ? iso(a.compUntil) : null,
+    status: a.state, pricePence: s.eventPricePence, paidAt: iso(o.paidAt), comped: !!o.compedAt,
+    opensAt: iso(o.opensAt), closesAt: iso(o.closesAt), timeZone: o.timeZone, deleteAfter: iso(a.deleteAfter),
+    testMode: a.testMode, testUploadLimit: a.testUploadLimit, canEditWindow: a.canEditWindow, canEndEarly: a.canEndEarly,
+    canPay: a.canPay, windowDays: s.windowDays, daysLeft: a.daysLeft,
   };
 }
 
@@ -36,10 +36,14 @@ export function toDay(d: DayRow): Day {
 type SummaryExtra = { coverUrl: string | null; mediaCount: number; guestCount: number; role: "owner" | "cohost" };
 
 export function toSummary(o: OccasionRow, extra: SummaryExtra, access: Access): OccasionSummary {
-  return { id: o.id, slug: o.slug, type: o.type as OccasionType, title: o.title, startsOn: o.startsOn, ...extra, access: occasionAccessOf(access) };
+  return {
+    id: o.id, slug: o.slug, type: o.type as OccasionType, title: o.title, startsOn: o.startsOn, ...extra, access: occasionAccessOf(access),
+    packageStatus: access.state, opensAt: iso(o.opensAt), closesAt: iso(o.closesAt), deleteAfter: iso(access.deleteAfter),
+    testMode: access.testMode, timeZone: o.timeZone,
+  };
 }
 
-export function toOccasion(o: OccasionRow, days: DayRow[], extra: SummaryExtra, access: Access): Occasion {
+export function toOccasion(o: OccasionRow, days: DayRow[], extra: SummaryExtra, access: Access, s: PackageSettings): Occasion {
   return {
     ...toSummary(o, extra, access),
     honorees: o.honorees, venueName: o.venueName, city: o.city, theme: o.theme as Theme, brand: o.brand,
@@ -50,14 +54,21 @@ export function toOccasion(o: OccasionRow, days: DayRow[], extra: SummaryExtra, 
       const active = new Set(activeDays(o, days).map((d) => d.id));
       return [...days].sort((a, b) => a.sortOrder - b.sortOrder).map((d) => ({ ...toDay(d), guestUrl: dayGuestUrl(o, d.id), active: active.has(d.id) }));
     })(),
-    guestUrl: guestUrl(o), wallUrl: wallUrl(o), vanitySlug: o.vanitySlug,
+    guestUrl: guestUrl(o), wallUrl: wallUrl(o), vanitySlug: o.vanitySlug, package: toPackage(o, access, s),
   };
 }
 
-export function toPublicOccasion(o: OccasionRow, days: DayRow[], locale: Locale, coverUrl: string | null, access: Access): PublicOccasion {
-  const f = SUBSCRIPTION.features;
+/** What a guest opening the link sees (see PublicOccasion.galleryState). */
+export function galleryState(a: Access): PublicOccasion["galleryState"] {
+  if (a.state === "expired" || a.state === "refunded" || a.reason === "suspended") return "unavailable";
+  if (!a.guestsCanView) return "not_open";
+  return a.guestsCanUpload ? "live" : "ended";
+}
+
+export function toPublicOccasion(o: OccasionRow, days: DayRow[], locale: Locale, coverUrl: string | null, access: Access, videoMaxSeconds: number): PublicOccasion {
+  const f = FEATURES;
   const reveal = effectiveRevealAt(o);
-  const open = uploadOpen(o, access.canUpload);
+  const open = uploadOpen(o, access.guestsCanUpload);
   return {
     slug: o.slug, type: o.type as OccasionType, title: o.title, honorees: o.honorees, startsOn: o.startsOn,
     venueName: o.venueName, city: o.city, theme: o.theme as Theme, brand: o.brand,
@@ -66,6 +77,7 @@ export function toPublicOccasion(o: OccasionRow, days: DayRow[], locale: Locale,
     voiceGuestbook: f.voiceGuestbook, uploadOpen: open, uploadsOpen: open, downloadsOpen: access.canDownload, revealMode: o.revealMode,
     revealAt: o.revealMode === "next_morning" || o.disposableShots ? iso(reveal) : null,
     coverUrl, hasPin: !!o.pinHash,
+    galleryState: galleryState(access), opensAt: iso(o.opensAt), closesAt: iso(o.closesAt), timeZone: o.timeZone, videoMaxSeconds,
   };
 }
 
@@ -75,7 +87,7 @@ export type MediaJoinRow = { media: MediaRow; guestName: string | null; reactedB
  * `audience` controls which fields are exposed:
  *  host  → everything incl. originalUrl, favourite/visibility/approved, guestId
  *  guest → public fields (+ reactedByMe); `withOriginal` for a guest's own uploads
- * `canDownload` = the event owner's access. When false, `originalUrl` is null on every item (download lock).
+ * `canDownload` = the event's download access. When false, `originalUrl` is null on every item (download lock).
  */
 export async function toMediaItems(rows: MediaJoinRow[], audience: "host" | "guest", opts: { withOriginal?: boolean; canDownload: boolean }): Promise<MediaItem[]> {
   const thumbs = await signMany(rows.map((r) => r.media.keyThumb));

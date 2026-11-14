@@ -10,11 +10,8 @@ import { OCCASIONS } from "@/lib/config";
 import { formatDate, formatNumber } from "@/lib/client/format";
 import { coverFallback } from "@/components/host/occasion-art";
 import { DeleteAccountButton } from "@/components/host/DeleteAccountButton";
-import { SubscriptionCard, UpgradePrompt } from "@/components/host/Billing";
-import { Notice } from "@/components/app/Notice";
-import { computeAccess } from "@/lib/access";
-import { toSubscription } from "@/lib/serializers";
-import { paymentsEnabled } from "@/lib/stripe";
+import { formatInZone } from "@/lib/tz";
+import type { OccasionSummary } from "@/lib/api-types";
 
 export const dynamic = "force-dynamic";
 
@@ -23,13 +20,29 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("dashboard.metaTitle") };
 }
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ subscribed?: string; checkout?: string }> }) {
+/** Event card status: Setup / Paid · opens … / Live until … / Ended · download until … (dates in the event's zone). */
+function statusOf(o: OccasionSummary, t: (k: string, v?: Record<string, string | number>) => string, locale: "en" | "tr") {
+  const d = (iso: string | null) => (iso ? formatInZone(iso, o.timeZone, locale, { year: false }) : "");
+  if (o.access.reason === "suspended") return { label: t("dashboard.status.suspended"), tone: "red" as const };
+  if (o.access.reason === "locked") return { label: t("dashboard.status.locked"), tone: "red" as const };
+  switch (o.packageStatus) {
+    case "setup": return { label: t("dashboard.status.setup"), tone: "amber" as const };
+    case "paid": return { label: o.opensAt ? t("dashboard.status.paid", { date: d(o.opensAt) }) : t("dashboard.status.paidNoDate"), tone: "blue" as const };
+    case "live": return { label: t("dashboard.status.live", { date: d(o.closesAt) }), tone: "green" as const };
+    case "ended": return { label: o.deleteAfter ? t("dashboard.status.ended", { date: d(o.deleteAfter) }) : t("dashboard.status.endedNoDate"), tone: "ink" as const };
+    case "refunded": return { label: t("dashboard.status.refunded"), tone: "grey" as const };
+    default: return { label: t("dashboard.status.expired"), tone: "grey" as const };
+  }
+}
+const TONE = {
+  amber: "bg-[#FFF3D6] text-[#7A4B00]", blue: "bg-royal text-white", green: "bg-[#E8F6EE] text-[#165C33]",
+  ink: "bg-white text-ink", grey: "bg-black/60 text-white", red: "bg-[#FDECEC] text-[#8A1C1C]",
+} as const;
+
+export default async function DashboardPage() {
   const host = await requireHostPage("/dashboard");
-  const sp = await searchParams;
   const { t, locale } = await getT("host");
   const list = await summariesFor(host.id);
-  const sub = toSubscription(computeAccess(host));
-  const payments = paymentsEnabled();
 
   return (
     <Container className="flex flex-col gap-10 py-8 sm:py-12">
@@ -40,12 +53,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             {t("dashboard.title")} <span className="font-serif text-royal">{t("dashboard.titleAccent")}</span>
           </h1>
         </div>
-        {sub.canCreateEvents ? <Button href="/dashboard/new" size="lg"><Plus size={20} aria-hidden />{t("dashboard.new")}</Button> : null}
+        <Button href="/dashboard/new" size="lg"><Plus size={20} aria-hidden />{t("dashboard.new")}</Button>
       </div>
-
-      {sp.subscribed ? <Notice tone="success">{t("billing.subscribedNotice")}</Notice> : null}
-      {sp.checkout === "cancelled" ? <Notice>{t("plan.cancelledNotice")}</Notice> : null}
-      <UpgradePrompt sub={sub} payments={payments} />
 
       {list.length === 0 ? (
         <div className="grid gap-8 overflow-hidden rounded-[32px] bg-ink text-white md:grid-cols-2">
@@ -60,7 +69,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </div>
       ) : (
         <ul className="m-0 grid list-none grid-cols-1 gap-5 p-0 sm:grid-cols-2 lg:grid-cols-3">
-          {list.map((o) => (
+          {list.map((o) => {
+            const st = statusOf(o, t, locale);
+            return (
             <li key={o.id}>
               <Link href={`/dashboard/${o.id}`} className="group relative block aspect-[4/5] overflow-hidden rounded-[28px] bg-surface text-white no-underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -68,12 +79,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
                 <div className="absolute left-4 right-4 top-4 flex items-start justify-between gap-2">
                   <span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink">{OCCASIONS[o.type].label[locale]}</span>
-                  <span className="flex gap-2">
-                    {o.role === "cohost" ? <span className="rounded-full bg-black/60 px-3 py-1.5 text-xs font-bold">{t("dashboard.cohost")}</span> : null}
-                    {o.access.readOnly ? <Sticker rotate={6} className="!px-3 !py-1.5 !text-xs">{t("billing.readOnlyBadge")}</Sticker> : null}
-                  </span>
+                  {o.role === "cohost" ? <span className="rounded-full bg-black/60 px-3 py-1.5 text-xs font-bold">{t("dashboard.cohost")}</span> : null}
                 </div>
                 <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5">
+                  <span className={`self-start rounded-full px-3 py-1.5 text-xs font-bold ${TONE[st.tone]}`}><span className="sr-only">{t("dashboard.statusLabel")}: </span>{st.label}</span>
                   <h2 className="m-0 text-[clamp(1.8rem,4vw,2.4rem)] font-black leading-[0.95] tracking-[-0.03em]">{o.title}</h2>
                   <span className="text-sm text-muted-dark">
                     {[o.startsOn ? formatDate(o.startsOn, locale) : null, t("dashboard.counts", { media: formatNumber(o.mediaCount, locale), guests: formatNumber(o.guestCount, locale) })].filter(Boolean).join(" · ")}
@@ -81,12 +90,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 </div>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
 
       <section aria-labelledby="acct-h" className="mt-6 grid gap-4 border-t border-[#E6E8EF] pt-8 md:grid-cols-2">
-        <SubscriptionCard sub={sub} payments={payments} />
         <div className="flex flex-col items-start gap-3 rounded-[28px] border border-[#E6E8EF] p-6">
           <h2 id="acct-h" className="m-0 text-xl font-black">{t("dashboard.accountTitle")}</h2>
           <p className="m-0 text-sm text-text-2">{t("dashboard.accountBody", { email: host.email })}</p>

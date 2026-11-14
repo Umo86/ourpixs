@@ -1,5 +1,5 @@
 import "server-only";
-import { BRANDS, CONTACT_EMAIL, SUBSCRIPTION, YEARLY_SAVING_PERCENT, brandBaseUrl, type Brand, type Locale } from "./config";
+import { BRANDS, CONTACT_EMAIL, MAIN_BRAND, brandBaseUrl, type Brand, type Locale } from "./config";
 import { makeT } from "@/i18n/shared";
 import { ApiError } from "./http";
 
@@ -79,29 +79,41 @@ export function formatEmailDate(d: Date, locale: Locale) {
 }
 
 /**
- * Account billing emails (sent once each by the daily cron). `kind`:
- *  trialPrompt   — a day into the trial: subscribe (monthly first) to unlock downloads
- *  trialEnded    — trial over unpaid: events read-only, files kept until `date`
- *  cancelled     — paid period over: events read-only, downloads open until `date`
- *  deletionSoon  — files are deleted on `date`
+ * "Your gallery has ended — download everything": sent once per event (cron, or lazily when the event is touched).
+ * Links to the event's download page in the dashboard.
  */
-export async function sendBillingEmail(to: string, kind: "trialPrompt" | "trialEnded" | "cancelled" | "deletionSoon",
-  opts: { locale: Locale; brand: Brand; date?: Date | null; days?: number | null }) {
+export async function sendGalleryEndedEmail(to: string, opts: { locale: Locale; brand: Brand; title: string; occasionId: string; deleteAfter: Date | null }) {
   const t = makeT(opts.locale, "host");
-  const url = `${brandBaseUrl(opts.brand)}/dashboard`;
-  const vars = {
-    brand: BRANDS[opts.brand].name, date: opts.date ? formatEmailDate(opts.date, opts.locale) : "", days: opts.days ?? 0,
-    monthly: money(SUBSCRIPTION.monthlyPence, opts.locale), yearly: money(SUBSCRIPTION.yearlyPence, opts.locale), saving: YEARLY_SAVING_PERCENT,
-  };
-  const k = `email.billing.${kind}`;
-  const subject = t(`${k}.subject`, vars);
-  const body = [t(`${k}.body`, vars), t(`${k}.body2`, vars)].filter((x) => x && !x.startsWith(k));
-  const html = layout(opts.brand, { heading: t(`${k}.heading`, vars), body, cta: { href: url, label: t(`${k}.cta`, vars) }, footer: t("email.billing.footer", vars) });
+  const url = `${brandBaseUrl(opts.brand)}/dashboard/${opts.occasionId}/download`;
+  const vars = { brand: BRANDS[opts.brand].name, title: opts.title, date: opts.deleteAfter ? formatEmailDate(opts.deleteAfter, opts.locale) : "" };
+  const subject = t("email.ended.subject", vars);
+  const body = [t("email.ended.body", vars), t(opts.deleteAfter ? "email.ended.body2" : "email.ended.body2NoDate", vars)];
+  const html = layout(opts.brand, { heading: t("email.ended.heading", vars), body, cta: { href: url, label: t("email.ended.cta") }, footer: t("email.ended.footer", vars) });
   await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${url}`);
 }
 
-function money(pence: number, locale: Locale) {
-  return (pence / 100).toLocaleString(locale === "tr" ? "tr-TR" : "en-GB", { style: "currency", currency: "GBP" });
+/** Reminder before an event's files are deleted (30 and 7 days before delete_after). */
+export async function sendDeletionReminder(to: string, opts: { locale: Locale; brand: Brand; title: string; occasionId: string; date: Date; days: number }) {
+  const t = makeT(opts.locale, "host");
+  const url = `${brandBaseUrl(opts.brand)}/dashboard/${opts.occasionId}/download`;
+  const vars = { brand: BRANDS[opts.brand].name, title: opts.title, date: formatEmailDate(opts.date, opts.locale), days: opts.days };
+  const subject = t("email.deletionSoon.subject", vars);
+  const body = [t("email.deletionSoon.body", vars), t("email.deletionSoon.body2", vars)];
+  const html = layout(opts.brand, { heading: t("email.deletionSoon.heading", vars), body, cta: { href: url, label: t("email.deletionSoon.cta") }, footer: t("email.ended.footer", vars) });
+  await send(opts.brand, to, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${url}`);
+}
+
+/** Internal alert to admins (ADMIN_EMAILS): an event passed the fair-use storage limit. English only. */
+export async function sendFairUseAlert(to: string[], opts: { title: string; occasionId: string; ownerEmail: string; gb: number; limitGb: number }) {
+  if (!to.length) return;
+  const brand = MAIN_BRAND;
+  const url = `${brandBaseUrl(brand)}/admin/events/${opts.occasionId}`;
+  const t = makeT("en", "admin");
+  const vars = { title: opts.title, owner: opts.ownerEmail, gb: opts.gb.toFixed(1), limit: opts.limitGb };
+  const subject = t("fairUse.email.subject", vars);
+  const body = [t("fairUse.email.body", vars), t("fairUse.email.body2", vars)];
+  const html = layout(brand, { heading: t("fairUse.email.heading", vars), body, cta: { href: url, label: t("fairUse.email.cta") }, footer: t("fairUse.email.footer") });
+  for (const addr of to) await send(brand, addr, subject, html, `${subject}\n\n${body.join("\n\n")}\n\n${url}`);
 }
 
 export async function sendReportEmail(to: string, opts: { title: string; occasionId: string; reason: string; locale: Locale; brand: Brand }) {
