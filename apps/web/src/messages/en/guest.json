@@ -71,6 +71,7 @@
  "feed": {
   "hi": "Hi {name}",
   "live": "Live",
+  "ended": "Ended",
   "later": "Soon",
   "filters": "Filter",
   "all": "All",
@@ -109,6 +110,7 @@
   "moment": "Tag the moment",
   "uploading": "Uploading",
   "allDone": "All done",
+  "someFailed": "Some didn't upload",
   "progress": "{done} of {total} done",
   "statusDone": "Done",
   "statusFailed": "Didn't upload",

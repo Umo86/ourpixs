@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
-import { Plus, RefreshCw, X } from "lucide-react";
+import { Film, ImageIcon, Plus, RefreshCw, X } from "lucide-react";
 import { useLocale, useT } from "@/i18n/client";
 import { formatDate } from "@/lib/client/format";
 import { api } from "@/lib/client/api";
@@ -113,21 +113,21 @@ export function UploadScreen() {
 
       {queue.length ? (
         <section aria-live="polite" className="flex flex-col gap-3 rounded-[24px] bg-surface p-4">
-          <div className="flex items-baseline justify-between">
-            <span className="text-[15px] font-extrabold">{stats.done === stats.total ? t("upload.allDone") : t("upload.uploading")}</span>
-            <span className="text-[13px] font-bold text-sky-soft">{t("upload.progress", { done: stats.done, total: stats.total })}</span>
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-[15px] font-extrabold">{stats.done === stats.total ? t("upload.allDone") : stats.failed && stats.done + stats.failed === stats.total ? t("upload.someFailed") : t("upload.uploading")}</span>
+            <span className="flex-none text-[13px] font-bold text-sky-soft">{t("upload.progress", { done: stats.done, total: stats.total })}</span>
           </div>
           <ul className="m-0 flex max-h-[40vh] list-none flex-col gap-3 overflow-y-auto p-0">
             {queue.slice().reverse().map((q) => (
-              <li key={q.id} className="flex items-center gap-3">
-                <span className="h-11 w-11 flex-none overflow-hidden rounded-xl bg-surface-2">
+              <li key={q.id} className="flex flex-none items-center gap-3">
+                <span className="flex h-11 w-11 flex-none items-center justify-center overflow-hidden rounded-xl bg-surface-2 text-muted-dark">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {q.preview ? <img src={q.preview} alt="" className="h-full w-full object-cover" /> : null}
+                  {q.preview ? <img src={q.preview} alt="" className="h-full w-full object-cover" /> : q.kind === "video" ? <Film size={18} aria-hidden /> : <ImageIcon size={18} aria-hidden />}
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-                  <span className="flex justify-between gap-2 text-[13px]">
+                  <span className={`flex text-[13px] ${q.status === "error" ? "flex-col gap-0.5" : "justify-between gap-2"}`}>
                     <span className="truncate font-semibold">{q.name}</span>
-                    <span className={q.status === "error" ? "text-[#FF9A9A]" : "text-muted-dark"}>
+                    <span className={q.status === "error" ? "leading-snug text-[#FF9A9A]" : "flex-none text-muted-dark"}>
                       {q.status === "done" ? t("upload.statusDone") : q.status === "error" ? t(`errors.${q.errorCode}`) !== `errors.${q.errorCode}` ? t(`errors.${q.errorCode}`, { seconds: o.videoMaxSeconds }) : t("upload.statusFailed")
                         : q.status === "queued" ? (q.attempts ? t("upload.statusRetrying") : t("upload.statusWaiting")) : q.status === "processing" ? t("upload.statusPreparing") : `${Math.round(q.progress * 100)}%`}
                     </span>

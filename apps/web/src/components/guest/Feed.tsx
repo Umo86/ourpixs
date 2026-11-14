@@ -133,6 +133,7 @@ export function Feed() {
   const processingLabel = (m: MediaItem) => (m.processing === "failed" ? t("feed.unavailable") : t("feed.processing"));
 
   const day = o.days.find((d) => d.date === new Date().toISOString().slice(0, 10));
+  const ended = o.galleryState === "ended";
   const hero = items[0];
   const rest = items.slice(1);
   const likeBtn = (m: MediaItem, dark = true) => (
@@ -144,13 +145,13 @@ export function Feed() {
 
   return (
     <main id="main" className="mx-auto flex w-full max-w-xl flex-col gap-4 px-5">
-      <header className="flex items-center justify-between gap-3 pt-1">
-        <div className="flex min-w-0 flex-col gap-0.5">
+      <header className="flex items-start justify-between gap-3 pt-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <span className="truncate text-xs text-[#A8ACB8]">{t("feed.hi", { name: guest?.displayName || "" })}{day ? ` · ${day.name}` : ""}</span>
-          <h1 className="m-0 truncate text-[26px] font-black tracking-[-0.04em]"><Title text={o.title} /></h1>
+          <h1 className="m-0 line-clamp-2 text-[26px] font-black leading-[1.08] tracking-[-0.04em]"><Title text={o.title} /></h1>
         </div>
-        <span className="flex flex-none items-center gap-2 rounded-full bg-surface px-3.5 py-2.5 text-[13px] font-bold">
-          <span aria-hidden className={`h-2 w-2 rounded-full bg-sky ${revealed ? "live-dot" : ""}`} />{revealed ? t("feed.live") : t("feed.later")}
+        <span className="mt-1 flex flex-none items-center gap-2 rounded-full bg-surface px-3.5 py-2.5 text-[13px] font-bold">
+          <span aria-hidden className={`h-2 w-2 rounded-full ${ended ? "bg-muted-dark" : "bg-sky"} ${revealed && !ended ? "live-dot" : ""}`} />{ended ? t("feed.ended") : revealed ? t("feed.live") : t("feed.later")}
         </span>
       </header>
 
@@ -196,7 +197,7 @@ export function Feed() {
             </span>
             {demo && hero.displayUrl && !hero.mine ? <DemoWatermark brand={o.brand} /> : null}
             {hero.kind === "video" ? <span className="absolute inset-0 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-black/55"><Play size={28} fill="currentColor" aria-hidden /></span> : null}
-            {o.liveWall ? <span className="absolute bottom-3.5 left-3.5 rotate-[-3deg] rounded-full bg-royal px-3 py-1.5 text-xs font-bold">{t("feed.onWall")}</span> : null}
+            {o.liveWall && !ended ? <span className="absolute bottom-3.5 left-3.5 rotate-[-3deg] rounded-full bg-royal px-3 py-1.5 text-xs font-bold">{t("feed.onWall")}</span> : null}
           </button>
           <div className="flex items-center justify-between gap-2.5 px-3.5 py-3">
             <span className="flex min-w-0 items-center gap-2.5">

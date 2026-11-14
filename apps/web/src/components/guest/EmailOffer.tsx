@@ -72,7 +72,7 @@ export function EmailOffer() {
       <button type="button" onClick={() => { remember("dismissed"); setShow(false); }} aria-label={t("emailOffer.dismiss")}
         className="absolute right-3 top-3 inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky"><X size={18} aria-hidden /></button>
       <span aria-hidden className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-royal"><Mail size={20} /></span>
-      <h2 id={`${id}-h`} className="m-0 pr-10 text-xl font-black leading-tight tracking-tight">{t("emailOffer.title")}</h2>
+      <h2 id={`${id}-h`} className="m-0 pr-10 text-xl font-black leading-tight tracking-tight text-balance">{t("emailOffer.title")}</h2>
       <p className="m-0 text-[15px] text-muted-dark">{t("emailOffer.body")}</p>
       <form onSubmit={submit} className="flex flex-col gap-3">
         <label htmlFor={`${id}-e`} className="text-[13px] font-bold text-muted-dark">{t("emailOffer.emailLabel")}</label>

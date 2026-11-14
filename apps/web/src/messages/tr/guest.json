@@ -54,7 +54,7 @@
  "welcome": {
   "lead": "Karelerini paylaş,",
   "leadAccent": "eğlenceye katıl.",
-  "closed": "Galeri kapandığı için yeni fotoğraf alınmıyor, ama etrafa bakmaya devam edebilirsiniz.",
+  "closed": "Galeri kapandığı için yeni fotoğraf alınmıyor, ama etrafa bakmaya devam edebilirsin.",
   "name": "Adın",
   "namePlaceholder": "ör. Ayşe",
   "pin": "Etkinlik PIN'i",
@@ -66,11 +66,12 @@
   "joining": "Katılıyorsun…",
   "small": "Uygulama yok · Üyelik yok · 10 saniye",
   "atVenue": "{venue}",
-  "paused": "Yüklemeler şu anda kapalı, ama etrafa bakabilirsiniz."
+  "paused": "Yüklemeler şu anda kapalı, ama etrafa bakabilirsin."
  },
  "feed": {
   "hi": "Merhaba {name}",
   "live": "Canlı",
+  "ended": "Sona erdi",
   "later": "Yakında",
   "filters": "Filtre",
   "all": "Tümü",
@@ -109,7 +110,8 @@
   "moment": "Anı etiketle",
   "uploading": "Yükleniyor",
   "allDone": "Hepsi tamam",
-  "progress": "{total} dosyanın {done} tanesi tamam",
+  "someFailed": "Bazıları yüklenemedi",
+  "progress": "{done}/{total} tamam",
   "statusDone": "Tamam",
   "statusFailed": "Yüklenemedi",
   "statusWaiting": "Sırada",
@@ -215,12 +217,12 @@
  },
  "notOpen": {
   "title": "Bu galeri yakında açılıyor.",
-  "body": "Ev sahipleri galeriyi {date} tarihinde açılacak şekilde ayarladı. O zaman aynı bağlantı ya da QR kodla gelin, katılın ve fotoğraflarınızı paylaşın.",
+  "body": "Ev sahipleri galeriyi {date} tarihinde açılacak şekilde ayarladı. O zaman aynı bağlantı ya da QR kodla gel, katıl ve fotoğraflarını paylaş.",
   "soonTitle": "Bu galeri henüz açılmadı.",
-  "soonBody": "Ev sahipleri hâlâ hazırlıyor. Daha sonra aynı bağlantı ya da QR kodla tekrar gelin.",
+  "soonBody": "Ev sahipleri hâlâ hazırlıyor. Daha sonra aynı bağlantı ya da QR kodla tekrar gel.",
   "unavailableTitle": "Bu galeri kapalı.",
-  "unavailableBody": "Artık kullanılamıyor. Bir yanlışlık olduğunu düşünüyorsanız ev sahiplerine sorun.",
-  "keepLink": "Bu bağlantıyı saklayın: indirilecek bir şey yok, hesap gerekmez."
+  "unavailableBody": "Artık kullanılamıyor. Bir yanlışlık olduğunu düşünüyorsan ev sahiplerine sor.",
+  "keepLink": "Bu bağlantıyı sakla: indirilecek bir şey yok, hesap gerekmez."
  },
  "purchase": {
   "productName": "Tüm fotoğraf ve videolar",

@@ -36,7 +36,7 @@ export function NotOpen() {
         ) : null}
         <div className="relative flex flex-col gap-2">
           <span className="self-start rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink">{OCCASIONS[o.type].label[locale]}</span>
-          <h1 className="m-0 text-[clamp(2.8rem,14vw,4rem)] font-black leading-[0.9] tracking-[-0.045em]"><Title text={o.title} accent={o.coverUrl ? "#8097FF" : c.accent} /></h1>
+          <h1 className="m-0 text-[clamp(2.8rem,14vw,4rem)] font-black leading-[1] tracking-[-0.045em]"><Title text={o.title} accent={o.coverUrl ? "#8097FF" : c.accent} /></h1>
         </div>
       </div>
       <section aria-labelledby="not-open-h" className="flex flex-1 flex-col gap-4 px-5 pb-8 pt-7">

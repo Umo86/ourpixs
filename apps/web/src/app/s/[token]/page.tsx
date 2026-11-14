@@ -57,7 +57,7 @@ export default async function SharePage({ params, searchParams }: { params: Prom
           ) : null}
           <div className="relative flex flex-col gap-3">
             <span className="self-start rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink">{eyebrow}</span>
-            <h1 className="m-0 text-[clamp(2.6rem,9vw,5.5rem)] font-black leading-[0.9] tracking-[-0.045em]"><Title text={o.title} /></h1>
+            <h1 className="m-0 text-[clamp(2.6rem,9vw,5.5rem)] font-black leading-[1] tracking-[-0.045em]"><Title text={o.title} /></h1>
             <p className="m-0 text-muted-dark">{link.label ? t("share.forLabel", { label: link.label }) : t("share.lead")}</p>
           </div>
         </section>

@@ -53,7 +53,7 @@ export function Welcome({ shareToken }: { shareToken?: string }) {
         <div className="relative flex flex-col gap-2">
           {eyebrow ? <span className="self-start rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink">{eyebrow}</span> : null}
           {o.venueName ? <span className="text-sm font-semibold opacity-90">{t("welcome.atVenue", { venue: o.venueName })}</span> : null}
-          <h1 className="m-0 text-[clamp(2.8rem,14vw,4rem)] font-black leading-[0.9] tracking-[-0.045em]"><Title text={o.title} accent={o.coverUrl ? "#8097FF" : c.accent} /></h1>
+          <h1 className="m-0 text-[clamp(2.8rem,14vw,4rem)] font-black leading-[1] tracking-[-0.045em]"><Title text={o.title} accent={o.coverUrl ? "#8097FF" : c.accent} /></h1>
         </div>
       </div>
 
